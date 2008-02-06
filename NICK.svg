@@ -1,0 +1,555 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://web.resource.org/cc/"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="210mm"
+   height="297mm"
+   id="svg2172"
+   sodipodi:version="0.32"
+   inkscape:version="0.45.1"
+   sodipodi:docbase="/home/nicolas/Bureau"
+   sodipodi:docname="NICK.svg"
+   inkscape:output_extension="org.inkscape.output.svg.inkscape"
+   inkscape:export-filename="/home/nicolas/Bureau/NICK.png"
+   inkscape:export-xdpi="92"
+   inkscape:export-ydpi="92">
+  <defs
+     id="defs2174">
+    <marker
+       inkscape:stockid="Arrow2Mend"
+       orient="auto"
+       refY="0.0"
+       refX="0.0"
+       id="Arrow2Mend"
+       style="overflow:visible;">
+      <path
+         id="path3246"
+         style="font-size:12.0;fill-rule:evenodd;stroke-width:0.62500000;stroke-linejoin:round;"
+         d="M 8.7185878,4.0337352 L -2.2072895,0.016013256 L 8.7185884,-4.0017078 C 6.9730900,-1.6296469 6.9831476,1.6157441 8.7185878,4.0337352 z "
+         transform="scale(0.6) rotate(180) translate(0,0)" />
+    </marker>
+    <marker
+       inkscape:stockid="Arrow2Lstart"
+       orient="auto"
+       refY="0.0"
+       refX="0.0"
+       id="Arrow2Lstart"
+       style="overflow:visible">
+      <path
+         id="path9082"
+         style="font-size:12.0;fill-rule:evenodd;stroke-width:0.62500000;stroke-linejoin:round"
+         d="M 8.7185878,4.0337352 L -2.2072895,0.016013256 L 8.7185884,-4.0017078 C 6.9730900,-1.6296469 6.9831476,1.6157441 8.7185878,4.0337352 z "
+         transform="scale(1.1) translate(1,0)" />
+    </marker>
+    <marker
+       inkscape:stockid="Arrow2Lend"
+       orient="auto"
+       refY="0.0"
+       refX="0.0"
+       id="Arrow2Lend"
+       style="overflow:visible;">
+      <path
+         id="path9085"
+         style="font-size:12.0;fill-rule:evenodd;stroke-width:0.62500000;stroke-linejoin:round;"
+         d="M 8.7185878,4.0337352 L -2.2072895,0.016013256 L 8.7185884,-4.0017078 C 6.9730900,-1.6296469 6.9831476,1.6157441 8.7185878,4.0337352 z "
+         transform="scale(1.1) rotate(180) translate(1,0)" />
+    </marker>
+  </defs>
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageopacity="1"
+     inkscape:pageshadow="2"
+     inkscape:zoom="0.98994949"
+     inkscape:cx="1164.0233"
+     inkscape:cy="274.71402"
+     inkscape:document-units="px"
+     inkscape:current-layer="g6450"
+     showguides="true"
+     inkscape:guide-bbox="true"
+     inkscape:window-width="1440"
+     inkscape:window-height="834"
+     inkscape:window-x="0"
+     inkscape:window-y="41" />
+  <metadata
+     id="metadata2177">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     inkscape:label="Calque 1"
+     inkscape:groupmode="layer"
+     id="layer1">
+    <g
+       id="g6554"
+       transform="translate(156.42857,452.87931)">
+      <g
+         transform="translate(77.142857,-4.2857143)"
+         id="g6556">
+        <path
+           id="path6558"
+           style="fill:none;fill-opacity:1;fill-rule:nonzero;stroke:#000000;stroke-width:2;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+           d="M 368.68401,75.528782 L 481.31599,75.528782 L 481.31599,106.33844 L 368.68401,106.33844 L 368.68401,75.528782 z "
+           sodipodi:nodetypes="ccccc" />
+        <flowRoot
+           xml:space="preserve"
+           id="flowRoot6560"
+           transform="translate(346.97852,-1.0342149)"><flowRegion
+             id="flowRegion6562"><rect
+               id="rect6564"
+               width="115.61787"
+               height="19.062912"
+               x="30.052038"
+               y="84.383507" /></flowRegion><flowPara
+             id="flowPara6566"
+             style="font-size:12px;font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;text-align:start;line-height:125%;writing-mode:lr-tb;text-anchor:start;font-family:Bitstream Vera Sans">serv : Serveur</flowPara></flowRoot>      </g>
+      <path
+         id="path6568"
+         d="M 502.14286,102.70025 L 502.14286,320.36817"
+         style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:8, 8;stroke-dashoffset:0;stroke-opacity:1"
+         sodipodi:nodetypes="cc" />
+    </g>
+    <path
+       style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;marker-start:none;marker-mid:none;marker-end:url(#Arrow2Mend);stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+       d="M 75.64594,138.1298 L 491.48192,138.1298"
+       id="path8088"
+       sodipodi:nodetypes="cc" />
+    <g
+       id="g2229">
+      <path
+         id="path7117"
+         d="M 75.42951,102.21248 L 75.42951,202.72267"
+         style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:8, 8;stroke-dashoffset:0;stroke-opacity:1"
+         sodipodi:nodetypes="cc" />
+      <g
+         transform="translate(0,-6.5052663)"
+         id="g2220">
+        <path
+           id="rect5130"
+           style="fill:none;fill-opacity:1;fill-rule:nonzero;stroke:#000000;stroke-width:2;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+           d="M 19.113521,77.748334 L 131.7455,77.748334 L 131.7455,108.55799 L 19.113521,108.55799 L 19.113521,77.748334 z "
+           sodipodi:nodetypes="ccccc" />
+        <flowRoot
+           xml:space="preserve"
+           id="flowRoot2195"
+           transform="translate(25.462714,1.2908049)"><flowRegion
+             id="flowRegion2197"><rect
+               id="rect2199"
+               width="89.90358"
+               height="16.920055"
+               x="30.052038"
+               y="84.383507" /></flowRegion><flowPara
+             id="flowPara2201"
+             style="font-size:12px;font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;text-align:start;line-height:125%;writing-mode:lr-tb;text-anchor:start;font-family:Bitstream Vera Sans">Client</flowPara></flowRoot>      </g>
+    </g>
+    <g
+       id="g2238">
+      <g
+         transform="translate(77.142857,-4.2857143)"
+         id="g2213">
+        <path
+           id="path2203"
+           style="fill:none;fill-opacity:1;fill-rule:nonzero;stroke:#000000;stroke-width:2;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+           d="M 368.68401,75.528782 L 481.31599,75.528782 L 481.31599,106.33844 L 368.68401,106.33844 L 368.68401,75.528782 z "
+           sodipodi:nodetypes="ccccc" />
+        <flowRoot
+           xml:space="preserve"
+           id="flowRoot2205"
+           transform="translate(367.95215,-1.0342149)"><flowRegion
+             id="flowRegion2207"><rect
+               id="rect2209"
+               width="89.90358"
+               height="16.920055"
+               x="30.052038"
+               y="84.383507" /></flowRegion><flowPara
+             id="flowPara2211"
+             style="font-size:12px;font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;text-align:start;line-height:125%;writing-mode:lr-tb;text-anchor:start;font-family:Bitstream Vera Sans">Serveur</flowPara></flowRoot>      </g>
+      <path
+         id="path2227"
+         d="M 502.14286,102.70025 L 502.14286,211.79674"
+         style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:8, 8;stroke-dashoffset:0;stroke-opacity:1"
+         sodipodi:nodetypes="cc" />
+    </g>
+    <text
+       xml:space="preserve"
+       style="font-size:12px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+       x="240.45135"
+       y="130.09291"
+       id="text3420"><tspan
+         sodipodi:role="line"
+         id="tspan3422"
+         x="240.45135"
+         y="130.09291">NICK &lt;pseudo&gt;</tspan></text>
+    <g
+       id="g5378"
+       transform="translate(-171.18241,121.80133)">
+      <path
+         sodipodi:nodetypes="cccccccccc"
+         id="rect6122"
+         d="M 772.28785,95.247576 L 788.4156,105.40875 L 772.28785,95.247576 z M 563.67815,95.269211 L 563.67815,123.19784 L 787.94449,123.19784 L 787.94449,105.46149 L 771.8076,105.33502 L 771.85246,95.39548 L 563.67815,95.269211 z "
+         style="fill:none;fill-opacity:1;fill-rule:nonzero;stroke:#000000;stroke-width:2;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1" />
+      <flowRoot
+         transform="translate(-6.4285714,0)"
+         style="font-size:12px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;writing-mode:lr-tb;text-anchor:start;font-family:Bitstream Vera Sans"
+         id="flowRoot4395"
+         xml:space="preserve"><flowRegion
+           id="flowRegion4397"><rect
+             style="font-size:12px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;writing-mode:lr-tb;text-anchor:start;font-family:Bitstream Vera Sans"
+             y="100.79848"
+             x="576.79712"
+             height="16.162439"
+             width="207.08127"
+             id="rect4399" /></flowRegion><flowPara
+           id="flowPara4407">&lt;pseudo&gt; = [a-zA-Z0-9-[]\`^{}]</flowPara></flowRoot>    </g>
+    <path
+       style="fill:#ffffff;fill-opacity:1;fill-rule:nonzero;stroke:#000000;stroke-width:2;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dashoffset:0;stroke-opacity:1"
+       d="M 67.373161,119.37276 L 83.485859,119.37276 L 83.485859,156.3259 L 67.373161,156.3259 L 67.373161,119.37276 z "
+       id="rect17039"
+       sodipodi:nodetypes="ccccc" />
+    <path
+       style="fill:#ffffff;fill-opacity:1;fill-rule:nonzero;stroke:#000000;stroke-width:2;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dashoffset:0;stroke-opacity:1"
+       d="M 494.08651,119.37276 L 510.19921,119.37276 L 510.19921,158.34619 L 494.08651,158.34619 L 494.08651,119.37276 z "
+       id="path5386"
+       sodipodi:nodetypes="ccccc" />
+    <path
+       id="path6363"
+       d="M 340.42141,127.29945 L 394.96965,221.77978"
+       style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:8, 8;stroke-dashoffset:0;stroke-opacity:1"
+       sodipodi:nodetypes="cc" />
+    <path
+       style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;marker-start:none;marker-mid:none;marker-end:url(#Arrow2Mend);stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+       d="M 75.431185,342.54351 L 491.26717,342.54351"
+       id="path6367"
+       sodipodi:nodetypes="cc" />
+    <g
+       id="g6369"
+       transform="translate(-0.2147553,204.41371)">
+      <path
+         id="path6371"
+         d="M 75.42951,102.21248 L 75.42951,234.86553"
+         style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:8, 8;stroke-dashoffset:0;stroke-opacity:1"
+         sodipodi:nodetypes="cc" />
+      <g
+         transform="translate(0,-6.5052663)"
+         id="g6373">
+        <path
+           id="path6375"
+           style="fill:none;fill-opacity:1;fill-rule:nonzero;stroke:#000000;stroke-width:2;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+           d="M 19.113521,77.748334 L 131.7455,77.748334 L 131.7455,108.55799 L 19.113521,108.55799 L 19.113521,77.748334 z "
+           sodipodi:nodetypes="ccccc" />
+        <flowRoot
+           xml:space="preserve"
+           id="flowRoot6377"
+           transform="translate(11.24201,1.2908049)"><flowRegion
+             id="flowRegion6379"><rect
+               id="rect6381"
+               width="89.90358"
+               height="16.920055"
+               x="30.052038"
+               y="84.383507" /></flowRegion><flowPara
+             id="flowPara6383"
+             style="font-size:12px;font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;text-align:start;line-height:125%;writing-mode:lr-tb;text-anchor:start;font-family:Bitstream Vera Sans">cli : Client</flowPara></flowRoot>      </g>
+    </g>
+    <g
+       id="g6385"
+       transform="translate(-0.2147553,204.41371)">
+      <g
+         transform="translate(77.142857,-4.2857143)"
+         id="g6387">
+        <path
+           id="path6389"
+           style="fill:none;fill-opacity:1;fill-rule:nonzero;stroke:#000000;stroke-width:2;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+           d="M 368.68401,75.528782 L 481.31599,75.528782 L 481.31599,106.33844 L 368.68401,106.33844 L 368.68401,75.528782 z "
+           sodipodi:nodetypes="ccccc" />
+        <flowRoot
+           xml:space="preserve"
+           id="flowRoot6391"
+           transform="translate(346.97852,-1.0342149)"><flowRegion
+             id="flowRegion6393"><rect
+               id="rect6395"
+               width="115.61787"
+               height="19.062912"
+               x="30.052038"
+               y="84.383507" /></flowRegion><flowPara
+             id="flowPara6397"
+             style="font-size:12px;font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;text-align:start;line-height:125%;writing-mode:lr-tb;text-anchor:start;font-family:Bitstream Vera Sans">serv : Serveur</flowPara></flowRoot>      </g>
+      <path
+         id="path6399"
+         d="M 502.14286,102.70025 L 502.14286,245.36817"
+         style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:8, 8;stroke-dashoffset:0;stroke-opacity:1"
+         sodipodi:nodetypes="cc" />
+    </g>
+    <text
+       xml:space="preserve"
+       style="font-size:12px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+       x="230.60422"
+       y="334.50662"
+       id="text6401"><tspan
+         sodipodi:role="line"
+         id="tspan6403"
+         x="230.60422"
+         y="334.50662">NICK NiCoOLaS25</tspan></text>
+    <path
+       style="fill:#ffffff;fill-opacity:1;fill-rule:nonzero;stroke:#000000;stroke-width:2;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dashoffset:0;stroke-opacity:1"
+       d="M 67.158406,323.78647 L 83.271104,323.78647 L 83.271104,360.73961 L 67.158406,360.73961 L 67.158406,323.78647 z "
+       id="path6405"
+       sodipodi:nodetypes="ccccc" />
+    <path
+       style="fill:#ffffff;fill-opacity:1;fill-rule:nonzero;stroke:#000000;stroke-width:2;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dashoffset:0;stroke-opacity:1"
+       d="M 493.87176,323.78647 L 509.98446,323.78647 L 509.98446,362.7599 L 493.87176,362.7599 L 493.87176,323.78647 z "
+       id="path6407"
+       sodipodi:nodetypes="ccccc" />
+    <g
+       id="g6409"
+       transform="translate(-414.6183,313.13947)">
+      <g
+         id="g6421"
+         transform="translate(377.14286,-91.428572)">
+        <path
+           style="fill:none;fill-opacity:1;fill-rule:nonzero;stroke:#000000;stroke-width:2;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+           d="M 683.00214,95.247576 L 699.12989,105.40875 L 683.00214,95.247576 z M 563.67815,95.269211 L 563.67815,145.3407 L 698.65878,145.3407 L 698.65878,105.46149 L 682.52189,105.33502 L 682.56675,95.39548 L 563.67815,95.269211 z "
+           id="path6411"
+           sodipodi:nodetypes="cccccccccc" />
+        <flowRoot
+           xml:space="preserve"
+           id="flowRoot6413"
+           style="font-size:12px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:center;line-height:100%;writing-mode:lr-tb;text-anchor:middle;font-family:Bitstream Vera Sans"
+           transform="translate(-16.111678,1.8469903)"><flowRegion
+             id="flowRegion6415"><rect
+               id="rect6417"
+               width="127.79556"
+               height="38.305298"
+               x="576.79712"
+               y="100.79848"
+               style="font-size:12px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:center;line-height:100%;writing-mode:lr-tb;text-anchor:middle;font-family:Bitstream Vera Sans" /></flowRegion><flowPara
+             id="flowPara6419">Le client cli defini son pseudo à NiCoOLaS25</flowPara></flowRoot>      </g>
+    </g>
+    <path
+       style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;marker-start:none;marker-mid:none;marker-end:url(#Arrow2Mend);stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+       d="M 75.431185,402.34679 L 491.26717,402.34679"
+       id="path6428"
+       sodipodi:nodetypes="cc" />
+    <text
+       xml:space="preserve"
+       style="font-size:12px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+       x="208.83957"
+       y="394.30991"
+       id="text6430"><tspan
+         sodipodi:role="line"
+         id="tspan6432"
+         x="208.83957"
+         y="394.30991">:NiCoOLaS25 NICK pouet</tspan></text>
+    <path
+       style="fill:#ffffff;fill-opacity:1;fill-rule:nonzero;stroke:#000000;stroke-width:2;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dashoffset:0;stroke-opacity:1"
+       d="M 67.158406,383.58975 L 83.271104,383.58975 L 83.271104,420.54289 L 67.158406,420.54289 L 67.158406,383.58975 z "
+       id="path6434"
+       sodipodi:nodetypes="ccccc" />
+    <path
+       style="fill:#ffffff;fill-opacity:1;fill-rule:nonzero;stroke:#000000;stroke-width:2;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dashoffset:0;stroke-opacity:1"
+       d="M 493.87176,383.58975 L 509.98446,383.58975 L 509.98446,422.56318 L 493.87176,422.56318 L 493.87176,383.58975 z "
+       id="path6436"
+       sodipodi:nodetypes="ccccc" />
+    <g
+       id="g6450"
+       transform="translate(-415.33259,374.2109)">
+      <g
+         id="g6452"
+         transform="translate(377.85715,-92.142858)">
+        <path
+           style="fill:none;fill-opacity:1;fill-rule:nonzero;stroke:#000000;stroke-width:2;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+           d="M 683.00214,95.247576 L 699.12989,105.40875 L 683.00214,95.247576 z M 563.67815,95.269211 L 563.67815,145.3407 L 698.65878,145.3407 L 698.65878,105.46149 L 682.52189,105.33502 L 682.56675,95.39548 L 563.67815,95.269211 z "
+           id="path6454"
+           sodipodi:nodetypes="cccccccccc" />
+        <flowRoot
+           xml:space="preserve"
+           id="flowRoot6456"
+           style="font-size:12px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:center;line-height:100%;writing-mode:lr-tb;text-anchor:middle;font-family:Bitstream Vera Sans"
+           transform="translate(-10.050763,0.8368377)"><flowRegion
+             id="flowRegion6458"><rect
+               id="rect6460"
+               width="127.79556"
+               height="38.305298"
+               x="576.79712"
+               y="100.79848"
+               style="font-size:12px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:center;line-height:100%;writing-mode:lr-tb;text-anchor:middle;font-family:Bitstream Vera Sans" /></flowRegion><flowPara
+             id="flowPara6462">Le client cli se renomme de NiCoOLaS25 à poeut</flowPara></flowRoot>      </g>
+    </g>
+    <path
+       style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;marker-start:none;marker-mid:none;marker-end:url(#Arrow2Mend);stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+       d="M 211.14547,591.00911 L 647.69574,591.00911"
+       id="path6464"
+       sodipodi:nodetypes="cc" />
+    <g
+       id="g6466"
+       transform="translate(135.49953,452.87931)">
+      <path
+         id="path6468"
+         d="M 75.42951,102.21248 L 75.42951,319.15124"
+         style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:8, 8;stroke-dashoffset:0;stroke-opacity:1"
+         sodipodi:nodetypes="cc" />
+      <g
+         transform="translate(0,-6.5052663)"
+         id="g6470">
+        <path
+           id="path6472"
+           style="fill:none;fill-opacity:1;fill-rule:nonzero;stroke:#000000;stroke-width:2;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+           d="M 19.113521,77.748334 L 131.7455,77.748334 L 131.7455,108.55799 L 19.113521,108.55799 L 19.113521,77.748334 z "
+           sodipodi:nodetypes="ccccc" />
+        <flowRoot
+           xml:space="preserve"
+           id="flowRoot6474"
+           transform="translate(7.0701355,1.2908049)"><flowRegion
+             id="flowRegion6476"><rect
+               id="rect6478"
+               width="89.90358"
+               height="16.920055"
+               x="30.052038"
+               y="84.383507" /></flowRegion><flowPara
+             id="flowPara6480"
+             style="font-size:12px;font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;text-align:start;line-height:125%;writing-mode:lr-tb;text-anchor:start;font-family:Bitstream Vera Sans">cli1 : Client</flowPara></flowRoot>      </g>
+    </g>
+    <text
+       xml:space="preserve"
+       style="font-size:12px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+       x="381.07352"
+       y="582.97223"
+       id="text6482"><tspan
+         sodipodi:role="line"
+         id="tspan6484"
+         x="381.07352"
+         y="582.97223">NICK NiCoOLaS25</tspan></text>
+    <g
+       id="g6538"
+       transform="translate(-1.1437954,452.87931)">
+      <path
+         id="path6540"
+         d="M 75.42951,102.21248 L 75.42951,317.00839"
+         style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:8, 8;stroke-dashoffset:0;stroke-opacity:1"
+         sodipodi:nodetypes="cc" />
+      <g
+         transform="translate(0,-6.5052663)"
+         id="g6542">
+        <path
+           id="path6544"
+           style="fill:none;fill-opacity:1;fill-rule:nonzero;stroke:#000000;stroke-width:2;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+           d="M 19.113521,77.748334 L 131.7455,77.748334 L 131.7455,108.55799 L 19.113521,108.55799 L 19.113521,77.748334 z "
+           sodipodi:nodetypes="ccccc" />
+        <flowRoot
+           xml:space="preserve"
+           id="flowRoot6546"
+           transform="translate(7.0701355,1.2908049)"><flowRegion
+             id="flowRegion6548"><rect
+               id="rect6550"
+               width="89.90358"
+               height="16.920055"
+               x="30.052038"
+               y="84.383507" /></flowRegion><flowPara
+             id="flowPara6552"
+             style="font-size:12px;font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;text-align:start;line-height:125%;writing-mode:lr-tb;text-anchor:start;font-family:Bitstream Vera Sans">cli2 : Client</flowPara></flowRoot>      </g>
+    </g>
+    <path
+       style="fill:#ffffff;fill-opacity:1;fill-rule:nonzero;stroke:#000000;stroke-width:2;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dashoffset:0;stroke-opacity:1"
+       d="M 202.87269,572.25207 L 218.98539,572.25207 L 218.98539,609.20521 L 202.87269,609.20521 L 202.87269,572.25207 z "
+       id="path6486"
+       sodipodi:nodetypes="ccccc" />
+    <path
+       style="fill:#ffffff;fill-opacity:1;fill-rule:nonzero;stroke:#000000;stroke-width:2;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dashoffset:0;stroke-opacity:1"
+       d="M 650.30033,572.25207 L 666.41303,572.25207 L 666.41303,611.2255 L 650.30033,611.2255 L 650.30033,572.25207 z "
+       id="path6488"
+       sodipodi:nodetypes="ccccc" />
+    <path
+       style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;marker-start:none;marker-mid:none;marker-end:url(#Arrow2Mend);stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+       d="M 74.002613,650.81239 L 647.69574,650.81239"
+       id="path6490"
+       sodipodi:nodetypes="cc" />
+    <text
+       xml:space="preserve"
+       style="font-size:12px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+       x="353.63113"
+       y="642.77551"
+       id="text6492"><tspan
+         sodipodi:role="line"
+         id="tspan6494"
+         x="353.63113"
+         y="642.77551">:cli2Nick NICK NiCoOLaS25</tspan></text>
+    <path
+       style="fill:#ffffff;fill-opacity:1;fill-rule:nonzero;stroke:#000000;stroke-width:2;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dashoffset:0;stroke-opacity:1"
+       d="M 65.729838,635.62678 L 81.842528,635.62678 L 81.842528,715.43706 L 65.729838,715.43706 L 65.729838,635.62678 z "
+       id="path6496"
+       sodipodi:nodetypes="ccccc" />
+    <path
+       style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;marker-start:none;marker-mid:none;marker-end:url(#Arrow2Mend);stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+       d="M 649.45665,704.21405 L 84.334953,704.21405"
+       id="path6570"
+       sodipodi:nodetypes="cc" />
+    <path
+       style="fill:#ffffff;fill-opacity:1;fill-rule:nonzero;stroke:#000000;stroke-width:2;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dashoffset:0;stroke-opacity:1"
+       d="M 650.30033,632.05535 L 666.41303,632.05535 L 666.41303,715.31449 L 650.30033,715.31449 L 650.30033,632.05535 z "
+       id="path6498"
+       sodipodi:nodetypes="ccccc" />
+    <rect
+       style="opacity:1;fill:#ffffff;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:12, 12;stroke-dashoffset:0;stroke-opacity:1"
+       id="rect6580"
+       width="14.285714"
+       height="19.285713"
+       x="203.57143"
+       y="682.36218" />
+    <text
+       xml:space="preserve"
+       style="font-size:12px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+       x="133.98158"
+       y="696.21558"
+       id="text6572"><tspan
+         sodipodi:role="line"
+         x="133.98158"
+         y="696.21558"
+         id="tspan6576">:servURL 433 ERR_NICKNAMEINUSE NiCoOLaS25 :Nickname is already in use </tspan></text>
+    <path
+       id="path7565"
+       d="M 648.49393,652.18015 L 620.25767,757.55926"
+       style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:8, 8;stroke-dashoffset:0;stroke-opacity:1"
+       sodipodi:nodetypes="cc" />
+    <g
+       id="g7575"
+       transform="translate(17.172593,1.0101525)">
+      <g
+         transform="translate(-506.88468,751.46972)"
+         id="g7551">
+        <g
+           transform="translate(377.85715,-92.142858)"
+           id="g7553">
+          <path
+             sodipodi:nodetypes="cccccccccc"
+             id="path7555"
+             d="M 730.47931,95.247576 L 746.60706,105.40875 L 730.47931,95.247576 z M 584.89135,95.269211 L 584.89135,191.80772 L 746.13595,191.80772 L 746.13595,105.46149 L 729.99906,105.33502 L 730.04392,95.39548 L 584.89135,95.269211 z "
+             style="fill:none;fill-opacity:1;fill-rule:nonzero;stroke:#000000;stroke-width:2;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1" />
+        </g>
+      </g>
+      <flowRoot
+         style="text-align:center;text-anchor:middle"
+         id="flowRoot7567"
+         xml:space="preserve"><flowRegion
+           id="flowRegion7569"><rect
+             style="text-align:center;text-anchor:middle"
+             y="757.39764"
+             x="460.62955"
+             height="89.90358"
+             width="151.52289"
+             id="rect7571" /></flowRegion><flowPara
+           id="flowPara7573">Dans ce cas ci, le renommage de cli2 provoque une erreur, deux clients ne peuvent avoir le même pseudonyme.</flowPara></flowRoot>    </g>
+  </g>
+</svg>
