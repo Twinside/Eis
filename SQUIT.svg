@@ -15,7 +15,10 @@
    inkscape:version="0.45.1"
    sodipodi:docbase="/home/nicolas/JIM doc"
    sodipodi:docname="SQUIT.svg"
-   inkscape:output_extension="org.inkscape.output.svg.inkscape">
+   inkscape:output_extension="org.inkscape.output.svg.inkscape"
+   inkscape:export-filename="/home/nicolas/JIM doc/SQUIT.png"
+   inkscape:export-xdpi="90"
+   inkscape:export-ydpi="90">
   <defs
      id="defs2280">
     <marker
@@ -37,7 +40,7 @@
      pagecolor="#ffffff"
      bordercolor="#666666"
      borderopacity="1.0"
-     inkscape:pageopacity="0.0"
+     inkscape:pageopacity="1"
      inkscape:pageshadow="2"
      inkscape:zoom="1.4"
      inkscape:cx="423.94655"
