@@ -1,5 +1,7 @@
 -module(chan_manager).
 
+-include("irc_struct.hrl").
+
 -behaviour(gen_server).
 
 % export for the gen_server
@@ -22,16 +24,20 @@ init(_Args) ->
 %
 % Different call used by the load balancer.
 %
-handle_call( {addressource, ChanName}, _From, State ) ->
-	undefined;
-handle_call( {killressource, ChanName}, _From, State ) ->
-	undefined;
-handle_call( takeany, From, State ) ->
-	undefined;
-	
-handle_call(_Request,_From, State) ->
-	{noreply, State}.
+handle_call( {addressource, Chan}, _From, ChanList ) ->
+	ets:insert( ChanList, {Chan#chan.channame, Chan} ),
+	{noreply, ChanList};
 
+handle_call( {killressource, Chan}, _From, ChanList ) ->
+	ets:delete( ChanList, Chan#chan.channame ),
+	{noreply, ChanList};
+	
+handle_call( takeany, _From, ChanList ) ->
+	Key = ets:first( ChanList ),
+	[Chan] = ets:lookup( ChanList, Key ),
+	ets:delete(ChanList, Key),
+	{reply, {takeany, Chan}, ChanList}.
+	
 handle_cast(_Request,_State) ->
 	undefined.
 

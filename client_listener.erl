@@ -12,37 +12,50 @@
 		terminate/2,
 		code_change/3]).
 
+% other export
+-export( [broadcaster/2] ).
 %-vsn(prealpha)
 
 
 %%
 % gen_server implementation
 %%
-init(_Args) ->
-	{ok, ets:new()}.
+init( Supervisor ) ->
+	{ok, {Supervisor, ets:new()} }.
 
 %
 % Different call used by the load balancer.
 %
-handle_call( {addressource, Client}, _From, State ) ->
-	ets:insert( State, {Client#client.nick, Client} ),
-	{noreply, State};
+handle_call( {addressource, Client}, _From, {Super, UserList} ) ->
+	ets:insert( UserList, {Client#client.nick, Client} ),
+	{noreply, {Super, UserList}};
 	
-handle_call( {killressource, Client}, _From, State ) ->
-	ets:delete( State, Client#client.nick),
-	{noreply, State};
+handle_call( {killressource, Client}, _From, {Super, UserList} ) ->
+	ets:delete( UserList, Client#client.nick),
+	{noreply, {Super, UserList}};
 	
-handle_call( takeany, From, State ) ->
-	Key = ets:first( State ),
-	[Cli] = ets:lookup( State, Key ),
-	ets:delete(State, Key),
-	{reply, {takeany, Cli}, State}.
+handle_call( takeany, _From, {Super, UserList} ) ->
+	Key = ets:first( UserList ),
+	[Cli] = ets:lookup( UserList, Key ),
+	ets:delete(UserList, Key),
+	{reply, {takeany, Cli}, {Super, UserList}}.
 
-handle_cast(_Request,_State) ->
-	undefined.
+% for casting irc messages
+broadcaster( User, StrMsg ) ->
+	(User#client.send)( User, StrMsg ),
+	StrMsg.
+	
+handle_cast( Msg, {Super,UserTable} ) when is_record(Msg, msg) ->
+	StrMsg = irc:string_of_msg( Msg ),
+	ets:foldl(broadcaster, StrMsg, UserTable),
+	{noreply, {Super,UserTable}};
 
-handle_info(_Info,_State) ->
-	undefined.
+handle_cast( _Request, State ) -> % ignore invalid cast
+	{noreply, State}.
+	
+handle_info({tcp, _Socket, Data}, State) ->
+	msg = irc:msg_of_string( Data ),
+	{noreply, State}.
 
 terminate(_Reason,_State) ->
 	undefined.
