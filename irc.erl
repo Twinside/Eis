@@ -1,18 +1,10 @@
 -module(irc).
 
--record(msg,
-		{
-			sender,		%% as a tuple : { nick, server, host } | server
-			dest,		%% as string
-			ircCommand,	%% as atom or int
-			params,		%% as list of string
-			data		%% as string
-		}).
+-include("irc_struct.hrl").
 
 -export([
 			msg_of_string/1,    %% Convert a string to an irc message
-			string_of_msg/1,    %% Convert an irc message to a string
-			string_of_numeric/2 %% conert a numerical irc message to string
+			string_of_msg/1    %% Convert an irc message to a string
 		]).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -80,9 +72,30 @@ sender_parser( Msg ) ->
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% -> string
-string_of_numeric( _Numeric, _Message ) ->
-	error.
+string_assembler( Sender, Dest, IrcCommand, Params, Data ) ->
+	SendedCommand = if is_atom(IrcCommand) -> atom_to_list(IrcCommand);
+						true -> integer_to_list(IrcCommand)
+					end,
+	Prelude = if Sender == "" -> "";
+				true -> lists:concat([":", Sender, " "])
+			end,
+	lists:concat( [Prelude, SendedCommand, " ", Dest, " ", lists:append(Params), ":", Data] ).
 
-string_of_msg( _Message ) ->
-	error.
+
+string_of_msg( Msg ) ->
+	case Msg of
+		#msg {sender={Nick,Username,Host},
+				dest=Dest,
+				ircCommand=IrcCommand,
+				params=Params,
+				data=Data } ->
+			string_assembler(lists:concat([Nick, "!", Username, "@", Host ]),
+											Dest, IrcCommand, Params, Data);
+		#msg { sender=Server,
+				dest=Dest,
+				ircCommand=IrcCommand,
+				params=Params,
+				data=Data } ->
+			string_assembler( Server, Dest, IrcCommand, Params, Data )
+	end.
 
