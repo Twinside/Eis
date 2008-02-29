@@ -1,9 +1,10 @@
 ECC=erlc
 OUTPUT=all
-OBJ= chan_manager.beam \
-		client_listener.beam \
+OBJ= irc_log.beam \
 		irc.beam \
 		load_balancer.beam \
+		client_listener.beam \
+		chan_manager.beam \
 
 $(OUTPUT): $(OBJ)
 
@@ -12,4 +13,7 @@ $(OUTPUT): $(OBJ)
 
 clean:
 	rm -f *.beam
+
+start:
+
 
