@@ -10,14 +10,14 @@
 init( _Function ) ->
 	ok.
 
-logmsg( ?LogVerbose, _Txt ) ->
-	ok;
-logmsg( ?LogInfo, _Txt ) ->
-	ok;
-logmsg( ?LogEvent, _Txt ) ->
-	ok;
-logmsg( ?LogError, _Txt ) ->
-	ok;
-logmsg( ?LogFatal, _Txt ) ->
-	ok.
+logmsg( ?LogVerbose, Txt ) ->
+	io:format(": " ++ Txt);
+logmsg( ?LogInfo, Txt ) ->
+	io:format("? " ++ Txt);
+logmsg( ?LogEvent, Txt ) ->
+	io:format("-> " ++ Txt);
+logmsg( ?LogError, Txt ) ->
+	io:format("* " ++ Txt);
+logmsg( ?LogFatal, Txt ) ->
+	io:format("! " ++ Txt).
 
