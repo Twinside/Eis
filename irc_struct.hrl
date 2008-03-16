@@ -21,6 +21,20 @@
 -define(IrcModeLocal , 2048).	% +n mode in
 -define(IrcModeModerated, 4096).% +m
 
+% Defining IRC error codes for use when
+% replying with a numerical code :)
+-define( ERR_NEEDMOREPARAMS, 461 ).
+-define( ERR_ALREADYREGISTERED, 462 ).
+
+-define( RPL_WELCOME, 001 ).
+-define( RPL_YOURHOST, 002 ).
+-define( RPL_CREATED, 003 ).
+-define( RPL_MYINFO, 004 ).
+-define( RPL_BOUNCE, 005 ).
+
+-define( RPL_MOTDSTART, 375 ).
+-define( RPL_MOTD, 372 ).
+-define( RPL_ENDOFMOTD, 476 ).
 
 -record(chan,
 		{

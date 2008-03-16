@@ -7,6 +7,7 @@ OBJ= irc_log.beam \
 		load_balancer.beam \
 		client_listener.beam \
 		chan_manager.beam \
+		ident_checker.beam
 
 $(OUTPUT): $(OBJ)
 
