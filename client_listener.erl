@@ -6,6 +6,7 @@
 
 % export for the gen_server
 -export([init/1,
+		start_link/1,
 		handle_call/3,
 		handle_cast/2,
 		handle_info/2,
@@ -17,11 +18,15 @@
 
 -vsn( p01 ).
 
+start_link( Balancer ) ->
+	gen_server:start_link( ?MODULE, [Balancer], []).
+
 
 %%
 % gen_server implementation
 %%
-init( Supervisor ) ->
+init( [Supervisor] ) ->
+	irc_log:logVerbose( "Created new child listener" ),
 	{ok, {Supervisor, ets:new()} }.
 
 handle_call( _What, _From, _State ) ->

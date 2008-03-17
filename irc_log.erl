@@ -23,8 +23,13 @@ basic_init() ->
 			[] ).
 
 init( Function, FuncArg ) ->
-	Pid = spawn( ?MODULE, logthread, [Function, FuncArg] ),
-	register( irc_serv_logger, Pid ),
+	LogStatus = whereis( irc_serv_logger ),
+	if 
+		LogStatus == undefined ->
+			Pid = spawn( ?MODULE, logthread, [Function, FuncArg] ),
+			register( irc_serv_logger, Pid );
+		true -> ok
+	end,
 	ok.
 
 logVerbose( Txt ) ->
@@ -82,5 +87,5 @@ logthread( Func, Args ) ->
 		{?LogEvent, What} -> Func( Args, prepare(What) );
 		{?LogError, What} -> Func( Args, prepare(What) )
 	end,
-	logthread( Func, Args ).
+	irc_log:logthread( Func, Args ).
 

@@ -9,16 +9,19 @@
 
 
 -export([
-			start_link/2,		% to launch a blancer.
+			start_link/3,		% to launch a blancer.
 			add_ressource/2,	% helper to add a ressource
 			kill_ressource/2,	% helper to add a ressource.
 			balancer/2
 		]).
 
+-export([
+			bootstrap_balancer/0
+		]).
 
 -record( bconf,
 		{
-			maxcli,	% maximum of client per process
+			maxress,	% maximum of client per process
 			spec,	% general process specification
 			curr	% current process count.
 		}).
@@ -39,19 +42,22 @@
 %% MaxClient : Number of ressource maximum
 %% per thread.
 %%
-start_link(Module, MaxClient) ->
-	InitialProcess = {0, {gen_server, start_link,[Module, [], [] ]},
-						transient, brutal_kill, worker, [gen_server]},
-	{error, Error} = supervisor:check_childspecs( [InitialProcess] ),
-	io:format( "Error childspec : ~s", Error),
-	case supervisor:start_link(?MODULE, InitialProcess ) of
-		{ok, Pid} -> Conf = #bconf {maxcli= MaxClient,
-									spec=InitialProcess,
-									curr=1}, 
-					{ok, spawn(?MODULE, balancer, [Pid, {Conf, [InitialProcess]} ])};
+start_link(Module, Function, MaxRessource) ->
+	Balance = spawn(?MODULE, bootstrap_balancer,[]),
+	InitialProcess = {Module,
+						{Module, Function, [Balance]},
+						permanent, 1000, worker, [Module]},
+	ok = supervisor:check_childspecs( [InitialProcess] ),
+	Conf = #bconf{ maxress= MaxRessource,
+				   spec=InitialProcess,
+				   curr=1 },
 
-		{error, _} -> irc_log:logmsg(?LogFatal,"Cannot start LoadBlancer"),
-						{error, "Fatal"}
+	case supervisor:start_link(?MODULE, [InitialProcess] ) of
+		{ok, Pid} -> Balance!{notifysupervisor, Pid, {Conf, [InitialProcess]}},
+					 {ok, Balance};
+
+		{error, _} -> irc_log:logFatal("Cannot start LoadBlancer"),
+					  {error, "Fatal"}
 	end.
 
 %%
@@ -62,13 +68,6 @@ add_ressource( BalancerPid, Rsrc ) ->
 
 kill_ressource( BalancerPid, Rsrc ) ->
 	BalancerPid!{killressource, Rsrc}.
-	
-% return the smallest process in term of managedcount for the
-smallest_process( Proc, Min ) ->
-	PMin = Proc#pinfo.count,
-	if Min < PMin -> Min;
-			true -> PMin
-	end.
 
 %
 % Update the balanced process list to
@@ -90,8 +89,13 @@ update_process( Count, [First | Next], New ) ->
 % ChildList : list of balanced process
 % New : ressource to add.
 ressource_adding( SuperPid, Conf, ChildList, New ) ->
-	MinRes = lists:foldl( smallest_process, ChildList, 999999 ),
-	if MinRes >= Conf#bconf.maxcli ->	% all our threads are full, launch a new one.
+	SmallestProc = (fun(Proc,Min) -> PMin = Proc#pinfo.count,
+									 if Min < PMin -> Min;
+										 true -> PMin end end),
+
+	MinRes = lists:foldl( SmallestProc, ChildList, 999999 ),
+	
+	if MinRes >= Conf#bconf.maxress ->	% all our threads are full, launch a new one.
 			Spec = setelement(1, Conf#bconf.spec, Conf#bconf.curr),
 			{ok, Pid} = supervisor:start_child(SuperPid, Spec),
 			gen_server:cast(Pid, {addressource, New}),
@@ -99,6 +103,7 @@ ressource_adding( SuperPid, Conf, ChildList, New ) ->
 			NewConf = setelement(3, Conf, Conf#bconf.curr + 1),
 			[First | Next] = ChildList,			% used to recombine the new list.
 			{NewConf, [NewProcess,First|Next]};
+			
 		true -> {Conf, update_process( MinRes, ChildList, New )}
 	end.
 
@@ -113,11 +118,15 @@ dec_count( Pid, [P | Next] ) ->
 		true -> [P | dec_count( Pid, Next )]
 	end.
 
-% helper function used to send a message
-% to all the managed process 
-broadcast( Proc, What ) ->
-	gen_server:cast(Proc#pinfo.proc, What),
-	What.
+bootstrap_balancer() ->
+	receive
+		{notifysupervisor, Pid, State} ->
+			irc_log:logVerbose( "Balance bootstraped" ),
+			 balancer( Pid, State ); 
+		_ -> irc_log:logFatal( "Wrong bootstraping of load balancer, halting"),
+			halt()
+	end.
+
 %
 % Thread keeping state of the process
 % and there states.
@@ -126,22 +135,27 @@ broadcast( Proc, What ) ->
 balancer( SuperPid, {Conf, ChildList} ) ->
 	receive
 		{addressource, Rsc} ->
-			balancer( SuperPid, ressource_adding(SuperPid, Conf, ChildList, Rsc ));
+			load_balancer:balancer( SuperPid, ressource_adding(SuperPid, Conf, ChildList, Rsc ));
 
 		{killressource, Rsc} ->
-			_ = lists:foldl( broadcast, {killressource, Rsc}, ChildList ),
-			balancer( SuperPid, {Conf, ChildList});
+			_ = lists:foldl( (fun(Proc,What) -> gen_server:cast(Proc#pinfo.proc, What), What end),
+							{killressource, Rsc}, ChildList ),
+			load_balancer:balancer( SuperPid, {Conf, ChildList});
 		
-		{killedaressource, Pid} -> {Conf, dec_count(Pid, ChildList)};
+		{killedaressource, Pid} ->
+			load_balancer:balancer( SuperPid, {Conf, dec_count(Pid, ChildList)} );
+
 		_ -> error
 	end.
 
 
 % used by the supervisor behaviour.
 init( IniChild ) ->
+	io:format( "~p~n", IniChild ),
+	irc_log:logVerbose("cacaca"),
 	{ok,
 		{						% restart a process for each dead, and stop
 			{one_for_one, 1,60},% if more than 1 process stop in 60 seconds.
-			IniChild
+			[IniChild]
 		}}.
 

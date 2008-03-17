@@ -1,6 +1,7 @@
 ECC=erlc
 OUTPUT=all
-OBJ= irc_log.beam \
+OBJ= conf_loader.beam \
+		irc_log.beam \
 		irc.beam \
 		doorman.beam \
 		server_node.beam \
