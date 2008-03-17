@@ -30,6 +30,7 @@
 			spec	% as childspec (supervisor)
 		}).
 
+-vsn( p01 ).
 
 %%
 %% Call to start the balancer.

@@ -7,6 +7,8 @@
 			logmsg/2
 		]).
 
+-vsn( p01 ).
+
 init( _Function ) ->
 	ok.
 

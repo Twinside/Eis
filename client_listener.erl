@@ -14,7 +14,8 @@
 
 % other export
 -export( [broadcaster/2] ).
-%-vsn(prealpha)
+
+-vsn( p01 ).
 
 
 %%

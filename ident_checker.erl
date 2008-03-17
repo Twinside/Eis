@@ -4,6 +4,8 @@
 
 -export( [check_ident/2] ).
 
+-vsn( p01 ).
+
 request_of_socket( Sock, Timeout ) ->
 	{ ForeignAdress, ForeignPort } = inet:peername( Sock ),
 	{ ok, LocalPort } = inet:port( Sock ),

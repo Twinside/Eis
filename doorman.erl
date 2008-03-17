@@ -5,6 +5,8 @@
 
 -define( BOUNCER_FUNC, authentificationProcess).
 
+-vsn( p01 ).
+
 door_loop( CliBalance, LSocket ) ->
 	case gen_tcp:accept( LSocket ) of
 		{ok, CliSock} -> spawn(?MODULE, ?BOUNCER_FUNC, [CliBalance, CliSock] ),
