@@ -44,15 +44,14 @@
 %%
 start_link(Module, Function, MaxRessource) ->
 	Balance = spawn(?MODULE, bootstrap_balancer,[]),
-	InitialProcess = {Module,
+	InitialProcess = {0,
 						{Module, Function, [Balance]},
 						permanent, 1000, worker, [Module]},
-	ok = supervisor:check_childspecs( [InitialProcess] ),
 	Conf = #bconf{ maxress= MaxRessource,
 				   spec=InitialProcess,
 				   curr=1 },
 
-	case supervisor:start_link(?MODULE, [InitialProcess] ) of
+	case supervisor:start_link(?MODULE, InitialProcess ) of
 		{ok, Pid} -> Balance!{notifysupervisor, Pid, {Conf, [InitialProcess]}},
 					 {ok, Balance};
 
@@ -151,11 +150,10 @@ balancer( SuperPid, {Conf, ChildList} ) ->
 
 % used by the supervisor behaviour.
 init( IniChild ) ->
-	io:format( "~p~n", IniChild ),
-	irc_log:logVerbose("cacaca"),
+	ok = supervisor:check_childspecs( [IniChild] ),
 	{ok,
 		{						% restart a process for each dead, and stop
-			{one_for_one, 1,60},% if more than 1 process stop in 60 seconds.
+			{one_for_one, 1000,3600},% if more than 1 process stop in 60 seconds.
 			[IniChild]
 		}}.
 

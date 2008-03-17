@@ -19,14 +19,13 @@
 -vsn( p01 ).
 
 start_link( Balancer ) ->
-	gen_server:start_link( ?MODULE, [Balancer], []).
+	gen_server:start_link( ?MODULE, [Balancer] ).
 
 
 %%
 % gen_server implementation
 %%
 init( [Supervisor] ) ->
-	irc_log:logVerbose( "Created new child listener" ),
 	{ok, {Supervisor, ets:new()} }.
 
 handle_call( _What, _From, _State ) ->
