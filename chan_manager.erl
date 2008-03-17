@@ -12,7 +12,7 @@
 		terminate/2,
 		code_change/3]).
 
-%-vsn(prealpha)
+-vsn( p01 ).
 
 
 %%

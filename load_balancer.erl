@@ -9,7 +9,7 @@
 
 
 -export([
-			start_link/3,		% to launch a blancer.
+			start_link/2,		% to launch a blancer.
 			add_ressource/2,	% helper to add a ressource
 			kill_ressource/2,	% helper to add a ressource.
 			balancer/2
@@ -39,10 +39,12 @@
 %% MaxClient : Number of ressource maximum
 %% per thread.
 %%
-start_link(Module, Initiator, MaxClient) ->
-	InitialProcess = {0, {Module, Initiator,[]},
+start_link(Module, MaxClient) ->
+	InitialProcess = {0, {gen_server, start_link,[Module, [], [] ]},
 						transient, brutal_kill, worker, [gen_server]},
-	case supervisor:start_link(?MODULE, {Module,Initiator} ) of
+	{error, Error} = supervisor:check_childspecs( [InitialProcess] ),
+	io:format( "Error childspec : ~s", Error),
+	case supervisor:start_link(?MODULE, InitialProcess ) of
 		{ok, Pid} -> Conf = #bconf {maxcli= MaxClient,
 									spec=InitialProcess,
 									curr=1}, 
@@ -74,7 +76,7 @@ smallest_process( Proc, Min ) ->
 %
 update_process( Count, [First | Next], New ) ->
 	if First#pinfo.count == Count ->
-			First#pinfo.proc!{addressource, New},
+			gen_server:cast(First#pinfo.proc, {addressource, New}),
 			[#pinfo{count = Count + 1,
 					proc = First#pinfo.proc,
 					spec = First#pinfo.spec} |Next];
@@ -92,7 +94,7 @@ ressource_adding( SuperPid, Conf, ChildList, New ) ->
 	if MinRes >= Conf#bconf.maxcli ->	% all our threads are full, launch a new one.
 			Spec = setelement(1, Conf#bconf.spec, Conf#bconf.curr),
 			{ok, Pid} = supervisor:start_child(SuperPid, Spec),
-			Pid!{addressource, New},
+			gen_server:cast(Pid, {addressource, New}),
 			NewProcess = #pinfo{count=1, proc=Pid, spec=Spec},
 			NewConf = setelement(3, Conf, Conf#bconf.curr + 1),
 			[First | Next] = ChildList,			% used to recombine the new list.
@@ -114,7 +116,7 @@ dec_count( Pid, [P | Next] ) ->
 % helper function used to send a message
 % to all the managed process 
 broadcast( Proc, What ) ->
-	Proc#pinfo.proc!What,
+	gen_server:cast(Proc#pinfo.proc, What),
 	What.
 %
 % Thread keeping state of the process

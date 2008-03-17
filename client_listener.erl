@@ -24,28 +24,32 @@
 init( Supervisor ) ->
 	{ok, {Supervisor, ets:new()} }.
 
-%
-% Different call used by the load balancer.
-%
-handle_call( {addressource, Client}, _From, {Super, UserList} ) ->
-	ets:insert( UserList, {Client#client.nick, Client} ),
-	{noreply, {Super, UserList}};
+handle_call( _What, _From, _State ) ->
+	undefined.
 	
-handle_call( {killressource, Client}, _From, {Super, UserList} ) ->
-	ets:delete( UserList, Client#client.nick),
-	{noreply, {Super, UserList}};
-	
-handle_call( takeany, _From, {Super, UserList} ) ->
-	Key = ets:first( UserList ),
-	[Cli] = ets:lookup( UserList, Key ),
-	ets:delete(UserList, Key),
-	{reply, {takeany, Cli}, {Super, UserList}}.
 
 % for casting irc messages
 broadcaster( User, StrMsg ) ->
 	(User#client.send)( User, StrMsg ),
 	StrMsg.
 	
+%
+% Different call used by the load balancer.
+%
+handle_cast( {addressource, Client}, {Super, UserList} ) ->
+	ets:insert( UserList, {Client#client.nick, Client} ),
+	{noreply, {Super, UserList}};
+	
+handle_cast( {killressource, Client}, {Super, UserList} ) ->
+	ets:delete( UserList, Client#client.nick),
+	{noreply, {Super, UserList}};
+	
+handle_cast( takeany, {Super, UserList} ) ->
+	Key = ets:first( UserList ),
+	[Cli] = ets:lookup( UserList, Key ),
+	ets:delete(UserList, Key),
+	{reply, {takeany, Cli}, {Super, UserList}};
+
 handle_cast( Msg, {Super,UserTable} ) when is_record(Msg, msg) ->
 	StrMsg = irc:string_of_msg( Msg ),
 	ets:foldl(broadcaster, StrMsg, UserTable),
