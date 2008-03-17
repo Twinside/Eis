@@ -56,7 +56,7 @@ awaiting_sequence( CliSock ) ->
 	    Message = irc:msg_of_string( Packet ),
 	    case Message#msg.ircCommand of
 		'PASS' ->
-		    awaiting_sequence( CliSock, lists:nth( 0, Message#msg.params ) );
+		    awaiting_sequence( CliSock, {lists:nth( 0, Message#msg.params )} );
 		_Other ->
 		    gen_tcp:send( CliSock, "NOTICE AUTH :*** Wrong sequence of commands." ),
 		    {error, "Wrong sequence of commands."}
@@ -69,7 +69,7 @@ awaiting_sequence( CliSock ) ->
 	    gen_tcp:close( CliSock )
     end.
 
-awaiting_sequence( CliSock, Pass ) ->
+awaiting_sequence( CliSock, {Pass} ) ->
     case gen_tcp:recv( CliSock, 0, 10000 ) of
 	{ok, Packet} -> 
 	    Message = irc:msg_of_string( Packet ),
@@ -93,7 +93,7 @@ awaiting_sequence( CliSock, {Pass, Nick} ) ->
 	{ok, Packet} -> 
 	    Message = irc:msg_of_string( Packet ),
 	    case Message#msg.ircCommand of
-		'NICK' ->
+		'USER' ->
 		    {Pass, Nick, lists:nth( 0, Message#msg.params ), "Toto", "RAS"};
 		_Other ->
 		    gen_tcp:send( CliSock, "NOTICE AUTH :*** Wrong sequence of commands." ),
