@@ -38,7 +38,7 @@
 %%
 %% Call to start the balancer.
 %% Module, module of code to balance
-%% Initiator : code to balance
+%% Function : code to balance
 %% MaxClient : Number of ressource maximum
 %% per thread.
 %%
@@ -117,11 +117,13 @@ dec_count( Pid, [P | Next] ) ->
 		true -> [P | dec_count( Pid, Next )]
 	end.
 
+%
+% Wait to receive the state of the balancer,
+% and then launch it.
+%
 bootstrap_balancer() ->
 	receive
-		{notifysupervisor, Pid, State} ->
-			irc_log:logVerbose( "Balance bootstraped" ),
-			 balancer( Pid, State ); 
+		{notifysupervisor, Pid, State} -> balancer( Pid, State ); 
 		_ -> irc_log:logFatal( "Wrong bootstraping of load balancer, halting"),
 			halt()
 	end.

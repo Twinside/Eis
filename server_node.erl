@@ -29,8 +29,8 @@ balanceLaunch( Module, Func, Max, LogInfo ) ->
 	
 launch() ->
 	irc_log:basic_init(),
-	% load configuration from file
 	irc_log:logInfo( "Server Initialization begin" ),
+	% load configuration from file
 	MaxCli = 10,	% load real constant from conf
 	MaxChan = 10,	% load real constant from conf
 	CliBalance = balanceLaunch( client_listener, start_link, MaxCli, "Client's"),
