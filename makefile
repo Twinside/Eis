@@ -1,22 +1,28 @@
 ECC=erlc
 OUTPUT=all
-OBJ= conf_loader.beam \
-		irc_log.beam \
-		irc.beam \
-		doorman.beam \
-		server_node.beam \
-		load_balancer.beam \
-		client_listener.beam \
-		chan_manager.beam \
-		ident_checker.beam
+
+SOLUTIONDIR=./
+
+OBJDIR:=$(SOLUTIONDIR)ebin/
+SOURCEDIR:=$(SOLUTIONDIR)src/
+
+OBJ=$(OBJDIR)conf_loader.beam \
+		$(OBJDIR)irc_log.beam \
+		$(OBJDIR)irc.beam \
+		$(OBJDIR)doorman.beam \
+		$(OBJDIR)server_node.beam \
+		$(OBJDIR)load_balancer.beam \
+		$(OBJDIR)client_listener.beam \
+		$(OBJDIR)chan_manager.beam \
+		$(OBJDIR)ident_checker.beam
 
 $(OUTPUT): $(OBJ)
 
-%.beam: %.erl
-	$(ECC) -o$@ $<
+$(OBJDIR)%.beam: $(SOURCEDIR)%.erl
+	$(ECC) -o $(OBJDIR) $<
 
 clean:
-	rm -f *.beam
+	rm -f $(OBJDIR)*.beam
 
 start:
 

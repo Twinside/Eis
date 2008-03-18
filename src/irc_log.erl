@@ -1,6 +1,10 @@
 -module (irc_log).
 
--include("log_level.hrl").
+-define( LogVerbose, 0).
+-define( LogInfo,  1 ).
+-define( LogEvent, 2 ).
+-define( LogError, 3 ).
+-define( LogFatal, 4 ).
 
 -export([
 			basic_init/0,
@@ -9,8 +13,7 @@
 			logInfo/1,
 			logEvent/1,
 			logError/1,
-			logFatal/1,
-			logmsg/2
+			logFatal/1
 		]).
 
 % export only to get correct working status.

@@ -1,7 +1,5 @@
 -module (load_balancer).
 
--include( "log_level.hrl" ).
-
 -behaviour(supervisor).
 
 % export for the behaviour.

@@ -1,7 +1,6 @@
 -module( doorman ).
 
 -include_lib("kernel/include/inet.hrl").
--include( "log_level.hrl" ).
 -include( "irc_struct.hrl" ).
 
 -define( LOOKING_HOST_MSG, ":*** Looking up your hostname..." ).
@@ -83,7 +82,7 @@ authentification_process( _ServPid, _CliBalance, CliSock ) ->
 	    			send_notice( CliSock, ?VALIDATION_MSG );
 				{error, Reason} ->
 		   			gen_tcp:close( CliSock ),
-	   				irc_log:logmsg( ?LogVerbose, "Failed to accept client " ++ Reason )
+	   				irc_log:logVerbose("Failed to accept client " ++ Reason )
 			end;
 		{error, Reason} ->
 	    	send_notice( CliSock, ?HOST_NOT_FOUND_MSG ),
