@@ -16,13 +16,13 @@
 -vsn( p01 ).
 
 start_link( Balancer ) ->
-	gen_server:start_link( ?MODULE, [], []).
+	gen_server:start_link( ?MODULE, [Balancer], []).
 
 %%
 % gen_server implementation
 %%
-init(_Args) ->
-	undefined.
+init( Balance ) ->
+	{ok, {Balance ,ets:new(chan_tab, [set])}}.
 
 handle_call( _Arg, _From, _State ) ->
 	undefined.

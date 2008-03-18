@@ -19,14 +19,14 @@
 -vsn( p01 ).
 
 start_link( Balancer ) ->
-	gen_server:start_link( ?MODULE, [Balancer] ).
+	gen_server:start_link( ?MODULE, [Balancer], [] ).
 
 
 %%
 % gen_server implementation
 %%
-init( [Supervisor] ) ->
-	{ok, {Supervisor, ets:new()} }.
+init( Supervisor ) ->
+	{ok, {Supervisor, ets:new(tabtest, [set])} }.
 
 handle_call( _What, _From, _State ) ->
 	undefined.
