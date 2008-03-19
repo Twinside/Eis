@@ -3,8 +3,10 @@ OUTPUT=all
 
 SOLUTIONDIR=./
 
+
 OBJDIR:=$(SOLUTIONDIR)ebin/
 SOURCEDIR:=$(SOLUTIONDIR)src/
+HEADERDIR:=$(SOLUTIONDIR)include/
 
 SRCEXT=.erl
 OBJEXT=.beam
@@ -23,10 +25,12 @@ modules=conf_loader \
 SRC:=$(addprefix $(SOURCEDIR),$(addsuffix $(SRCEXT), $(modules)))
 OBJ:=$(addprefix $(OBJDIR),$(addsuffix $(OBJEXT),$(modules)))
 
+EFLAGS:=-o $(OBJDIR) -I $(HEADERDIR)
+
 $(OUTPUT): $(OBJ)
 
 $(OBJDIR)%.beam: $(SOURCEDIR)%.erl
-	$(ECC) -o $(OBJDIR) $<
+	$(ECC) $(EFLAGS) $<
 
 docs: $(SRC)
 	escript doc_generator.erl $^
