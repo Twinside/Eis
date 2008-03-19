@@ -6,22 +6,31 @@ SOLUTIONDIR=./
 OBJDIR:=$(SOLUTIONDIR)ebin/
 SOURCEDIR:=$(SOLUTIONDIR)src/
 
-OBJ=$(OBJDIR)conf_loader.beam \
-		$(OBJDIR)irc_log.beam \
-		$(OBJDIR)irc.beam \
-		$(OBJDIR)doorman.beam \
-		$(OBJDIR)server_node.beam \
-		$(OBJDIR)load_balancer.beam \
-		$(OBJDIR)client_listener.beam \
-		$(OBJDIR)chan_manager.beam \
-		$(OBJDIR)ident_checker.beam \
-		$(OBJDIR)eis.beam
+SRCEXT=.erl
+OBJEXT=.beam
+
+modules=conf_loader \
+		irc_log \
+		irc \
+		doorman \
+		server_node \
+		load_balancer \
+		client_listener \
+		chan_manager \
+		ident_checker \
+		eis
+
+SRC:=$(addprefix $(SOURCEDIR),$(addsuffix $(SRCEXT), $(modules)))
+OBJ:=$(addprefix $(OBJDIR),$(addsuffix $(OBJEXT),$(modules)))
 
 $(OUTPUT): $(OBJ)
 
 $(OBJDIR)%.beam: $(SOURCEDIR)%.erl
 	$(ECC) -o $(OBJDIR) $<
 
+docs: $(SRC)
+	escript doc_generator.erl $^
+	
 clean:
 	rm -f $(OBJDIR)*.beam
 
