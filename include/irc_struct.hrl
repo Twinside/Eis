@@ -36,6 +36,17 @@
 -define( RPL_MOTD, 372 ).
 -define( RPL_ENDOFMOTD, 476 ).
 
+
+%% Defining EIS responses during
+%% connection of a client.
+-define( LOOKING_HOST_MSG, ":*** Looking up your hostname..." ).
+-define( HOST_FOUND_MSG, ":*** Found your hostname." ).
+-define( HOST_NOT_FOUND_MSG, ":*** Unable to find your hostname, closing connection." ).
+-define( BAD_SEQUENCE_MSG, ":***Bad commands sequence." ).
+-define( TIME_OUT_MSG, ":*** Time out, closing connection." ).
+-define( VALIDATION_MSG, ":*** You've been regitered !" ).
+
+
 -record(chan,
 		{
 			channame,	%% as string

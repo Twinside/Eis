@@ -4,8 +4,9 @@
 
 -export([
 			msg_of_string/1,    %% Convert a string to an irc message
-			string_of_msg/1    %% Convert an irc message to a string
-		]).
+			string_of_msg/1,    %% Convert an irc message to a string
+			send_ident_msg/2
+]).
 
 -vsn( p01 ).
 
@@ -100,4 +101,10 @@ string_of_msg( Msg ) ->
 				data=Data } ->
 			string_assembler( Server, Dest, IrcCommand, Params, Data )
 	end.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Helpers %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%% A little function to send quickly a notice during identification
+send_ident_msg( CliSock, Message ) ->
+	gen_tcp:send( CliSock, "NOTICE AUTH " ++ Message ).
 
