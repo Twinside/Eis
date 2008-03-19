@@ -14,7 +14,8 @@ OBJ=$(OBJDIR)conf_loader.beam \
 		$(OBJDIR)load_balancer.beam \
 		$(OBJDIR)client_listener.beam \
 		$(OBJDIR)chan_manager.beam \
-		$(OBJDIR)ident_checker.beam
+		$(OBJDIR)ident_checker.beam \
+		$(OBJDIR)eis.beam
 
 $(OUTPUT): $(OBJ)
 
