@@ -1,12 +1,20 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% @doc
+%% <p>
+%%		irc module is the collection of helper function related
+%%		to IRC.
+%% </p>
+%% @end
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 -module(irc).
 
 -include("irc_struct.hrl").
 
 -export([
-			msg_of_string/1,    %% Convert a string to an irc message
-			string_of_msg/1,    %% Convert an irc message to a string
+			msg_of_string/1,
+			string_of_msg/1,
 			send_ident_msg/2
-]).
+		]).
 
 -vsn( p01 ).
 
@@ -15,7 +23,15 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% -> msg
+%% @doc
+%%	Transform a text representation of IRC
+%%	(received by a socket by example), and structure
+%%	it in a msg struct.
+%% @end
+%% @spec msg_of_string( Msg ) -> Result
+%% where
+%%		Msg = string
+%%		Result = msg
 msg_of_string( [$: | RawMsg] ) -> %% match if first character is ':'
 	{IrcCommand, Data} = extract_irc_data( RawMsg ),
 	[Sender | Next] = string:tokens( IrcCommand, " " ),
@@ -84,7 +100,15 @@ string_assembler( Sender, Dest, IrcCommand, Params, Data ) ->
 			end,
 	lists:concat( [Prelude, SendedCommand, " ", Dest, " ", lists:append(Params), ":", Data] ).
 
-
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% @doc
+%%	transform a msg structure representing an IRC
+%%	message to it's string representation ready to be
+%%	send across the network.
+%% @end
+%% @spec string_of_msg( Msg ) -> Result
+%% where Msg = msg()
+%%		Result = string()
 string_of_msg( Msg ) ->
 	case Msg of
 		#msg {sender={Nick,Username,Host},
@@ -103,8 +127,9 @@ string_of_msg( Msg ) ->
 	end.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Helpers %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
+%% @doc
 %% A little function to send quickly a notice during identification
+%% @end
 send_ident_msg( CliSock, Message ) ->
 	gen_tcp:send( CliSock, "NOTICE AUTH " ++ Message ).
 
