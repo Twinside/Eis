@@ -28,7 +28,8 @@
 
 -export([
 		door_loop/3,
-		auth_process/3
+		auth_process/3,
+		start_link/3
 	]).
 
 %% Callback from gen_fsm
@@ -57,6 +58,23 @@ log_ok( Cli ) ->
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%% First part functions %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% @doc
+%% <p>The launching funtion for the doorman. She launch the main loop.</p>
+%% @end
+%%
+%% @spec start_link ( ServPid, CliBalance, LSocket ) -> Result
+%% where
+%% 		ServPid = pid()
+%% 		Result = {ok, pid()}
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+start_link( Port, ServPid, CliBalance ) ->
+	{ok, LSocket} = gen_tcp:listen(Port, [{active, false}, {packet, line}, 
+														{reuseaddr, true}]),
+	Pid = spawn(?MODULE, door_loop, [ServPid, CliBalance, LSocket]),
+	{ok, Pid}.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% @doc
@@ -89,7 +107,7 @@ door_loop( ServPid, CliBalance, LSocket ) ->
 %% @doc
 %% <p>Auth_process is in charge to identify a peer who is trying to connect. He
 %% verifies that the firsts received commands are ordered.</p><p>The process 
-%% will launch a finite state machine for constraint received commands. But 
+%% will launch a finite state machine for constraint received commands. But
 %% before he try to resolve name of peer.</p>
 %% @end
 %%
@@ -101,13 +119,13 @@ door_loop( ServPid, CliBalance, LSocket ) ->
 %% 		Result = none()
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 auth_process( ServPid, CliBal, CliSock ) ->
-	irc:send_init_msg( CliSock, ?LOOKING_HOST_MSG ),
+	irc:send_ident_msg( CliSock, ?LOOKING_HOST_MSG ),
+	inet:setopts(CliSock, [{active, false}, {packet, line}]),
 	case inet:peername( CliSock ) of
 		{ok, {Address, _}} ->
-			{hostent,_,_,_,_,Host} = inet:gethostbyaddr( Address ),
+			{ok , {hostent,Host,_,_,_,_}} = inet:gethostbyaddr( Address ),
 			irc:send_ident_msg( CliSock, ?HOST_FOUND_MSG ),
-			{ok, Pid} = gen_fsm:start_link( doorman,
-								{ServPid, CliBal, Host}, []),
+			{ok, Pid} = gen_fsm:start_link( doorman, {Host}, []),
 			auth_loop( Pid, CliSock, ServPid, CliBal ); 
 		{error, Reason} ->
 	    	irc:send_ident_msg( CliSock, ?HOST_NOT_FOUND_MSG ),
@@ -139,7 +157,7 @@ auth_process( ServPid, CliBal, CliSock ) ->
 auth_loop( FsmPid, CliSock, ServPid, CliBal ) ->
 	case gen_tcp:recv( CliSock, 0, 10000 ) of
 		{ok, Packet} ->
-			IrcMessage = irc:string_to_msg( Packet ),
+			IrcMessage = irc:msg_of_string( Packet ),
 			case gen_fsm:sync_send_event( FsmPid, IrcMessage ) of
 				continue ->
 					auth_loop( FsmPid, CliSock, ServPid, CliBal );
@@ -147,9 +165,9 @@ auth_loop( FsmPid, CliSock, ServPid, CliBal ) ->
 					gen_tcp:close( CliSock ),
 					log_error( "Bad commands sequence." ),
 					error;
-				{ok, Client} ->
+				{ok, {Client, Pass}} ->
 					log_ok( Client ),
-					%% @todo Passer le CliSock au reste du système
+					% @todo
 					ok
 			end;
 		{error, etimedout} ->
@@ -184,104 +202,82 @@ handle_sync_event( Message, _From, CurrentState, StateData ) ->
 			CurrentState( IrcMessage, StateData )
 	end.
 
-terminate( Reason, _, StateData ) ->
+terminate( Reason, _, _ ) ->
 	case Reason of
 		normal ->
-			{ServPid, CliBal, Client} = StateData,
-			%% @todo Envoyer les bons messages pour ajouter le client
 			ok;
 		error ->
 			error
 	end.
 
-q1( {msg, _, _, Command, Params, _}, {ServPid, CliBal, Host} ) ->
+q1( {msg, _, _, Command, Params, _}, {Host} ) ->
 	case Command of
 		'PASS' ->
 			Pass = lists:nth(1, Params),
-			{next_state, q2, {ServPid, CliBal, Host, Pass}};
+			{next_state, q2, {Host, Pass}};
 		'NICK' -> % Now we know the peer is a simple client
-			{next_state, q3, {ServPid, CliBal, Host, undefined}};
+			{next_state, q3, {Host, undefined}};
 		_ -> % Not a valid message to initialise a connection
 			{stop, error, undefined}
 	end.
 			
 
-q1( {msg, _, _, Command, Params, _}, _From, {ServPid, CliBal, Host} ) ->
+q1( {msg, _, _, Command, Params, _}, _From, {Host} ) ->
 	case Command of
 		'PASS' ->
 			Pass = lists:nth(1, Params),
-			{reply, continue, q2, {ServPid, CliBal, Host, Pass}};
+			{reply, continue, q2, {Host, Pass}};
 		'NICK' -> % Now we know the peer is a simple client
-			{reply, continue, q3, {ServPid, CliBal, Host, undefined}};
+			{reply, continue, q3, {Host, undefined}};
 		_ -> % Not a valid message to initialise a connection
 			{stop, error, error, undefined}
 
 	end.
 
 
-q2( {msg, _, _, Command, Params, _}, {ServPid, CliBal, Host, Pass} ) ->
+q2( {msg, _, _, Command, Params, _}, {Host, Pass} ) ->
 	case Command of
 		'PASS' ->
 			NewPass = lists:nth(1, Params),
-			{next_state, q2, {ServPid, CliBal, Host, NewPass}};
+			{next_state, q2, {Host, NewPass}};
 		'NICK' ->
 			Nick = lists:nth(1, Params),
-			PassResponse = valid,
-			%% @todo PassResponse = verifier le Pass / Nick
-			case PassResponse of
-				valid ->
-					{next_state, q3, {ServPid, CliBal, Host, Pass, Nick}}; 
-				error ->
-					{stop, error, undefined}
-			end;
+			{next_state, q3, {Host, Pass, Nick}};
 		'SERVER' ->
 			{stop, error, undefined}; % NOT SUPPORTED
 		_ -> % Not a valid message to initialise a connection
 			{stop, error, undefined}
 	end.
 
-q2( {msg, _, _, Command, Params, _}, _From, {ServPid, CliBal, Host, Pass} ) ->
+q2( {msg, _, _, Command, Params, _}, _From, {Host, Pass} ) ->
 	case Command of
 		'PASS' ->
 			NewPass = lists:nth(1, Params),
-			{reply, continue, q2, {ServPid, CliBal, Host, NewPass}};
+			{reply, continue, q2, {Host, NewPass}};
 		'NICK' ->
 			Nick = lists:nth(1, Params),
-			PassResponse = valid,
-			%% @todo PassResponse = verifier le Pass / Nick
-			case PassResponse of
-				valid ->
-					{reply, continue, q3, {ServPid, CliBal, Host, Pass, Nick}}; 
-				error ->
-					{stop, error, error, undefined}
-			end;
+			{next_state, continue, q3, {Host, Pass, Nick}};
 		'SERVER' ->
 			{stop, error, error, undefined}; % NOT SUPPORTED
 		_ -> % Not a valid message to initialise a connection
 			{stop, error, error, undefined}
 	end.
 
-q3( {msg, _, _, Command, Params, Data},{ServPid, CliBal, Host, Pass, Nick} ) ->
+q3( {msg, _, _, Command, _, _}, _ ) ->
 	case Command of
 		'USER' ->
-			Name = lists:nth(1, Params),
-			Send = undefined,
-			Client = {client, Nick, Host, Name, Send, Data},
-			%% @todo Send = qch ??
-			{stop, normal, {ServPid, CliBal, Client}};
+			{stop, normal, undefined};
 		_ -> % Not a valid message to initialise a connection
-			{stop, error, error, undefined}
+			{stop, error, undefined}
 	end.
 
-q3( {msg, _, _, Command, Params, Data}, _From,
-                                      {ServPid, CliBal, Host, Pass, Nick} ) ->
+q3( {msg, _, _, Command, Params, Data}, _From, {Host, Pass, Nick} ) ->
 	case Command of
 		'USER' ->
 			Name = lists:nth(1, Params),
 			Send = undefined,
 			Client = {client, Nick, Host, Name, Send, Data},
-			%% @todo Send = qch ??
-			{stop, normal, {ok, Client}, {ServPid, CliBal, Client}};
+			{stop, normal, {ok, {Client, Pass}}, undefined};
 		_ -> % Not a valid message to initialise a connection
 			{stop, error, error, undefined}
 	end.

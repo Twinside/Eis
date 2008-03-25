@@ -54,7 +54,7 @@ start( _StartType, _StartArgs ) ->
 	
 	MaxCli = 10,	% load real constant from conf
 	MaxChan = 10,	% load real constant from conf
-	ListeningPort = 8080,	% load real constant from conf
+	ListeningPort = 6667,	% load real constant from conf
 	
 	CliBalance = make_specbalance( 'CLIBALANCE', load_balancer, start_link,
 									[client_listener, start_link, MaxCli] ),
@@ -68,11 +68,13 @@ start( _StartType, _StartArgs ) ->
 	
 	ServerNode = make_specserv( server_node, start_link,
 								[{RootSupervisor, CliBalPid, ChanBalPid}] ),
-	{ok, _ServerPid} = supervisor:start_child( RootSupervisor, ServerNode ),
+	{ok, ServerPid} = supervisor:start_child( RootSupervisor, ServerNode ),
 	
-	DoormanNode = make_specserv( doorman, start_link, [ListeningPort] ),
+	DoormanNode = make_specserv( doorman, start_link, [ListeningPort, 
+													ServerPid, CliBalPid] ),
 	{ok, _DoormanPid} = supervisor:start_child( RootSupervisor, DoormanNode ),
-	
+	irc_log:logVerbose( "Doorman launched" ),
+
 	irc_log:logInfo( "End of server initialization" ),
 	ok.
 
