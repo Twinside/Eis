@@ -54,7 +54,8 @@ log_error( Reason ) ->
 
 %% Function to log that a client has joined the server
 log_ok( Cli ) ->
-	irc_log:logEvent( "A client has just joined : " ++ Cli#client.host ).
+	irc_log:logEvent( "A client has just joined : " ++ Cli#client.nick ++ "@" 
+														++ Cli#client.host ).
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%% First part functions %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -210,38 +211,40 @@ terminate( Reason, _, _ ) ->
 			error
 	end.
 
-q1( {msg, _, _, Command, Params, _}, {Host} ) ->
+q1( {msg, _, Dest, Command, _, _}, {Host} ) ->
 	case Command of
 		'PASS' ->
-			Pass = lists:nth(1, Params),
+			Pass = Dest,
 			{next_state, q2, {Host, Pass}};
 		'NICK' -> % Now we know the peer is a simple client
-			{next_state, q3, {Host, undefined}};
+			Nick = Dest,
+			{next_state, q3, {Host, undefined, Nick}};
 		_ -> % Not a valid message to initialise a connection
 			{stop, error, undefined}
 	end.
 			
 
-q1( {msg, _, _, Command, Params, _}, _From, {Host} ) ->
+q1( {msg, _, Dest, Command, _, _}, _From, {Host} ) ->
 	case Command of
 		'PASS' ->
-			Pass = lists:nth(1, Params),
+			Pass = Dest,
 			{reply, continue, q2, {Host, Pass}};
 		'NICK' -> % Now we know the peer is a simple client
-			{reply, continue, q3, {Host, undefined}};
+			Nick = Dest,
+			{reply, continue, q3, {Host, undefined, Nick}};
 		_ -> % Not a valid message to initialise a connection
 			{stop, error, error, undefined}
 
 	end.
 
 
-q2( {msg, _, _, Command, Params, _}, {Host, Pass} ) ->
+q2( {msg, _, Dest, Command, _, _}, {Host, Pass} ) ->
 	case Command of
 		'PASS' ->
-			NewPass = lists:nth(1, Params),
+			NewPass = Dest,
 			{next_state, q2, {Host, NewPass}};
 		'NICK' ->
-			Nick = lists:nth(1, Params),
+			Nick = Dest,
 			{next_state, q3, {Host, Pass, Nick}};
 		'SERVER' ->
 			{stop, error, undefined}; % NOT SUPPORTED
@@ -249,13 +252,13 @@ q2( {msg, _, _, Command, Params, _}, {Host, Pass} ) ->
 			{stop, error, undefined}
 	end.
 
-q2( {msg, _, _, Command, Params, _}, _From, {Host, Pass} ) ->
+q2( {msg, _, Dest, Command, _, _}, _From, {Host, Pass} ) ->
 	case Command of
 		'PASS' ->
-			NewPass = lists:nth(1, Params),
+			NewPass = Dest,
 			{reply, continue, q2, {Host, NewPass}};
 		'NICK' ->
-			Nick = lists:nth(1, Params),
+			Nick = Dest,
 			{next_state, continue, q3, {Host, Pass, Nick}};
 		'SERVER' ->
 			{stop, error, error, undefined}; % NOT SUPPORTED
@@ -271,10 +274,10 @@ q3( {msg, _, _, Command, _, _}, _ ) ->
 			{stop, error, undefined}
 	end.
 
-q3( {msg, _, _, Command, Params, Data}, _From, {Host, Pass, Nick} ) ->
+q3( {msg, _, Dest, Command, _, Data}, _From, {Host, Pass, Nick} ) ->
 	case Command of
 		'USER' ->
-			Name = lists:nth(1, Params),
+			Name = Dest,
 			Send = undefined,
 			Client = {client, Nick, Host, Name, Send, Data},
 			{stop, normal, {ok, {Client, Pass}}, undefined};

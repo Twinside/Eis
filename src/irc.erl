@@ -68,7 +68,9 @@ extract_irc_data( Str ) ->
 extract_irc_data( Remain, [$: | Data] ) ->
 	{lists:reverse(Remain), Data};
 extract_irc_data( Remain, [Car | Tail] ) ->
-	extract_irc_data( [Car | Remain], Tail ).
+	extract_irc_data( [Car | Remain], Tail );
+extract_irc_data( InvertedMsg, [] ) ->
+	{lists:reverse(InvertedMsg), ""}.
 	
 
 %% Convert an IRC command to an atom
