@@ -51,8 +51,10 @@ start( _StartType, _StartArgs ) ->
 	LogSpec = make_specserv( irc_log, basic_init, [] ),
 	{ok, RootSupervisor} = supervisor:start_link( ?MODULE, [LogSpec]),	
 	irc_log:logInfo( "Server Initialization begin" ),
+	
 	MaxCli = 10,	% load real constant from conf
 	MaxChan = 10,	% load real constant from conf
+	ListeningPort = 8080,	% load real constant from conf
 	
 	CliBalance = make_specbalance( 'CLIBALANCE', load_balancer, start_link,
 									[client_listener, start_link, MaxCli] ),
@@ -68,7 +70,7 @@ start( _StartType, _StartArgs ) ->
 								[{RootSupervisor, CliBalPid, ChanBalPid}] ),
 	{ok, _ServerPid} = supervisor:start_child( RootSupervisor, ServerNode ),
 	
-	DoormanNode = make_specserv( doorman, start_link, [] ),
+	DoormanNode = make_specserv( doorman, start_link, [ListeningPort] ),
 	{ok, _DoormanPid} = supervisor:start_child( RootSupervisor, DoormanNode ),
 	
 	irc_log:logInfo( "End of server initialization" ),
