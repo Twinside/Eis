@@ -1,3 +1,9 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% @doc
+%% <p>The server_node module is a "gen_server" which store all
+%%	all the global informations required to be known across the
+%%	server.</p>
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 -module( server_node ).
 
 -behaviour( gen_server ).
@@ -6,7 +12,9 @@
 		{
 			supervisor,
 			clibal,		% load balancer for client
-			chanbal	% load balancer for channels
+			chanbal,	% load balancer for channels
+			clients,	% global list of clients connected to this server.
+			chans		% global list of chans on the network.
 		} ).
 
 -export([
@@ -26,14 +34,31 @@
 
 -vsn( p01 ).
 
-is_client_existing( _ServerPid, _NickName ) ->
-	false.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% @doc
+%%	tell if a client is currently registered in
+%%	in the server.
+%% @end
+%% @spec is_client_existing( ServerPid, NickName ) -> bool
+%% where
+%%		ServerPid = pid()
+%%		Nickname = string()
+%%
+is_client_existing( ServerPid, NickName ) ->
+	gen_server:call( ServerPid, {client_exists, NickName} ).
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% @doc
+%%	Launch a new server.
+%% @end
+%%
 start_link({Supervisor, CliBalance, ChanBalance}) ->
 	gen_server:start_link(?MODULE,
 							[#srvs{supervisor=Supervisor,
 									clibal = CliBalance,
-									chanbal = ChanBalance }],
+									chanbal = ChanBalance,
+									clients = ets:new( global_clients, [set] ),
+									chans = ets:new( global_chans, [set] ) }],
 							[] ).
 		
 %%
@@ -43,6 +68,13 @@ init( State ) ->
 	irc_log:logVerbose( "Server node spawned" ),
 	{ok, State}.
 
+
+handle_call( {client_exists, Name}, _From, State ) ->
+	case ets:lookup( State#srvs.clients, Name ) of
+		[] -> {reply, true ,State};
+		_ -> {reply, false, State}
+	end;
+		
 handle_call( _What, _From, State ) ->
 	{noreply, State}.	
 	
