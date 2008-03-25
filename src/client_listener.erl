@@ -26,6 +26,7 @@ start_link( Balancer ) ->
 % gen_server implementation
 %%
 init( Supervisor ) ->
+	irc_log:logVerbose( "Client Listener created" ),
 	{ok, {Supervisor, ets:new(tabtest, [set])} }.
 
 handle_call( _What, _From, _State ) ->
@@ -67,6 +68,7 @@ handle_info({tcp, _Socket, Data}, State) ->
 	{noreply, State}.
 
 terminate(_Reason,_State) ->
+	irc_log:logVerbose( "Client Listener terminated" ),
 	undefined.
 
 code_change(_OldVsn,_State,_Extra) ->

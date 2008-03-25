@@ -14,29 +14,33 @@
 		]).
 
 % export for the gen_server
--export([init/1,
-		start_link/3,
-		handle_call/3,
-		handle_cast/2,
-		handle_info/2,
-		terminate/2,
-		code_change/3]).
+-export([
+			init/1,
+			start_link/1,
+			handle_call/3,
+			handle_cast/2,
+			handle_info/2,
+			terminate/2,
+			code_change/3
+		]).
 
 -vsn( p01 ).
 
 is_client_existing( _ServerPid, _NickName ) ->
 	false.
 
-start_link(Supervisor, CliBalance, ChanBalance) ->
-	gen_server:start_link(?MODULE, [{Supervisor, CliBalance, ChanBalance}], [] ).
+start_link({Supervisor, CliBalance, ChanBalance}) ->
+	gen_server:start_link(?MODULE,
+							[#srvs{supervisor=Supervisor,
+									clibal = CliBalance,
+									chanbal = ChanBalance }],
+							[] ).
 		
 %%
 % gen_server implementation
 %%
-init( {Supervisor, Cli, Chan} ) ->
-	State = #srvs{supervisor=Supervisor,
-					clibal = Cli,
-					chanbal = Chan },
+init( State ) ->
+	irc_log:logVerbose( "Server node spawned" ),
 	{ok, State}.
 
 handle_call( _What, _From, State ) ->

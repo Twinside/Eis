@@ -22,6 +22,7 @@ start_link( Balancer ) ->
 % gen_server implementation
 %%
 init( Balance ) ->
+	irc_log:logVerbose( "chan manager spawned" ),
 	{ok, {Balance ,ets:new(chan_tab, [set])}}.
 
 handle_call( _Arg, _From, _State ) ->
@@ -51,6 +52,7 @@ handle_info(_Info,_State) ->
 	undefined.
 
 terminate(_Reason,_State) ->
+	irc_log:logVerbose("chan manager terminated" ),
 	undefined.
 
 code_change(_OldVsn,_State,_Extra) ->
