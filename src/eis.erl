@@ -39,7 +39,7 @@ make_specbalance( Module, Func, Args ) ->
 
 init( Args ) ->
 	{ok, { { one_for_one, 1000, 3600 },
-		   	[Args]
+		   	Args
 		}
 	}.
 

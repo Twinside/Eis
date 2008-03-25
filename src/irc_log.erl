@@ -30,10 +30,10 @@ init( Function, FuncArg ) ->
 	if 
 		LogStatus == undefined ->
 			Pid = spawn( ?MODULE, logthread, [Function, FuncArg] ),
-			register( irc_serv_logger, Pid );
-		true -> ok
-	end,
-	ok.
+			register( irc_serv_logger, Pid ),
+			{ok, Pid};
+		true -> error
+	end.
 
 logVerbose( Txt ) ->
 	logmsg( ?LogVerbose, Txt ).
