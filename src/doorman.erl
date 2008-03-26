@@ -120,7 +120,7 @@ door_loop( ServPid, CliBalance, LSocket ) ->
 %% 		Result = none()
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 auth_process( ServPid, CliBal, CliSock ) ->
-	irc:send_ident_msg( CliSock, ?LOOKING_HOST_MSG ),
+	irc:send_ident_msg( CliSock, ?LOOKING_HOST_MSG ), 
 	inet:setopts(CliSock, [{active, false}, {packet, line}]),
 	case inet:peername( CliSock ) of
 		{ok, {Address, _}} ->
@@ -164,11 +164,17 @@ auth_loop( FsmPid, CliSock, ServPid, CliBal ) ->
 					auth_loop( FsmPid, CliSock, ServPid, CliBal );
 				error ->
 					gen_tcp:close( CliSock ),
+					irc:send_ident_msg( CliSock, ?BAD_SEQUENCE_MSG ), 
 					log_error( "Bad commands sequence." ),
 					error;
 				{ok, {Client, Pass}} ->
-					log_ok( Client ),
-					% @todo
+					% envoit on simplement un truc bourrin du genre 
+					% {Socket, Client} au server Node
+					% Pid = 
+					% gen_server:cast( Pid, {add, CliSock} ),
+					% gen_tcp:controlling_process( CliSock, Pid ),
+	     			log_ok( Client ),
+					irc:send_ident_msg( CliSock, ?VALIDATION_MSG ),
 					ok
 			end;
 		{error, etimedout} ->
