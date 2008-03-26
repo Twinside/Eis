@@ -1,3 +1,9 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% @doc
+%%	Module in charge of the dynamic balancing of 
+%%	different ressources. can start a given number
+%%	of thread to handle the charge.
+%% @end
 -module (load_balancer).
 
 -behaviour(supervisor).
@@ -33,13 +39,18 @@
 
 -vsn( p01 ).
 
-%%
+%% @doc
 %% Call to start the balancer.
-%% Module, module of code to balance
-%% Function : code to balance
-%% MaxClient : Number of ressource maximum
-%% per thread.
-%%
+%%	<p>
+%%	Module/Function is what to start, MaxRessource is the upper
+%%	bound of balanced ressources.
+%%	</p>
+%% @end
+%% @spec start_link( Module, Function, MaxRessource ) -> Result
+%% where
+%%		Module = atom()
+%%		Function = atom()
+%%		MaxRessource = integer()
 start_link(Module, Function, MaxRessource) ->
 	Balance = spawn(?MODULE, bootstrap_balancer,[]),
 	InitialProcess = {0,
@@ -57,12 +68,23 @@ start_link(Module, Function, MaxRessource) ->
 					  {error, "Fatal"}
 	end.
 
-%%
-%% Helper function to use the balancer
-%%
+%% @doc
+%% 	add a ressource to a balance.
+%% @end
+%% @spec add_ressource( BalancerPid, Rsrc ) -> term()
+%% where
+%%		BalancerPid = pid()
+%%		Rsrc = term()
 add_ressource( BalancerPid, Rsrc ) ->
 	BalancerPid!{addressource,Rsrc}.
 
+%% @doc
+%%	Remove a ressource from the balance. 
+%% @end
+%% @spec kill_ressource( BalancerPid, Rsrc ) -> term()
+%% where
+%%		BalancerPid	= pid()
+%%		Rsrc = term()
 kill_ressource( BalancerPid, Rsrc ) ->
 	BalancerPid!{killressource, Rsrc}.
 
@@ -115,10 +137,11 @@ dec_count( Pid, [P | Next] ) ->
 		true -> [P | dec_count( Pid, Next )]
 	end.
 
-%
-% Wait to receive the state of the balancer,
-% and then launch it.
-%
+%% @doc
+%%  Wait to receive the state of the balancer,
+%%  and then launch it.
+%% @end
+%% @hidden
 bootstrap_balancer() ->
 	receive
 		{notifysupervisor, Pid, State} -> balancer( Pid, State ); 
@@ -126,15 +149,17 @@ bootstrap_balancer() ->
 			halt()
 	end.
 
-%
-% Thread keeping state of the process
-% and there states.
-% todo : add a suicide message or something.
-%
+%% @doc
+%%  Thread keeping state of the process
+%%  and there states.
+%% @end
+%% @todo : add a suicide message or something.
+%% @hidden
 balancer( SuperPid, {Conf, ChildList} ) ->
 	receive
 		{addressource, Rsc} ->
-			load_balancer:balancer( SuperPid, ressource_adding(SuperPid, Conf, ChildList, Rsc ));
+			State = ressource_adding(SuperPid, Conf, ChildList, Rsc ),
+			load_balancer:balancer( SuperPid, State );
 
 		{killressource, Rsc} ->
 			_ = lists:foldl( (fun(Proc,What) -> gen_server:cast(Proc#pinfo.proc, What), What end),
@@ -148,7 +173,8 @@ balancer( SuperPid, {Conf, ChildList} ) ->
 	end.
 
 
-% used by the supervisor behaviour.
+%% used by the supervisor behaviour.
+%% @hidden
 init( IniChild ) ->
 	ok = supervisor:check_childspecs( [IniChild] ),
 	{ok,
