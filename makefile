@@ -13,6 +13,7 @@ OBJEXT=.beam
 
 modules=conf_loader \
 		irc_log \
+		irc_laws \
 		irc \
 		doorman \
 		server_node \
