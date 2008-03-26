@@ -133,5 +133,5 @@ string_of_msg( Msg ) ->
 %% A little function to send quickly a notice during identification
 %% @end
 send_ident_msg( CliSock, Message ) ->
-	gen_tcp:send( CliSock, "NOTICE AUTH " ++ Message ).
+	ok = gen_tcp:send( CliSock, "NOTICE AUTH " ++ Message ).
 
