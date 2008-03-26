@@ -14,10 +14,11 @@ loadConf(Device, Conf) ->
 			file:close(Device), 
 			wait(Conf);
 		Line -> 
-			%% Supprime les " ", \n, et le "="
+			%% Supprime les " ", \n,le "=" et les "
 			loadConf(Device, [string:tokens(
-								string:strip(
-									string:strip(Line, both, $\n), both, $=), " =")|Conf])
+						string:strip(
+							string:strip(
+								string:strip(Line, both, $\n), both, $=), both, $"), " =")|Conf])
 	end.
 
 %% Attend un message.
