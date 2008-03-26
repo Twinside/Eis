@@ -165,6 +165,7 @@ getTime() ->
 prepare( Txt ) ->
 	getTime() ++ Txt ++ "\n".
 
+%% @hidden
 logthread( Func, Args ) ->
 	receive
 		{?LogVerbose, What} -> Func( Args, prepare(What) );

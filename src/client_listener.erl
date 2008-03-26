@@ -18,6 +18,12 @@
 
 -vsn( p01 ).
 
+%% @doc
+%%	Start e new client listener.
+%% @end
+%% @spec start_link( Balancer ) -> Result
+%% where Balancer = pid()
+%%		 Result = {ok, Pid} | {error| Error}
 start_link( Balancer ) ->
 	gen_server:start_link( ?MODULE, [Balancer], [] ).
 
@@ -25,10 +31,12 @@ start_link( Balancer ) ->
 %%
 % gen_server implementation
 %%
+%% @hidden
 init( Supervisor ) ->
 	irc_log:logVerbose( "Client Listener created" ),
 	{ok, {Supervisor, ets:new(tabtest, [set])} }.
 
+%% @hidden
 handle_call( _What, _From, _State ) ->
 	undefined.
 	
@@ -41,10 +49,12 @@ broadcaster( User, StrMsg ) ->
 %
 % Different call used by the load balancer.
 %
+%% @hidden
 handle_cast( {addressource, Client}, {Super, UserList} ) ->
 	ets:insert( UserList, {Client#client.nick, Client} ),
 	{noreply, {Super, UserList}};
 	
+%% @hidden
 handle_cast( {killressource, Client}, {Super, UserList} ) ->
 	ets:delete( UserList, Client#client.nick),
 	{noreply, {Super, UserList}};
@@ -63,14 +73,17 @@ handle_cast( Msg, {Super,UserTable} ) when is_record(Msg, msg) ->
 handle_cast( _Request, State ) -> % ignore invalid cast
 	{noreply, State}.
 	
+%% @hidden
 handle_info({tcp, _Socket, Data}, State) ->
 	msg = irc:msg_of_string( Data ),
 	{noreply, State}.
 
+%% @hidden
 terminate(_Reason,_State) ->
 	irc_log:logVerbose( "Client Listener terminated" ),
 	undefined.
 
+%% @hidden
 code_change(_OldVsn,_State,_Extra) ->
 	undefined.
 

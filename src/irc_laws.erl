@@ -1,3 +1,8 @@
+%% @doc
+%%	Module dedicated to the rights management.
+%%	All the right management go through this module,
+%%	everything use macro to avoid many redundant code.
+%% @end
 -module( irc_laws ).
 
 -define( MINVISIBLE, (1 bsl 0) ).
@@ -47,10 +52,10 @@
 			when ((UserRight band User) == UserRight) and
 				 ((ChanRight band Chan) == Chan) -> true
 		).
-%
-% We refuse everything, unless the rules
-% is defined below.
-%
+
+
+% % We refuse everything, unless the rules is defined below.
+
 ?allow_chan( 'KICK', ?MCHANOP, ?ANYMODE );
 ?allow_chan( 'KICK', ?MHALFED, ?ANYMODE );
 ?allow_chan( 'TOPIC', ?MCHANOP, ?MTOPIC );

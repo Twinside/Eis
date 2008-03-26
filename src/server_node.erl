@@ -64,32 +64,39 @@ start_link({Supervisor, CliBalance, ChanBalance}) ->
 %%
 % gen_server implementation
 %%
+%% @hidden
 init( State ) ->
 	irc_log:logVerbose( "Server node spawned" ),
 	{ok, State}.
 
 
+%% @hidden
 handle_call( {client_exists, Name}, _From, State ) ->
 	case ets:lookup( State#srvs.clients, Name ) of
 		[] -> {reply, true ,State};
 		_ -> {reply, false, State}
 	end;
 		
+%% @hidden
 handle_call( _What, _From, State ) ->
 	{noreply, State}.	
 	
 %
 % Different call used by the load balancer.
 %
+%% @hidden
 handle_cast( _Command, State ) ->
 	{noreply, State}.
 	
+%% @hidden
 handle_info(_What, State) ->
 	{noreply, State}.
 
+%% @hidden
 terminate(_Reason,State) ->
 	{ok, State}.
 
+%% @hidden
 code_change(_OldVsn, State,_Extra) ->
 	{ok, State}.
 

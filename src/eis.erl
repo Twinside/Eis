@@ -1,3 +1,9 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% @doc
+%%	Launching module for the application.
+%%	It's also the main supervisor and an application
+%%	regarding the OTP design principles.
+%% @end
 -module( eis ).
 
 -behaviour( application ).
@@ -38,15 +44,21 @@ make_specbalance( Name, Module, Func, Args ) ->
 		supervisor,
 		[Module]}.
 
-init( Args ) ->
-	{ok, { { one_for_one, 1000, 3600 },
-		   	Args
-		}
-	}.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% @doc
+%%	Shortcut used to launch the server
+%%	during the debuging period.
+%% @end
+dlaunch() ->
+	start( 0, 0 ).
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%	
-dlaunch() -> start( 0, 0 ).
-
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% @doc
+%%	Really start the IRC server, parameters are
+%%	an application parameter.
+%% @end
+%% @see application
+%% @spec start( StartType, StartArgs ) -> term()
 start( _StartType, _StartArgs ) ->
 	LogSpec = make_specserv( irc_log, basic_init, [] ),
 	{ok, RootSupervisor} = supervisor:start_link( ?MODULE, [LogSpec]),	
@@ -78,15 +90,25 @@ start( _StartType, _StartArgs ) ->
 	irc_log:logInfo( "End of server initialization" ),
 	ok.
 
+%% @hidden
+init( Args ) ->
+	{ok, { { one_for_one, 1000, 3600 },
+		   	Args
+		}
+	}.
+%% @hidden
 start_phase( _Phase, _StartType, _PhaseArgs ) ->
 	ok.
 
+%% @hidden
 prep_stop( State ) ->
 	State.
 
+%% @hidden
 stop( _State ) ->
 	ok.
 
+%% @hidden
 config_change( _Changed, _New, _Removed ) ->
 	ok.
 

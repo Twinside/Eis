@@ -190,9 +190,11 @@ auth_loop( FsmPid, CliSock, ServPid, CliBal ) ->
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%% The gen_fsm callback %%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+%% @hidden
 init( Args ) ->
 	{ok, q1, Args}.
 
+%% @hidden
 handle_event( Message, CurrentState, StateData ) ->
 	case Message of
 		stop ->
@@ -201,6 +203,7 @@ handle_event( Message, CurrentState, StateData ) ->
 			CurrentState( IrcMessage, StateData )
 	end.
 
+%% @hidden
 handle_sync_event( Message, _From, CurrentState, StateData ) ->
 	case Message of
 		stop ->
@@ -209,6 +212,7 @@ handle_sync_event( Message, _From, CurrentState, StateData ) ->
 			CurrentState( IrcMessage, StateData )
 	end.
 
+%% @hidden
 terminate( Reason, _, _ ) ->
 	case Reason of
 		normal ->
@@ -217,6 +221,7 @@ terminate( Reason, _, _ ) ->
 			error
 	end.
 
+%% @hidden
 q1( {msg, _, Dest, Command, _, _}, {Host} ) ->
 	case Command of
 		'PASS' ->
@@ -230,6 +235,7 @@ q1( {msg, _, Dest, Command, _, _}, {Host} ) ->
 	end.
 			
 
+%% @hidden
 q1( {msg, _, Dest, Command, _, _}, _From, {Host} ) ->
 	case Command of
 		'PASS' ->
@@ -244,6 +250,7 @@ q1( {msg, _, Dest, Command, _, _}, _From, {Host} ) ->
 	end.
 
 
+%% @hidden
 q2( {msg, _, Dest, Command, _, _}, {Host, Pass} ) ->
 	case Command of
 		'PASS' ->
@@ -258,6 +265,7 @@ q2( {msg, _, Dest, Command, _, _}, {Host, Pass} ) ->
 			{stop, error, undefined}
 	end.
 
+%% @hidden
 q2( {msg, _, Dest, Command, _, _}, _From, {Host, Pass} ) ->
 	case Command of
 		'PASS' ->
@@ -272,6 +280,7 @@ q2( {msg, _, Dest, Command, _, _}, _From, {Host, Pass} ) ->
 			{stop, error, error, undefined}
 	end.
 
+%% @hidden
 q3( {msg, _, _, Command, _, _}, _ ) ->
 	case Command of
 		'USER' ->
@@ -280,6 +289,7 @@ q3( {msg, _, _, Command, _, _}, _ ) ->
 			{stop, error, undefined}
 	end.
 
+%% @hidden
 q3( {msg, _, Dest, Command, _, Data}, _From, {Host, Pass, Nick} ) ->
 	case Command of
 		'USER' ->
