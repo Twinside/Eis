@@ -43,7 +43,8 @@ handle_call( _What, _From, _State ) ->
 
 % for casting irc messages
 broadcaster( User, Msg ) ->
-	(User#client.send)( User, Msg ).
+	(User#client.send)( User, Msg ),
+	Msg.
 
 %
 % Different call used by the load balancer.
