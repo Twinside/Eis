@@ -49,6 +49,18 @@ is_client_existing( ServerPid, NickName ) ->
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% @doc
+%%	Retrieve a client from the server node.
+%% @end
+%% @spec is_client_existing( ServerPid, NickName ) -> Result
+%% where
+%%		ServerPid = pid()
+%%		Nickname = string()
+%%		Result = {ok, Client} | error
+get_client( ServerPid, Nickname ) ->
+	gen_server:call( ServerPid, {get_client, Nickname} ).
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% @doc
 %%	Launch a new server.
 %% @end
 %%
@@ -76,7 +88,11 @@ handle_call( {client_exists, Name}, _From, State ) ->
 		[] -> {reply, true ,State};
 		_ -> {reply, false, State}
 	end;
-		
+
+
+handle_call( {get_client, Nick}, _From, State ) ->
+	false;
+
 %% @hidden
 handle_call( _What, _From, State ) ->
 	{noreply, State}.	

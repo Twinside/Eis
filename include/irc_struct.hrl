@@ -62,7 +62,7 @@
 			host,		%% as string
 			username,	%% as string
 			send,		%% as function/2
-			sendArgs    %% as socket() | {virtual, Pid}
+			sendArgs,    %% as socket() | {virtual, Pid}
 			subinfo		%% as you want.
 		}).
 		

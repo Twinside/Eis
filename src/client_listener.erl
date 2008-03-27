@@ -34,7 +34,15 @@ start_link( Balancer ) ->
 %% @hidden
 init( Supervisor ) ->
 	irc_log:logVerbose( "Client Listener created" ),
-	{ok, {Supervisor, {ets:new(tabtest, [set]), {ets:new(tabtest, [set])}} }.
+	{ok,
+		{
+			Supervisor,
+			{
+				ets:new(tabtest, [set]),
+				ets:new(tabtest, [set])
+			}
+		}
+	}.
 
 %% @hidden
 handle_call( _What, _From, _State ) ->
@@ -76,7 +84,7 @@ handle_cast( takeany, {Super, {UserList, SockList}} ) ->
 handle_cast( Msg, {Super, {UserList, SockList}} ) when is_record( Msg, msg ) ->
 	% do not convert Msg to StrMsg before know if the client is virtual or not
 	ets:foldl(broadcaster, Msg, UserTable),
-	{noreply, {Super, {UserList, SockList}};
+	{noreply, {Super, {UserList, SockList}}};
 
 handle_cast( _Request, State ) -> % ignore invalid cast
 	{noreply, State}.
@@ -98,3 +106,16 @@ terminate(_Reason,_State) ->
 code_change(_OldVsn,_State,_Extra) ->
 	undefined.
 
+
+dispatcher( 'JOIN', Msg, From ) -> command_join( Msg );
+dispatcher( 'PRIVMSG', Msg, From ) -> command_privmsg( Msg );
+dispatcher( 'NOTICE', Msg, From ) -> command_notice( Msg ).
+
+command_privmsg( Msg ) ->
+	true.
+
+command_notice( Msg ) ->
+	true.
+
+command_join( Msg ) ->
+	true.
