@@ -34,7 +34,7 @@ start_link( Balancer ) ->
 %% @hidden
 init( Supervisor ) ->
 	irc_log:logVerbose( "Client Listener created" ),
-	{ok, {Supervisor, ets:new(tabtest, [set])} }.
+	{ok, {Supervisor, {ets:new(tabtest, [set]), {ets:new(tabtest, [set])}} }.
 
 %% @hidden
 handle_call( _What, _From, _State ) ->
@@ -42,40 +42,50 @@ handle_call( _What, _From, _State ) ->
 	
 
 % for casting irc messages
-broadcaster( User, StrMsg ) ->
-	(User#client.send)( User, StrMsg ),
-	StrMsg.
-	
+broadcaster( User, Msg ) ->
+	(User#client.send)( User, Msg ).
+
 %
 % Different call used by the load balancer.
 %
 %% @hidden
-handle_cast( {addressource, Client}, {Super, UserList} ) ->
+handle_cast( {addressource, Client}, {Super, {UserList, SockList}} ) ->
 	ets:insert( UserList, {Client#client.nick, Client} ),
+	ets:insert( SockList, {Client#client.sendArgs, Client#client.nick} ),
+	{noreply, {Super, {UserList, SockList}}};
+
+%% @hidden	
+handle_cast( {killressource, Client}, {Super, {UserList, SockList}} ) ->
+	[Cli] = ets:lookup( UserList, Client#client.nick ), % find the client
+	% @todo maybe add a log message
+	gen_tcp:close( Cli#client.sendArgs ), % close the connection between us
+	ets:delete( UserList, Client#client.nick ), % delete his trace from tables
+	ets:delete( SockList, Socket ),
 	{noreply, {Super, UserList}};
 	
-%% @hidden
-handle_cast( {killressource, Client}, {Super, UserList} ) ->
-	ets:delete( UserList, Client#client.nick),
-	{noreply, {Super, UserList}};
-	
-handle_cast( takeany, {Super, UserList} ) ->
+handle_cast( takeany, {Super, {UserList, SockList}} ) ->
 	Key = ets:first( UserList ),
 	[Cli] = ets:lookup( UserList, Key ),
-	ets:delete(UserList, Key),
-	{reply, {takeany, Cli}, {Super, UserList}};
+	% we give the responsabilitie of the socket to the supervisor
+	gen_tcp:controlling_process( Cli#client.sendArgs, Super ),
+	ets:delete( SockList, Cli#client.sendArgs ), % deleting from tables
+	ets:delete( UserList, Cli#client.nick ),
+	{reply, {takeany, Cli}, {Super, {UserList, SockList}}};
 
-handle_cast( Msg, {Super,UserTable} ) when is_record(Msg, msg) ->
-	StrMsg = irc:string_of_msg( Msg ),
-	ets:foldl(broadcaster, StrMsg, UserTable),
-	{noreply, {Super,UserTable}};
+handle_cast( Msg, {Super, {UserList, SockList}} ) when is_record( Msg, msg ) ->
+	% do not convert Msg to StrMsg before know if the client is virtual or not
+	ets:foldl(broadcaster, Msg, UserTable),
+	{noreply, {Super, {UserList, SockList}};
 
 handle_cast( _Request, State ) -> % ignore invalid cast
 	{noreply, State}.
 	
 %% @hidden
-handle_info({tcp, _Socket, Data}, State) ->
-	msg = irc:msg_of_string( Data ),
+handle_info( {tcp, Socket, Data}, {Super, {UserList, SockList}} ) ->
+	Msg = irc:msg_of_string( Data ),
+	Cli = ets:lookup( UserList, ets:lookup( SockList, Socket ) ),
+	% do right things with Cli and Msg
+	io:format( "TCP message received from ~p~nMassage is : ~p~n", [Cli, MSG] ),
 	{noreply, State}.
 
 %% @hidden
