@@ -51,7 +51,7 @@ is_client_existing( ServerPid, NickName ) ->
 %% @doc
 %%	Retrieve a client from the server node.
 %% @end
-%% @spec is_client_existing( ServerPid, NickName ) -> Result
+%% @spec get_client( ServerPid, NickName ) -> Result
 %% where
 %%		ServerPid = pid()
 %%		Nickname = string()

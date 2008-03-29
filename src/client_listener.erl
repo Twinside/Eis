@@ -69,7 +69,7 @@ handle_cast( {killressource, Client}, {Super, {UserList, SockList}} ) ->
 	% @todo maybe add a log message
 	gen_tcp:close( Cli#client.sendArgs ), % close the connection between us
 	ets:delete( UserList, Client#client.nick ), % delete his trace from tables
-	ets:delete( SockList, Socket ),
+	%ets:delete( SockList, Socket ),
 	{noreply, {Super, UserList}};
 	
 handle_cast( takeany, {Super, {UserList, SockList}} ) ->
@@ -83,7 +83,7 @@ handle_cast( takeany, {Super, {UserList, SockList}} ) ->
 
 handle_cast( Msg, {Super, {UserList, SockList}} ) when is_record( Msg, msg ) ->
 	% do not convert Msg to StrMsg before know if the client is virtual or not
-	ets:foldl(broadcaster, Msg, UserTable),
+	% ets:foldl(broadcaster, Msg, UserTable),
 	{noreply, {Super, {UserList, SockList}}};
 
 handle_cast( _Request, State ) -> % ignore invalid cast
@@ -94,8 +94,8 @@ handle_info( {tcp, Socket, Data}, {Super, {UserList, SockList}} ) ->
 	Msg = irc:msg_of_string( Data ),
 	Cli = ets:lookup( UserList, ets:lookup( SockList, Socket ) ),
 	% do right things with Cli and Msg
-	io:format( "TCP message received from ~p~nMassage is : ~p~n", [Cli, MSG] ),
-	{noreply, State}.
+	%io:format( "TCP message received from ~p~nMassage is : ~p~n", [Cli, MSG] ),
+	{noreply, 0 }.%State}.
 
 %% @hidden
 terminate(_Reason,_State) ->

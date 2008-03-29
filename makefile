@@ -3,13 +3,21 @@ OUTPUT=all
 
 SOLUTIONDIR=./
 
-
 OBJDIR:=$(SOLUTIONDIR)ebin/
 SOURCEDIR:=$(SOLUTIONDIR)src/
+COMSOURCEDIR:=$(SOURCEDIR)commands/
 HEADERDIR:=$(SOLUTIONDIR)include/
+
 
 SRCEXT=.erl
 OBJEXT=.beam
+
+irccommands=com_join \
+			com_kick \
+			com_kill \
+			com_notice \
+			com_part \
+			com_privmsg
 
 modules=conf_loader \
 		irc_log \
@@ -23,21 +31,31 @@ modules=conf_loader \
 		ident_checker \
 		eis
 
+COMOBJ:=$(addprefix $(OBJDIR),$(addsuffix $(OBJEXT),$(irccommands)))
+COMSRC:=$(addprefix $(COMSOURCEDIR),$(addsuffix $(SRCEXT), $(irccommands)))
 SRC:=$(addprefix $(SOURCEDIR),$(addsuffix $(SRCEXT), $(modules)))
 OBJ:=$(addprefix $(OBJDIR),$(addsuffix $(OBJEXT),$(modules)))
 
+ALLSOURCES:=$(SRC) $(COMSRC)
+ALLOBJ:=$(OBJ) $(COMOBJ)
+
 EFLAGS:=-o $(OBJDIR) -I $(HEADERDIR)
 
-$(OUTPUT): $(OBJ)
+$(OUTPUT): $(ALLOBJ)
+
+all: $(OUTPUT) docs
 
 $(OBJDIR)%.beam: $(SOURCEDIR)%.erl
 	$(ECC) $(EFLAGS) $<
 
-docs: $(SRC)
+$(OBJDIR)%.beam: $(COMSOURCEDIR)%.erl
+	$(ECC) $(EFLAGS) $<
+	
+docs: $(ALLSOURCES)
 	escript doc_generator.erl $^
 	
 clean:
-	rm -f $(OBJDIR)*.beam
+	rm -f $(OBJDIR)*.beam doc/*
 
 start:
 
