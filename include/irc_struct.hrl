@@ -75,3 +75,12 @@
 			data		%% as string
 		}).
 
+
+-record( listener,
+		{
+			supervisor,
+			bynick,
+			bysock
+		}).
+
+

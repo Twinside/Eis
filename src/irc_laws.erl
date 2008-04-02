@@ -44,6 +44,7 @@
 
 -export([
 			check_chanlaw/3
+			,check_granting/2
 %			,mode_translate/1
 		]).
 
@@ -53,7 +54,11 @@
 				 ((ChanRight band Chan) == Chan) -> true
 		).
 
-
+-define( allow_grant( Mode, From ),
+		check_granting( Mode, FromUser )
+			when (From band FromUser) /= 0  -> true
+		).
+		
 % % We refuse everything, unless the rules is defined below.
 
 ?allow_chan( 'KICK', ?MCHANOP, ?ANYMODE );
@@ -77,5 +82,11 @@
 %%		IrcCommand = atom()
 %%		UserRight = int
 %%		ChanRight = int
-check_chanlaw( _, _, _ ) -> false.
+check_chanlaw( _Command, _User, _Chan) -> false.
 
+?allow_grant( ?MCHANOP, ?MCHANOP );
+?allow_grant( ?MHALFED, ?MCHANOP );
+?allow_grant( ?MVOICED, ?MCHANOP bor ?MHALFED );
+%?allow_grant( ?MSECRET, );
+%?allow_grant( , );
+check_granting( _Mode, _From ) -> false.

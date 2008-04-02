@@ -7,14 +7,14 @@
 -vsn( p01 ).
 
 -export([
-			perform_client/2,
-			perform_chan/2
+			perform_client/3,
+			perform_chan/3
 		]).
 
-perform_client( ClientState, _IrcMsg ) ->
+perform_client( _Cli, ClientState, _IrcMsg ) ->
 	ClientState.
 
 
-perform_chan( ChanState, _IrcMsg ) ->
+perform_chan( _Chan, ChanState, _IrcMsg ) ->
 	ChanState.
 

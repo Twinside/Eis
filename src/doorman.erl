@@ -43,7 +43,10 @@
 		q2/3,
 		q3/2,
 		q3/3,
-		terminate/3
+		terminate/3,
+
+		code_change/4,
+		handle_info/3
 	]).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Helpers %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -57,6 +60,10 @@ log_ok( Cli ) ->
 	irc_log:logEvent( "A client has just joined : " ++ Cli#client.nick ++ "@" 
 														++ Cli#client.host ).
 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%% To squeeze warnings  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+code_change( _, _, _, _ ) -> undefined.
+handle_info( _, _, _ ) -> undefined.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%% First part functions %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -167,7 +174,7 @@ auth_loop( FsmPid, CliSock, ServPid, CliBal ) ->
 					irc:send_ident_msg( CliSock, ?BAD_SEQUENCE_MSG ), 
 					log_error( "Bad commands sequence." ),
 					error;
-				{ok, {Client, Pass}} ->
+				{ok, {Client, _Pass}} ->
 					% envoit on simplement un truc bourrin du genre 
 					% {Socket, Client} au server Node
 					% Pid = 

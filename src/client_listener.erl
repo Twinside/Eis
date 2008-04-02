@@ -17,7 +17,6 @@
 -export( [broadcaster/2] ).
 
 -vsn( p01 ).
-
 %% @doc
 %%	Start e new client listener.
 %% @end
@@ -34,14 +33,9 @@ start_link( Balancer ) ->
 %% @hidden
 init( Supervisor ) ->
 	irc_log:logVerbose( "Client Listener created" ),
-	{ok,
-		{
-			Supervisor,
-			{
-				ets:new(tabtest, [set]),
-				ets:new(tabtest, [set])
-			}
-		}
+	{ok, #listener{ supervisor = Supervisor,
+					bynick = ets:new(tabtest, [set]),
+					bysock = ets:new(tabtest, [set]) }
 	}.
 
 %% @hidden
@@ -58,41 +52,50 @@ broadcaster( User, Msg ) ->
 % Different call used by the load balancer.
 %
 %% @hidden
-handle_cast( {addressource, Client}, {Super, {UserList, SockList}} ) ->
-	ets:insert( UserList, {Client#client.nick, Client} ),
-	ets:insert( SockList, {Client#client.sendArgs, Client#client.nick} ),
-	{noreply, {Super, {UserList, SockList}}};
+handle_cast( {addressource, Client}, State ) ->
+	ets:insert( State#listener.bynick, {Client#client.nick, Client} ),
+	ets:insert( State#listener.bysock, {Client#client.sendArgs, Client#client.nick} ),
+	{noreply, State};
 
 %% @hidden	
-handle_cast( {killressource, Client}, {Super, {UserList, SockList}} ) ->
-	[Cli] = ets:lookup( UserList, Client#client.nick ), % find the client
-	% @todo maybe add a log message
-	gen_tcp:close( Cli#client.sendArgs ), % close the connection between us
-	ets:delete( UserList, Client#client.nick ), % delete his trace from tables
-	%ets:delete( SockList, Socket ),
-	{noreply, {Super, UserList}};
-	
-handle_cast( takeany, {Super, {UserList, SockList}} ) ->
-	Key = ets:first( UserList ),
-	[Cli] = ets:lookup( UserList, Key ),
-	% we give the responsabilitie of the socket to the supervisor
-	gen_tcp:controlling_process( Cli#client.sendArgs, Super ),
-	ets:delete( SockList, Cli#client.sendArgs ), % deleting from tables
-	ets:delete( UserList, Cli#client.nick ),
-	{reply, {takeany, Cli}, {Super, {UserList, SockList}}};
+handle_cast( {killressource, Client}, State ) ->
+	Bynick = State#listener.bynick,
+	Bysock = State#listener.bysock,
+	case ets:lookup( Bynick, Client#client.nick ) of
+		[] -> {noreply, State};
+		[Cli] -> gen_tcp:close( Cli#client.sendArgs ), % close the connection between us
+				ets:delete( Bynick, Client#client.nick ), % delete his trace from tables
+				ets:delete( Bysock, Client#client.sendArgs ),
+				{noreply, State}
+	end;
 
-handle_cast( Msg, {Super, {UserList, SockList}} ) when is_record( Msg, msg ) ->
+handle_cast( takeany, State ) ->
+	Bynick = State#listener.bynick,
+	Bysock = State#listener.bysock,
+	
+	Key = ets:first( Bynick ),
+	[Cli] = ets:lookup( Bynick, Key ),
+	ets:delete( Bynick, Cli#client.sendArgs ), % deleting from tables
+	ets:delete( Bysock, Cli#client.nick ),
+	
+	% we give the responsabilitie of the socket to the supervisor
+	gen_tcp:controlling_process( Cli#client.sendArgs,
+								 State#listener.supervisor ),
+	{reply, {takeany, Cli}, State};
+
+handle_cast( Msg, State ) when is_record( Msg, msg ) ->
 	% do not convert Msg to StrMsg before know if the client is virtual or not
 	% ets:foldl(broadcaster, Msg, UserTable),
-	{noreply, {Super, {UserList, SockList}}};
+	{noreply, State};
 
 handle_cast( _Request, State ) -> % ignore invalid cast
 	{noreply, State}.
 	
 %% @hidden
-handle_info( {tcp, Socket, Data}, {Super, {UserList, SockList}} ) ->
-	Msg = irc:msg_of_string( Data ),
-	Cli = ets:lookup( UserList, ets:lookup( SockList, Socket ) ),
+handle_info( {tcp, Socket, Data}, State ) ->
+	Bysock = State#listener.bysock,
+	_Msg = irc:msg_of_string( Data ),
+	[_Cli] = ets:lookup( Bysock, Socket ),
 	% do right things with Cli and Msg
 	%io:format( "TCP message received from ~p~nMassage is : ~p~n", [Cli, MSG] ),
 	{noreply, 0 }.%State}.
@@ -107,15 +110,10 @@ code_change(_OldVsn,_State,_Extra) ->
 	undefined.
 
 
-dispatcher( 'JOIN', Msg, From ) -> command_join( Msg );
-dispatcher( 'PRIVMSG', Msg, From ) -> command_privmsg( Msg );
-dispatcher( 'NOTICE', Msg, From ) -> command_notice( Msg ).
+%dispatcher( 'JOIN', Msg, From ) -> command_join( Msg );
+%dispatcher( 'PRIVMSG', Msg, From ) -> command_privmsg( Msg );
+%dispatcher( 'NOTICE', Msg, From ) -> command_notice( Msg ).
 
-command_privmsg( Msg ) ->
-	true.
-
-command_notice( Msg ) ->
-	true.
-
-command_join( Msg ) ->
-	true.
+% command_privmsg( Msg ) -> true.  
+% command_notice( Msg ) -> true.  
+%command_join( Msg ) -> true.
