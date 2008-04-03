@@ -77,11 +77,12 @@ handle_cast( takeany, ChanList ) ->
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 handle_cast({Msg, Data}, State ) ->
-	Chan = 
+	_Chan = 0,
 	{noreply, dispatch(Msg#msg.ircCommand,
 						Data,
 						State)
 	}
+	
 	;
 	
 %% @hidden

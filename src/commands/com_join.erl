@@ -36,25 +36,34 @@ join_chan( Msg, Cli, Chan, [] ) ->
 	chan_manager:send_chan( Chan, {Msg, Cli, ""} )
 	;
 
-join_chan( Msg, Cli, {Chan,Pid}, [Pass] ) ->
-	chan_manager:send_chan( Chan, {Msg, Cli, Pass} )
+join_chan( Msg, Cli, {_Chan,Pid}, [Pass] ) ->
+	chan_manager:send_chan( Pid, {Msg, Cli, Pass} )
 	.
 	
 create_chan( Msg, Cli, ServerNode ) ->
-	[ChanName|Other] = Msg#msg.params,
+	[ChanName|_] = Msg#msg.params,
 	server_node:add_chan( ServerNode, ChanName, Cli )
 	.
 
-perform_server( Chan, Serverstate, _IrcMsg ) ->
-	Serverstate.
+% perform_server( _Chan, Serverstate, _IrcMsg ) ->
+%	Serverstate.
 	
 perform_chan( _Chan, ChanState, _IrcMsg ) ->
 	ChanState.
 
+%% @doc
+%%	Add a chan to the server, internal
+%%	process.
+%% @end
+%% @spec server_add( ServerState, Chan Owner ) -> none
+%% where
+%%		ServerState = srvrs()
+%%		Chan = string()
+%%		Owner = client()
 server_add( ServerState, Chan, Owner ) ->
 	Bal = ServerState#srvs.chanbal,
 	{ok, Pid} = load_balancer:add_ressource( Bal, Chan ),
-	ets:add( ServerState#srvs.chans, {ChanChan#chan.channame, Pid} ),
+	ets:add( ServerState#srvs.chans, {Chan, Pid} ),
 	gen_server:cast( Pid, {Chan,Owner} )
 	.
 
