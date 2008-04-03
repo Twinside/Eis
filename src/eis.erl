@@ -69,12 +69,12 @@ start( _StartType, _StartArgs ) ->
 	ListeningPort = 6667,	% load real constant from conf
 	
 	CliBalance = make_specbalance( 'CLIBALANCE', load_balancer, start_link,
-									[client_listener, start_link, MaxCli] ),
+									[client_listener, start_link, {MaxCli, self()}] ),
 	{ok, CliBalPid} = supervisor:start_child( RootSupervisor, CliBalance ),
 	irc_log:logVerbose( "Client balance launched" ),
 	
 	ChanBalance = make_specbalance( 'CHANBALANCE', load_balancer, start_link,
-									[chan_manager, start_link, MaxChan] ),
+									[chan_manager, start_link, {MaxChan, self()}] ),
 	{ok, ChanBalPid} = supervisor:start_child( RootSupervisor, ChanBalance ),
 	irc_log:logVerbose( "Chan balance launched" ),
 	

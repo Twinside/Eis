@@ -7,21 +7,16 @@
 -module( server_node ).
 
 -behaviour( gen_server ).
+-include( "irc_struct.hrl" ).
 
--record( srvs,
-		{
-			supervisor,
-			clibal,		% load balancer for client
-			chanbal,	% load balancer for channels
-			clients,	% global list of clients connected to this server.
-			chans		% global list of chans on the network.
-		} ).
 
 -export([
 			is_client_existing/2,
 			is_chan_existing/2,
 			get_client/2,
-			get_chan/2
+			get_chan/2,
+			add_chan/3,
+			add_user/2
 		]).
 
 % export for the gen_server
@@ -51,7 +46,7 @@ is_client_existing( ServerPid, NickName ) ->
 
 %% @doc
 %%	tell if a chan with the given name exist in the server.
-%% @send
+%% @end
 %% @spec is_chan_existing( ServerPid, NickName ) -> bool
 %% where
 %%		ServerPid = pid()
@@ -80,6 +75,26 @@ get_client( ServerPid, Nickname ) ->
 %%		Result = {ok, Chan} | error
 get_chan( ServerPid, ChanName ) ->
 	gen_server:call( ServerPid, {get_chan, ChanName} ).
+
+%% @doc
+%%	Add a new chan into the server.
+%%	Existance is re-checked to avoid race conditions.
+%%	if existance is found, the message is forwarded as
+%%	a non-creative join.
+%% @end
+%% @spec add_chan( ServerPid, Chan, Client ) -> Result
+%% where
+%%		ServerPid = pid()
+%%		Chan = chan()
+%%		Result = none
+add_chan( ServerPid, Chan, From ) ->
+	gen_server:cast( ServerPid, {add_chan, Chan, From} ).
+
+%% @doc
+%%	Add a new user into the server.
+%%	Existance is re-checked,
+add_user( ServerPid, User ) ->
+	gen_server:call( ServerPid, {add_user, User} ).
 
 %% @doc
 %%	Launch a new server.
@@ -134,6 +149,13 @@ handle_call( _What, _From, State ) ->
 % Different call used by the load balancer.
 %
 %% @hidden
+handle_cast( {add_chan, Chan, Client}, State ) ->
+	case extract( State#srvs.chans, Chan#chan.channame, State ) of
+		{_, error,_ } -> com_join:server_add( State, Chan, Client );	% faire un join
+		{_, {ok, Prev}, _} -> chan_manager:send_chan( Prev, Client )	% we join the previous one.
+	end,	
+	{noreply, State};
+	
 handle_cast( _Command, State ) ->
 	{noreply, State}.
 	

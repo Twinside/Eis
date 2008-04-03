@@ -51,10 +51,10 @@
 %%		Module = atom()
 %%		Function = atom()
 %%		MaxRessource = integer()
-start_link(Module, Function, MaxRessource) ->
+start_link(Module, Function, {MaxRessource, Referer}) ->
 	Balance = spawn(?MODULE, bootstrap_balancer,[]),
 	InitialProcess = {0,
-						{Module, Function, [Balance]},
+						{Module, Function, [{Balance, Referer}]},
 						permanent, 1000, worker, [Module]},
 	Conf = #bconf{ maxress= MaxRessource,
 				   spec=InitialProcess,
@@ -70,13 +70,20 @@ start_link(Module, Function, MaxRessource) ->
 
 %% @doc
 %% 	add a ressource to a balance.
+%%	return the pid of the processing which
+%%	is managing the ressource
 %% @end
-%% @spec add_ressource( BalancerPid, Rsrc ) -> term()
+%% @spec add_ressource( BalancerPid, Rsrc ) -> Result
 %% where
 %%		BalancerPid = pid()
 %%		Rsrc = term()
+%%		Result = {ok, Pid} | {error, Reason}
 add_ressource( BalancerPid, Rsrc ) ->
-	BalancerPid!{addressource,Rsrc}.
+	BalancerPid!{addressource,Rsrc, self()},
+	receive
+		{putted, Pid} -> {ok, Pid};
+		Otherwise -> Otherwise
+	end.
 
 %% @doc
 %%	Remove a ressource from the balance. 
@@ -92,13 +99,14 @@ kill_ressource( BalancerPid, Rsrc ) ->
 % Update the balanced process list to
 % get the new ressource.
 %
-update_process( Count, [First | Next], New ) ->
+update_process( Count, [First | Next], New, Parent ) ->
 	if First#pinfo.count == Count ->
 			gen_server:cast(First#pinfo.proc, {addressource, New}),
+			Parent!{putted, First#pinfo.proc},
 			[#pinfo{count = Count + 1,
 					proc = First#pinfo.proc,
 					spec = First#pinfo.spec} |Next];
-		true -> [First | update_process(Count, Next, New)]
+		true -> [First | update_process(Count, Next, New, Parent)]
 	end.
 
 %
@@ -107,7 +115,7 @@ update_process( Count, [First | Next], New ) ->
 % Conf : configuration state of the balancer.
 % ChildList : list of balanced process
 % New : ressource to add.
-ressource_adding( SuperPid, Conf, ChildList, New ) ->
+ressource_adding( SuperPid, Conf, ChildList, New, Parent ) ->
 	SmallestProc = (fun(Proc,Min) -> PMin = Proc#pinfo.count,
 									 if Min < PMin -> Min;
 										 true -> PMin end end),
@@ -118,12 +126,13 @@ ressource_adding( SuperPid, Conf, ChildList, New ) ->
 			Spec = setelement(1, Conf#bconf.spec, Conf#bconf.curr),
 			{ok, Pid} = supervisor:start_child(SuperPid, Spec),
 			gen_server:cast(Pid, {addressource, New}),
+			Parent!{putted, Pid},
 			NewProcess = #pinfo{count=1, proc=Pid, spec=Spec},
 			NewConf = setelement(3, Conf, Conf#bconf.curr + 1),
 			[First | Next] = ChildList,			% used to recombine the new list.
 			{NewConf, [NewProcess,First|Next]};
 			
-		true -> {Conf, update_process( MinRes, ChildList, New )}
+		true -> {Conf, update_process( MinRes, ChildList, New, Parent )}
 	end.
 
 
@@ -157,8 +166,8 @@ bootstrap_balancer() ->
 %% @hidden
 balancer( SuperPid, {Conf, ChildList} ) ->
 	receive
-		{addressource, Rsc} ->
-			State = ressource_adding(SuperPid, Conf, ChildList, Rsc ),
+		{addressource, Rsc, From} ->
+			State = ressource_adding(SuperPid, Conf, ChildList, Rsc, From ),
 			load_balancer:balancer( SuperPid, State );
 
 		{killressource, Rsc} ->

@@ -11,9 +11,11 @@
 -include("irc_struct.hrl").
 
 -export([
-			msg_of_string/1,
-			string_of_msg/1,
-			send_ident_msg/2
+			msg_of_string/1
+			,string_of_msg/1
+			,send_ident_msg/2
+			,prepare_err/2
+			,update_sender/2
 		]).
 
 -vsn( p01 ).
@@ -22,7 +24,17 @@
 %%  Implementation
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% @doc
+%%	Change the sender field of a msg
+%% @end
+%% @spec update_sender( Msg, Sender ) -> Msg
+update_sender( Msg, Sender ) ->
+	#msg{ sender = Sender,
+			ircCommand = Msg#msg.ircCommand,
+			params = Msg#msg.params,
+			data = Msg#msg.data
+		}.
+
 %% @doc
 %%	Transform a text representation of IRC
 %%	(received by a socket by example), and structure
@@ -43,21 +55,12 @@ msg_of_string( RawMsg ) ->
 
 
 	
-next_parse( Sender, Data, [Command, Destination | Message] ) ->
+next_parse( Sender, Data, [Command | Params] ) ->
 	Code = extract_command_code( Command ),
 	#msg{ sender=Sender,
-			dest=Destination,
 			ircCommand=Code,
-			params=Message,
+			params=Params,
 			data=Data
-		};
-next_parse( Sender, Data, [Command] ) ->
-	Code = extract_command_code( Command ),
-	#msg{ sender= Sender,
-			dest = [],
-			ircCommand = Code,
-			params = [],
-			data = Data
 		}.
 				
 %% Separate IRC protocol information of
@@ -93,14 +96,14 @@ sender_parser( Msg ) ->
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% -> string
-string_assembler( Sender, Dest, IrcCommand, Params, Data ) ->
+string_assembler( Sender, IrcCommand, Params, Data ) ->
 	SendedCommand = if is_atom(IrcCommand) -> atom_to_list(IrcCommand);
 						true -> integer_to_list(IrcCommand)
 					end,
 	Prelude = if Sender == "" -> "";
 				true -> lists:concat([":", Sender, " "])
 			end,
-	lists:concat( [Prelude, SendedCommand, " ", Dest, " ", lists:append(Params), ":", Data] ).
+	lists:concat( [Prelude, SendedCommand, " ", lists:append(Params), ":", Data] ).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% @doc
@@ -114,18 +117,16 @@ string_assembler( Sender, Dest, IrcCommand, Params, Data ) ->
 string_of_msg( Msg ) ->
 	case Msg of
 		#msg {sender={Nick,Username,Host},
-				dest=Dest,
 				ircCommand=IrcCommand,
 				params=Params,
 				data=Data } ->
 			string_assembler(lists:concat([Nick, "!", Username, "@", Host ]),
-											Dest, IrcCommand, Params, Data);
+											IrcCommand, Params, Data);
 		#msg { sender=Server,
-				dest=Dest,
 				ircCommand=IrcCommand,
 				params=Params,
 				data=Data } ->
-			string_assembler( Server, Dest, IrcCommand, Params, Data )
+			string_assembler( Server, IrcCommand, Params, Data )
 	end.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Helpers %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -133,5 +134,18 @@ string_of_msg( Msg ) ->
 %% A little function to send quickly a notice during identification
 %% @end
 send_ident_msg( CliSock, Message ) ->
-	ok = gen_tcp:send( CliSock, "NOTICE AUTH " ++ Message ).
+	ok = gen_tcp:send( CliSock, "NOTICE AUTH " ++ Message )
+	.
+
+%% @doc
+%%	Prepare a server message to send as a numerical error.
+%% @end
+%% @spec prepare_err( Serverhost, Errmsg ) -> Result
+%% where
+%%		Serverhost = string()
+%%		Errmsg = string() | [string]
+%%		Result = string()
+prepare_err( Serverhost, Errmsg ) ->
+	":" ++ Serverhost ++ Errmsg
+	.
 

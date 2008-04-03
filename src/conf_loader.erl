@@ -16,15 +16,20 @@ loadConf(Device, Conf) ->
 		Line -> 
 			%% Supprime les " ", \n,le "=" et les "
 			loadConf(Device, [string:tokens(
-						string:strip(
-							string:strip(
-								string:strip(Line, both, $\n), both, $=), both, $"), " =")|Conf])
+								string:strip(
+									string:strip(
+										string:strip(Line, both, $\n),
+										both, $=),
+									both, $"),
+								" =")|Conf])
 	end.
 
+%% @doc
 %% Attend un message.
 %% Le message se compose du Pid de l'appelant ainsi que du nom de la configuration a charger
 %%  Ex : dans le fichier de conf charger on a une conf : name = EIS. 
 %%       Le message a envoyer est de la forme : < Pid, name > et le résultat retourné sera EIS
+%% @end
 wait (Conf) ->
 	receive
 		{Pid, Name} -> 
@@ -33,19 +38,21 @@ wait (Conf) ->
 		_ -> error
 	end.
 
+%% @doc
 %% Autre fonction de test
-%%getElement (Conf, Seek) -> 
-%%	[Head | Queue] = Conf,
-%%	[Name | Val] = Head,
+%% Recherche la valeur correspondant a la clé Seek dans les conf
+%%  et envoi la réponse.
+%% @spec getElement (Conf, Seek) -> Result
+%% where
+%%	conf = [Head|Queue]
+%%	Head = [Name | Val]
 %%	if 
 %%		Name == Seek ->
 %%			Val;
 %%		true ->
 %%			getElement(Queue, Seek)
 %%	end.
-	
-%% Recherche la valeur correspondant a la clé Seek dans les conf
-%%  et envoi la réponse.
+%%	
 getElement ([[ Name| Val] | Queue], Seek, Pid) ->
 	if Name == Seek ->
 		Pid ! Val;

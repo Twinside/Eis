@@ -43,8 +43,6 @@ EFLAGS:=-o $(OBJDIR) -I $(HEADERDIR)
 
 $(OUTPUT): $(ALLOBJ)
 
-all: $(OUTPUT) docs
-
 $(OBJDIR)%.beam: $(SOURCEDIR)%.erl
 	$(ECC) $(EFLAGS) $<
 

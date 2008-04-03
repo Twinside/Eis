@@ -25,6 +25,7 @@
 
 -include_lib("kernel/include/inet.hrl").
 -include( "irc_struct.hrl" ).
+-include( "irc_authstrings.hrl" ).
 
 -export([
 		door_loop/3,

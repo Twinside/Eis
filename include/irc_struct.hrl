@@ -4,26 +4,9 @@
 % store content.
 %
 
-% user rights
--define(IrcModeInvisible , 1).	% +i
--define(IrcModeServNotified, 2).% +s
--define(IrcModeWallMsg, 4).		% +w
--define(IrcModeServOp, 8).		% +o
-
-% chan rights
--define(IrcModeOp, 16).			% +o
--define(IrcModeHalfop, 32).		% +h
--define(IrcModeVoice, 64).		% +v
--define(IrcModePrivate, 128).	% +p
--define(IrcModeSecret, 256).	% +s
--define(IrcModeInvite, 512).	% +i
--define(IrcModeTopic , 1024).	% +t
--define(IrcModeLocal , 2048).	% +n mode in
--define(IrcModeModerated, 4096).% +m
-
 % Defining IRC error codes for use when
 % replying with a numerical code :)
--define( ERR_NEEDMOREPARAMS, 461 ).
+-define( ERR_NEEDMOREPARAMS, "461 :Error need more parameters" ).
 -define( ERR_ALREADYREGISTERED, 462 ).
 
 -define( RPL_WELCOME, 001 ).
@@ -37,18 +20,9 @@
 -define( RPL_ENDOFMOTD, 476 ).
 
 
-%% Defining EIS responses during
-%% connection of a client.
--define( LOOKING_HOST_MSG, ":*** Looking up your hostname...\n" ).
--define( HOST_FOUND_MSG, ":*** Found your hostname.\n" ).
--define( HOST_NOT_FOUND_MSG, ":*** Unable to find your hostname, closing connection.\n" ).
--define( BAD_SEQUENCE_MSG, ":***Bad commands sequence.\n" ).
--define( TIME_OUT_MSG, ":*** Time out, closing connection.\n" ).
--define( VALIDATION_MSG, ":*** You've been regitered !\n" ).
-
-
 -record(chan,
 		{
+			manager,	%% as pid()
 			channame,	%% as string
 			userlimit,	%% as int
 			banlist,	%% as string list
@@ -58,29 +32,47 @@
 
 -record(client,
 		{
-			nick,		%% as string
-			host,		%% as string
-			username,	%% as string
-			send,		%% as function/2
-			sendArgs,    %% as socket() | {virtual, Pid}
-			subinfo		%% as you want.
+			nick		%% as string
+			,host		%% as string
+			,username	%% as string
+			,send		%% as function/2
+			,sendArgs    %% as socket() | {virtual, Pid}
+			,subinfo		%% as you want.
 		}).
 		
 -record(msg,
 		{
-			sender,		%% as a tuple : { nick, username, host } | server
-			dest,		%% as string
-			ircCommand,	%% as atom or int
-			params,		%% as list of string
-			data		%% as string
+			sender		%% as a tuple : { nick, username, host } | server
+			,ircCommand	%% as atom or int
+			,params		%% as list of string
+			,data		%% as string
 		}).
 
 
 -record( listener,
 		{
-			supervisor,
-			bynick,
-			bysock
+			server_host %% string
+			,supervisor	%% balance
+			,servernode	%% pid of the server node.
+			,bynick
+			,bysock
 		}).
 
+-record( cmanager,
+		{
+			bal			%% PID of balance
+			,serv		%% PID of servernode.
+			,byname		%% association table with chan name in key
+		}).
 
+-record( srvs,
+		{
+			supervisor
+			,clibal		% load balancer for client
+			,chanbal	% load balancer for channels
+			,clients	% global list of clients connected to this server.
+			,chans		% global list of chans on the network.
+
+			,maxcli
+			,maxchanpercli	% fuck.
+		} ).

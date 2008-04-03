@@ -94,11 +94,9 @@ handle_cast( _Request, State ) -> % ignore invalid cast
 %% @hidden
 handle_info( {tcp, Socket, Data}, State ) ->
 	Bysock = State#listener.bysock,
-	_Msg = irc:msg_of_string( Data ),
-	[_Cli] = ets:lookup( Bysock, Socket ),
-	% do right things with Cli and Msg
-	%io:format( "TCP message received from ~p~nMassage is : ~p~n", [Cli, MSG] ),
-	{noreply, 0 }.%State}.
+	Msg = irc:msg_of_string( Data ),
+	[Cli] = ets:lookup( Bysock, Socket ),
+	{noreply, dispatcher( Msg#msg.ircCommand, Msg, Cli, State ) }.
 
 %% @hidden
 terminate(_Reason,_State) ->
@@ -110,7 +108,8 @@ code_change(_OldVsn,_State,_Extra) ->
 	undefined.
 
 
-%dispatcher( 'JOIN', Msg, From ) -> command_join( Msg );
+dispatcher( 'JOIN', Msg, From, State ) ->
+	com_join:perform_client( Msg, From, State ).
 %dispatcher( 'PRIVMSG', Msg, From ) -> command_privmsg( Msg );
 %dispatcher( 'NOTICE', Msg, From ) -> command_notice( Msg ).
 

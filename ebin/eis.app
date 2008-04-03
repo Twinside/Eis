@@ -4,26 +4,27 @@
     {vsn, "p01"},
     {modules,
         [
-            chan_manager.beam,
-            client_listener.beam,
-            com_kick.beam,
-            com_kill.beam,
-            com_notice.beam,
-            com_part.beam,
-            com_privmsg.beam,
-            conf_loader.beam,
-            doorman.beam,
-            eis.beam,
-            ident_checker.beam,
-            irc.beam,
-            irc_laws.beam,
-            irc_log.beam,
-            load_balancer.beam,
-            server_node.beam 
+            chan_manager,
+            client_listener,
+            com_kick,
+            com_kill,
+            com_notice,
+            com_part,
+            com_privmsg,
+            conf_loader,
+            doorman,
+            eis,
+            ident_checker,
+            irc,
+            irc_laws,
+            irc_log,
+            load_balancer,
+            server_node 
         ]
     },
     {registered, []},
     {env, []},
-    {mod, {,[]}}
+    {mod, {eis,[]}}
   ]
 }
+
