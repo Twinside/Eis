@@ -29,7 +29,7 @@
 %% @end
 %% @spec send_chan( Chan, What ) -> Result
 %% where
-%%		Chan = chan()
+%%		Chan = {pid(), string()}
 %%		What = term()
 %%		Result = ok
 send_chan( Chan, What ) ->
@@ -70,7 +70,7 @@ handle_cast( {killressource, Chan}, ChanList ) ->
 %% @hidden
 handle_cast( takeany, ChanList ) ->
 	Key = ets:first( ChanList ),
-	[Chan] = ets:lookup( ChanList, Key ),
+	[{_, Chan}] = ets:lookup( ChanList, Key ),
 	ets:delete(ChanList, Key),
 	{reply, {takeany, Chan}, ChanList};
 

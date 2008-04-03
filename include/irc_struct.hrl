@@ -71,7 +71,7 @@
 			,clibal		% load balancer for client
 			,chanbal	% load balancer for channels
 			,clients	% global list of clients connected to this server.
-			,chans		% global list of chans on the network.
+			,chans		% global list of chans on the network. {channame, managerPid}
 
 			,maxcli
 			,maxchanpercli	% fuck.

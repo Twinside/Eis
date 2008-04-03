@@ -74,7 +74,7 @@ handle_cast( takeany, State ) ->
 	Bysock = State#listener.bysock,
 	
 	Key = ets:first( Bynick ),
-	[Cli] = ets:lookup( Bynick, Key ),
+	[{_, Cli}] = ets:lookup( Bynick, Key ),
 	ets:delete( Bynick, Cli#client.sendArgs ), % deleting from tables
 	ets:delete( Bysock, Cli#client.nick ),
 	
@@ -95,7 +95,7 @@ handle_cast( _Request, State ) -> % ignore invalid cast
 handle_info( {tcp, Socket, Data}, State ) ->
 	Bysock = State#listener.bysock,
 	Msg = irc:msg_of_string( Data ),
-	[Cli] = ets:lookup( Bysock, Socket ),
+	[{_, Cli}] = ets:lookup( Bysock, Socket ),
 	{noreply, dispatcher( Msg#msg.ircCommand, Msg, Cli, State ) }.
 
 %% @hidden

@@ -61,7 +61,7 @@ is_chan_existing( ServerPid, NickName ) ->
 %% where
 %%		ServerPid = pid()
 %%		Nickname = string()
-%%		Result = {ok, Client} | error
+%%		Result = {ok, {nick,client()}} | error
 get_client( ServerPid, Nickname ) ->
 	gen_server:call( ServerPid, {get_client, Nickname} ).
 
@@ -72,7 +72,7 @@ get_client( ServerPid, Nickname ) ->
 %% where
 %%		ServerPid = pid()
 %%		ChanName = string()
-%%		Result = {ok, Chan} | error
+%%		Result = {ok, {Channame,pid()}} | error
 get_chan( ServerPid, ChanName ) ->
 	gen_server:call( ServerPid, {get_chan, ChanName} ).
 
@@ -150,7 +150,7 @@ handle_call( _What, _From, State ) ->
 %
 %% @hidden
 handle_cast( {add_chan, Chan, Client}, State ) ->
-	case extract( State#srvs.chans, Chan#chan.channame, State ) of
+	case extract( State#srvs.chans, Chan, State ) of
 		{_, error,_ } -> com_join:server_add( State, Chan, Client );	% faire un join
 		{_, {ok, Prev}, _} -> chan_manager:send_chan( Prev, Client )	% we join the previous one.
 	end,	

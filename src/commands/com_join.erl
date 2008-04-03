@@ -36,18 +36,13 @@ join_chan( Msg, Cli, Chan, [] ) ->
 	chan_manager:send_chan( Chan, {Msg, Cli, ""} )
 	;
 
-join_chan( Msg, Cli, Chan, [Pass] ) ->
+join_chan( Msg, Cli, {Chan,Pid}, [Pass] ) ->
 	chan_manager:send_chan( Chan, {Msg, Cli, Pass} )
 	.
 	
 create_chan( Msg, Cli, ServerNode ) ->
 	[ChanName|Other] = Msg#msg.params,
-	Chan = #chan { channame = ChanName,
-					userlimit = no_limit,
-					banlist = [],
-					topic = "",
-					mode = 0 },
-	server_node:add_chan( ServerNode, Chan, Cli )
+	server_node:add_chan( ServerNode, ChanName, Cli )
 	.
 
 perform_server( Chan, Serverstate, _IrcMsg ) ->
@@ -59,6 +54,7 @@ perform_chan( _Chan, ChanState, _IrcMsg ) ->
 server_add( ServerState, Chan, Owner ) ->
 	Bal = ServerState#srvs.chanbal,
 	{ok, Pid} = load_balancer:add_ressource( Bal, Chan ),
+	ets:add( ServerState#srvs.chans, {ChanChan#chan.channame, Pid} ),
 	gen_server:cast( Pid, {Chan,Owner} )
 	.
 
