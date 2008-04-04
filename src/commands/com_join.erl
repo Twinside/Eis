@@ -55,7 +55,7 @@ perform_chan( _Chan, ChanState, _IrcMsg ) ->
 %%	Add a chan to the server, internal
 %%	process.
 %% @end
-%% @spec server_add( ServerState, Chan Owner ) -> none
+%% @spec server_add( ServerState, Chan, Owner ) -> none
 %% where
 %%		ServerState = srvrs()
 %%		Chan = string()
