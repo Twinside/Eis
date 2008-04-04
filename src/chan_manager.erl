@@ -21,6 +21,7 @@
 -export([
 			send_chan/2
             ,new_chan/1
+            ,broadcast_users/2
 		]).
 		
 -vsn( p01 ).
@@ -48,7 +49,23 @@ new_chan( Channame ) ->
             userlist = ets:new( gnalist, [set] ),
             foreignusers = ets:new( gneugneu, [set] )
           }.
-          
+
+%% @doc
+%%  Send a message to all members of a chan.
+%% @end
+%% @spec broadcast_users( Chan , Message ) -> none
+%% where
+%%      Chan = chan()
+%%      Message = string()
+broadcast_users( Chan, Message ) ->
+    Broadcaster = (fun( Usr, Msg ) ->
+                    (Usr#client.send)(Usr#client.sendArgs, Msg )
+                   end), 
+    ets:foldl( Broadcaster, Message, Chan#chan.userlist )
+    % do something for foreign users, may be send to server
+    % node.
+    .
+    
 start_link( Initparam ) ->
 	gen_server:start_link( ?MODULE, [Initparam], []).
 

@@ -11,6 +11,10 @@
 -define( ERR_BADCHANNELKEY, "475 :Error bad chanel key" ).
 -define( ERR_CHANNELISFULL, "471 :Error channel is full" ).
 -define( ERR_NOSUCHCHANNEL, "403 :Error no such channel" ).
+
+-define( RPL_TOPIC, " 322 " ).
+-define( RPL_NOTOPIC, " 331 " ).
+
 -define( RPL_WELCOME, 001 ).
 -define( RPL_YOURHOST, 002 ).
 -define( RPL_CREATED, 003 ).
@@ -26,7 +30,6 @@
 -define( MAX_CHANNAME_SIZE, 18 ).
 -define( MAX_NICKNAME_SIZE, 15 ).
 
--define( CHAN_INDEX_USERCOUNT, 3 ).
 -record(chan,
 		{
 			channame	    %% as string

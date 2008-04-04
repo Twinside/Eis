@@ -139,6 +139,15 @@ handle_call( {chan_exists, Name}, _From, State ) ->
 handle_call( {get_chan, ChanName}, _From, State ) ->
 	extract( State#srvs.chans, ChanName, State );
 
+handle_call( {add_chan, Chan}, _From, State ) ->
+	{reply,
+        case extract( State#srvs.chans, Chan, State ) of
+		    {_,  error , _} -> com_join:server_add( State, Chan );	% faire un join
+    		{_, {ok, _}, _} -> State
+        end,
+     State
+	};
+
 %% @hidden
 handle_call( _What, _From, State ) ->
 	{noreply, State}.	
@@ -147,14 +156,6 @@ handle_call( _What, _From, State ) ->
 % Different call used by the load balancer.
 %
 %% @hidden
-handle_cast( {add_chan, Chan}, State ) ->
-	{noreply,
-        case extract( State#srvs.chans, Chan, State ) of
-		    {_,  error , _} -> com_join:server_add( State, Chan );	% faire un join
-    		{_, {ok, _}, _} -> State
-        end
-	};
-
 %%%%%%
 handle_cast( {set_balance, Clibal, Chanbal},
             #srvs{supervisor=Sup, clients=Cli, chans=Chan,

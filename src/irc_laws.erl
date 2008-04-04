@@ -51,6 +51,7 @@
             ,is_chan_passworded/1
             ,is_chan_inviteonly/1
             ,is_chan_limited/1
+            ,choose_welcome_right/1
 		]).
 
 -define( allow_chan( Command, UserRight, ChanRight ),
@@ -93,6 +94,17 @@ is_chan_inviteonly( Chan ) ->
 %%      Chan = chan()
 is_chan_limited( Chan ) ->
     (Chan#chan.mode band ?MLIMITED) /=0.
+
+%% @doc
+%%  Give the initial user right in function
+%%  of the number of user already in the chan.
+%% @end
+%% @spec choose_welcome_right( N ) -> Result
+%% where
+%%      N = int()
+%%      Result = rights()
+choose_welcome_right( 0 ) -> ?MCHANOP;
+choose_welcome_right( _ ) -> 0.
 
 % % We refuse everything, unless the rules is defined below.
 

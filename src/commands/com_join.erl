@@ -63,15 +63,17 @@ do_client_join( Dest, Msg, Cli, CliState ) ->
 
        true -> false
     end.
+
      
 join_chan( Msg, Cli, {Channame,Pid} ) ->
 	chan_manager:send_chan( Pid, {Msg, Channame, Cli} )
 	.
+
 	
-create_chan( Msg, _Cli, ServerNode ) ->
+create_chan( Msg, Cli, ServerNode ) ->
 	[ChanName|_] = Msg#msg.params,
-	server_node:add_chan( ServerNode, ChanName )
-    % TODO truc ici
+	Pid = server_node:add_chan( ServerNode, ChanName ),
+    chan_manger:send( Pid, {Msg, ChanName, Cli} )
 	.
 
 %% @doc
@@ -132,9 +134,6 @@ check_user_limit( State, Cli, Chan ) ->
 check_user_ban( _State, _Cli, _Chan ) ->
     true.
 
-% perform_server( _Chan, Serverstate, _IrcMsg ) ->
-%	Serverstate.
-
 %% @doc
 %%  Perform validation and registering of the JOIN
 %%	command on the cannel side. Called by chan_manager.
@@ -156,20 +155,37 @@ perform_chan( Msg, Cli, Chan, ChanState ) ->
     end
 	.
 
+% work only for local user, fix it
+% for foreign ones.
 register_user( Cli, ChanState, Chan ) ->
-    NeoChan = setelement( Chan, ?CHAN_INDEX_USERCOUNT,
-                            Chan#chan.usercount + 1 ),
+    Right = irc_laws:choose_welcome_right( Chan#chan.usercount ),
+    NeoChan = Chan#chan {usercount = Chan#chan.usercount + 1 },
     ets:insert( NeoChan#chan.userlist,
                 {
                     Cli#client.nick,
-                    {Cli, 0}
+                    {Cli, Right}
                 } ),
     % update the chan information.
     ets:insert( ChanState#cmanager.byname,
                 {Chan#chan.channame, NeoChan} ),
+    send_welcome_info( ChanState#cmanager.server_host,
+                        Cli, Chan ),
+    % broadcaster tous les utilisateurs du chan
+    % filer la liste des noms aussi, ça peut aider.     
     ChanState
     .
     
+send_welcome_info( Serverhost, Cli, #chan { channame= ChanName,
+                                            topic= "" } ) ->
+    Message = lists:concat([":", Serverhost, ?RPL_NOTOPIC, ChanName, "\n" ]),
+    (Cli#client.send)( Cli#client.sendArgs, Message );
+
+send_welcome_info( Serverhost, Cli, #chan {channame = ChanName,
+                                            topic = Topic } ) ->
+    Message = lists:concat([":", Serverhost, ?RPL_TOPIC, ChanName
+                          ," :", Topic, "\n"]),
+    (Cli#client.send)( Cli#client.sendArgs, Message ).
+                                            
     
 %% @doc
 %%	Add a chan to the server, internal
