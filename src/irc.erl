@@ -172,9 +172,6 @@ send_err( ServHost, Client, Errmsg ) ->
     (Client#client.send)( Client#client.sendArgs, ParamErr )
     .
 
--define( MAX_CHANNAME_SIZE, 18 ).
--define( MAX_NICKNAME_SIZE, 15 ).
-
 %% @doc
 %%  Tell if the chan name is a valid one.
 %% @end

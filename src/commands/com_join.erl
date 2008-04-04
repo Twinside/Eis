@@ -18,19 +18,40 @@
 perform_client( Msg, Cli, ClientState ) ->
 	Lst = Msg#msg.params,
 	NeoMsg = irc:update_sender( Msg, Cli#client.nick ),
-	ServerNode = ClientState#listener.servernode,
 
 	case Lst of
 		[] -> irc:sendErr( ClientState, Cli, ?ERR_NEEDMOREPARAMS );
-        [Dest | _] ->
-				(case server_node:get_chan(ServerNode, Dest) of
-					error -> create_chan( NeoMsg, Cli, ServerNode );
-					{ok, Chan} -> join_chan( NeoMsg, Cli, Chan )
-				end)
+        [Dest | _] -> do_client_join( Dest, NeoMsg, Cli, ClientState )
 	end,
 	ClientState.
 
+%% @doc
+%%  Validate a channel name and send the
+%%  apropriate error message if there is an error.
+%% @end
+%% @spec name_validation( ClientState, Cli, Channame ) -> bool
+%% where
+%%      ClientState = listener()
+%%      Cli = client()
+%%      Channame = string()
+name_validation( ClientState, Cli, Channame ) ->
+    Valid = irc:is_channame_valid( Channame ),
+    if Valid -> true;
+        true -> irc:send_err( ClientState, Cli, ?ERR_NOSUCHCHANNEL ),
+                false
+    end.
 
+do_client_join( Dest, Msg, Cli, CliState ) ->
+    Continue = name_validation( CliState, Cli, Dest ),
+	ServerNode = CliState#listener.servernode,
+    if Continue -> case server_node:get_chan(ServerNode, Dest) of
+                    error -> create_chan( Msg, Cli, ServerNode );
+                    {ok, Chan} -> join_chan( Msg, Cli, Chan )
+                end;
+
+       true -> false
+    end.
+     
 join_chan( Msg, Cli, {Channame,Pid} ) ->
 	chan_manager:send_chan( Pid, {Msg, Channame, Cli} )
 	.

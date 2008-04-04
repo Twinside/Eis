@@ -10,7 +10,7 @@
 -define( ERR_ALREADYREGISTERED, 462 ).
 -define( ERR_BADCHANNELKEY, "475 :Error bad chanel key" ).
 -define( ERR_CHANNELISFULL, "471 :Error channel is full" ).
-
+-define( ERR_NOSUCHCHANNEL, "403 :Error no such channel" ).
 -define( RPL_WELCOME, 001 ).
 -define( RPL_YOURHOST, 002 ).
 -define( RPL_CREATED, 003 ).
@@ -21,6 +21,10 @@
 -define( RPL_MOTD, 372 ).
 -define( RPL_ENDOFMOTD, 476 ).
 
+% surement à bouger dans la conf,
+% pour le moment je le laisse là.
+-define( MAX_CHANNAME_SIZE, 18 ).
+-define( MAX_NICKNAME_SIZE, 15 ).
 
 -record(chan,
 		{
