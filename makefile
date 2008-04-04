@@ -39,7 +39,8 @@ OBJ:=$(addprefix $(OBJDIR),$(addsuffix $(OBJEXT),$(modules)))
 ALLSOURCES:=$(SRC) $(COMSRC)
 ALLOBJ:=$(OBJ) $(COMOBJ)
 
-EFLAGS:=-o $(OBJDIR) -I $(HEADERDIR)
+DEBUG=+debug_info
+EFLAGS:=$(DEBUG) -o $(OBJDIR) -I $(HEADERDIR) -Wall
 
 $(OUTPUT): $(ALLOBJ)
 

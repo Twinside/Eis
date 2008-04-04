@@ -54,18 +54,21 @@
 start_link(Module, Function, {MaxRessource, Referer}) ->
 	Balance = spawn(?MODULE, bootstrap_balancer,[]),
 	InitialProcess = {0,
-						{Module, Function, [{Balance, Referer}]},
+						{
+                            Module,
+                            Function,
+                            [ {Balance, Referer} ]
+                         },
 						permanent, 1000, worker, [Module]},
 	Conf = #bconf{ maxress= MaxRessource,
 				   spec=InitialProcess,
 				   curr=1 },
-
 	case supervisor:start_link(?MODULE, InitialProcess ) of
 		{ok, Pid} -> Balance!{notifysupervisor, Pid, {Conf, [InitialProcess]}},
 					 {ok, Balance};
 
 		{error, _} -> irc_log:logFatal("Cannot start LoadBlancer"),
-					  {error, "Fatal"}
+					  {error, "Fatal"}            
 	end.
 
 %% @doc

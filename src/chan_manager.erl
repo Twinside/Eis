@@ -36,13 +36,13 @@ send_chan( Chan, What ) ->
 	gen_server:handle_cast( Chan#chan.manager,
 							What ).
 
-start_link( Balancer ) ->
-	gen_server:start_link( ?MODULE, [Balancer], []).
+start_link( Initparam ) ->
+	gen_server:start_link( ?MODULE, [Initparam], []).
 
 %
 % gen_server implementation
 %
-init( {Balance, ServerNode} ) ->
+init( [ {Balance, ServerNode} ] ) ->
 	irc_log:logVerbose( "chan manager spawned" ),
 	State = #cmanager { bal = Balance,
 						serv = ServerNode,

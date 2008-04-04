@@ -68,20 +68,20 @@ start( _StartType, _StartArgs ) ->
 	MaxChan = 10,	% load real constant from conf
 	ListeningPort = 6667,	% load real constant from conf
 	
+	ServerNode = make_specserv( server_node, start_link, [RootSupervisor] ),
+	{ok, ServerPid} = supervisor:start_child( RootSupervisor, ServerNode ),
+	
 	CliBalance = make_specbalance( 'CLIBALANCE', load_balancer, start_link,
-									[client_listener, start_link, {MaxCli, self()}] ),
+									[client_listener, start_link, {MaxCli, ServerPid}] ),
 	{ok, CliBalPid} = supervisor:start_child( RootSupervisor, CliBalance ),
 	irc_log:logVerbose( "Client balance launched" ),
 	
 	ChanBalance = make_specbalance( 'CHANBALANCE', load_balancer, start_link,
-									[chan_manager, start_link, {MaxChan, self()}] ),
+									[chan_manager, start_link, {MaxChan, ServerPid}] ),
 	{ok, ChanBalPid} = supervisor:start_child( RootSupervisor, ChanBalance ),
 	irc_log:logVerbose( "Chan balance launched" ),
-	
-	ServerNode = make_specserv( server_node, start_link,
-								[{RootSupervisor, CliBalPid, ChanBalPid}] ),
-	{ok, ServerPid} = supervisor:start_child( RootSupervisor, ServerNode ),
-	
+    gen_server:cast( ServerPid, {set_balance, CliBalPid, ChanBalPid } ),
+    	
 	DoormanNode = make_specserv( doorman, start_link, [ListeningPort, 
 													ServerPid, CliBalPid] ),
 	{ok, _DoormanPid} = supervisor:start_child( RootSupervisor, DoormanNode ),

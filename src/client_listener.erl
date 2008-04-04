@@ -21,19 +21,21 @@
 %%	Start e new client listener.
 %% @end
 %% @spec start_link( Balancer ) -> Result
-%% where Balancer = pid()
-%%		 Result = {ok, Pid} | {error| Error}
-start_link( Balancer ) ->
-	gen_server:start_link( ?MODULE, [Balancer], [] ).
+%% where InitParam = {pid(), pid()}
+%%		 Result = {ok, Pid} | {error, Error}
+start_link( Initparam ) ->
+	gen_server:start_link( ?MODULE, [Initparam], [] ).
 
 
 %%
 % gen_server implementation
 %%
 %% @hidden
-init( Supervisor ) ->
+
+init( [ {Balance, Servernode} ] ) ->
 	irc_log:logVerbose( "Client Listener created" ),
-	{ok, #listener{ supervisor = Supervisor,
+	{ok, #listener{ supervisor = Balance,
+                    servernode = Servernode,
 					bynick = ets:new(tabtest, [set]),
 					bysock = ets:new(tabtest, [set]) }
 	}.

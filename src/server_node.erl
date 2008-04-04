@@ -99,11 +99,9 @@ add_user( ServerPid, User ) ->
 %% @doc
 %%	Launch a new server.
 %% @end
-start_link({Supervisor, CliBalance, ChanBalance}) ->
+start_link(Supervisor) ->
 	gen_server:start_link(?MODULE,
 							[#srvs{supervisor=Supervisor,
-									clibal = CliBalance,
-									chanbal = ChanBalance,
 									clients = ets:new( global_clients, [set] ),
 									chans = ets:new( global_chans, [set] ) }],
 							[] ).
@@ -155,7 +153,21 @@ handle_cast( {add_chan, Chan, Client}, State ) ->
 		{_, {ok, Prev}, _} -> chan_manager:send_chan( Prev, Client )	% we join the previous one.
 	end,	
 	{noreply, State};
-	
+
+%%%%%%
+handle_cast( {set_balance, Clibal, Chanbal},
+            #srvs{supervisor=Sup, clients=Cli, chans=Chan,
+                    maxcli=Max, maxchanpercli=Maxpercli} ) ->
+    {noreply,
+        #srvs { supervisor = Sup,
+                clients = Cli,
+                chanbal = Chanbal,
+                clibal = Clibal,
+                chans = Chan,
+                maxcli = Max,
+                maxchanpercli = Maxpercli }
+    };
+              
 handle_cast( _Command, State ) ->
 	{noreply, State}.
 	
