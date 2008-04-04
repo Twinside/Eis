@@ -15,7 +15,7 @@
 			is_chan_existing/2,
 			get_client/2,
 			get_chan/2,
-			add_chan/3,
+			add_chan/2,
 			add_user/2
 		]).
 
@@ -82,13 +82,13 @@ get_chan( ServerPid, ChanName ) ->
 %%	if existance is found, the message is forwarded as
 %%	a non-creative join.
 %% @end
-%% @spec add_chan( ServerPid, Chan, Client ) -> Result
+%% @spec add_chan( ServerPid, Chan ) -> Result
 %% where
 %%		ServerPid = pid()
 %%		Chan = chan()
 %%		Result = none
-add_chan( ServerPid, Chan, From ) ->
-	gen_server:cast( ServerPid, {add_chan, Chan, From} ).
+add_chan( ServerPid, Chan ) ->
+	gen_server:cast( ServerPid, {add_chan, Chan} ).
 
 %% @doc
 %%	Add a new user into the server.
@@ -147,12 +147,13 @@ handle_call( _What, _From, State ) ->
 % Different call used by the load balancer.
 %
 %% @hidden
-handle_cast( {add_chan, Chan, Client}, State ) ->
-	case extract( State#srvs.chans, Chan, State ) of
-		{_, error,_ } -> com_join:server_add( State, Chan, Client );	% faire un join
-		{_, {ok, Prev}, _} -> chan_manager:send_chan( Prev, Client )	% we join the previous one.
-	end,	
-	{noreply, State};
+handle_cast( {add_chan, Chan}, State ) ->
+	{noreply,
+        case extract( State#srvs.chans, Chan, State ) of
+		    {_,  error , _} -> com_join:server_add( State, Chan );	% faire un join
+    		{_, {ok, _}, _} -> State
+        end
+	};
 
 %%%%%%
 handle_cast( {set_balance, Clibal, Chanbal},

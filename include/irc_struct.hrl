@@ -26,16 +26,18 @@
 -define( MAX_CHANNAME_SIZE, 18 ).
 -define( MAX_NICKNAME_SIZE, 15 ).
 
+-define( CHAN_INDEX_USERCOUNT, 3 ).
 -record(chan,
 		{
-			manager 	%% as pid()
-			,channame	%% as string
-			,userlimit	%% as int
-            ,usercount  %% as int
-            ,password    %% as string
-			,banlist 	%% as string list
-			,topic 		%% as string
-			,mode		%% as int interpreted as flag.
+			channame	    %% as string
+			,userlimit = 0  %% as int
+            ,usercount = 0  %% as int
+            ,password = ""  %% as string
+			,banlist = []	%% as string list
+			,topic = ""		%% as string
+			,mode = 0	    %% as int interpreted as flag.
+            ,userlist       %% List of locals user to broadcast.
+            ,foreignusers   %%
 		}).
 
 -record(client,
@@ -45,7 +47,6 @@
 			,username	%% as string
 			,send		%% as function/2
 			,sendArgs    %% as socket() | {virtual, Pid}
-			,subinfo		%% as you want.
 		}).
 		
 -record(msg,

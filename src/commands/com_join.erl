@@ -11,10 +11,20 @@
 -export([
 			perform_client/3
 			,perform_chan/4
-			,server_add/3
+			,server_add/2
             ,get_password/1
 		]).
 
+%% @doc
+%%  Process the client side of the JOIN command.
+%%  It's called by the client_listener.
+%% @end
+%% @spec perform_client( Msg, Cli, ClientState ) -> Result
+%% where
+%%      Msg = msg()
+%%      Cli = client()
+%%      ClientState = listener()
+%%      Result = listener()
 perform_client( Msg, Cli, ClientState ) ->
 	Lst = Msg#msg.params,
 	NeoMsg = irc:update_sender( Msg, Cli#client.nick ),
@@ -45,7 +55,9 @@ do_client_join( Dest, Msg, Cli, CliState ) ->
     Continue = name_validation( CliState, Cli, Dest ),
 	ServerNode = CliState#listener.servernode,
     if Continue -> case server_node:get_chan(ServerNode, Dest) of
-                    error -> create_chan( Msg, Cli, ServerNode );
+                    error -> create_chan( Msg, Cli, ServerNode ),
+                             {_, Chan} = server_node:get_chan( ServerNode, Dest ),
+                             join_chan( Msg, Cli, Chan );
                     {ok, Chan} -> join_chan( Msg, Cli, Chan )
                 end;
 
@@ -56,9 +68,10 @@ join_chan( Msg, Cli, {Channame,Pid} ) ->
 	chan_manager:send_chan( Pid, {Msg, Channame, Cli} )
 	.
 	
-create_chan( Msg, Cli, ServerNode ) ->
+create_chan( Msg, _Cli, ServerNode ) ->
 	[ChanName|_] = Msg#msg.params,
-	server_node:add_chan( ServerNode, ChanName, Cli )
+	server_node:add_chan( ServerNode, ChanName )
+    % TODO truc ici
 	.
 
 %% @doc
@@ -121,27 +134,57 @@ check_user_ban( _State, _Cli, _Chan ) ->
 
 % perform_server( _Chan, Serverstate, _IrcMsg ) ->
 %	Serverstate.
-	
+
+%% @doc
+%%  Perform validation and registering of the JOIN
+%%	command on the cannel side. Called by chan_manager.
+%% @end
+%% @spec perform_chan( Msg, Cli, Chan, ChanState ) -> Result
+%% where
+%%      Msg = msg()
+%%      Cli = client()
+%%      Chan = channel()
+%%      ChanState = cmanager()
 perform_chan( Msg, Cli, Chan, ChanState ) ->
-    _ValidJoin = check_password( ChanState, Msg, Chan, Cli ) andalso
+    ValidJoin = check_password( ChanState, Msg, Chan, Cli ) andalso
                 (bnot irc_laws:is_chan_inviteonly( Chan )) andalso
                 check_user_limit( ChanState, Cli, Chan ) andalso
                 check_user_ban( ChanState, Cli, Chan ),
-	ChanState.
+                
+    if ValidJoin -> register_user( Cli, ChanState, Chan );
+        true -> ChanState
+    end
+	.
 
+register_user( Cli, ChanState, Chan ) ->
+    NeoChan = setelement( Chan, ?CHAN_INDEX_USERCOUNT,
+                            Chan#chan.usercount + 1 ),
+    ets:insert( NeoChan#chan.userlist,
+                {
+                    Cli#client.nick,
+                    {Cli, 0}
+                } ),
+    % update the chan information.
+    ets:insert( ChanState#cmanager.byname,
+                {Chan#chan.channame, NeoChan} ),
+    ChanState
+    .
+    
+    
 %% @doc
 %%	Add a chan to the server, internal
 %%	process.
 %% @end
-%% @spec server_add( ServerState, Chan, Owner ) -> none
+%% @spec server_add( ServerState, Channame ) -> Result
 %% where
 %%		ServerState = srvrs()
-%%		Chan = string()
-%%		Owner = client()
-server_add( ServerState, Chan, Owner ) ->
+%%		Channame = string()
+%%      Result = srvs()
+server_add( ServerState, Channame ) ->
 	Bal = ServerState#srvs.chanbal,
+    Chan = chan_manager:new_chan( Channame ),
 	{ok, Pid} = load_balancer:add_ressource( Bal, Chan ),
 	ets:add( ServerState#srvs.chans, {Chan, Pid} ),
-	gen_server:cast( Pid, {Chan,Owner} )
+    ServerState
 	.
 

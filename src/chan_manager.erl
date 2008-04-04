@@ -20,6 +20,7 @@
 
 -export([
 			send_chan/2
+            ,new_chan/1
 		]).
 		
 -vsn( p01 ).
@@ -33,9 +34,21 @@
 %%		What = term()
 %%		Result = ok
 send_chan( Chan, What ) ->
-	gen_server:handle_cast( Chan#chan.manager,
-							What ).
+	gen_server:handle_cast( Chan, What ).
 
+%% @doc
+%%  Instantiate a new chan.
+%% @spec new_chan( Channame ) -> Result
+%% where
+%%      Channame = string()
+%%      Result = chan()
+new_chan( Channame ) ->
+    #chan {
+            channame = Channame,
+            userlist = ets:new( gnalist, [set] ),
+            foreignusers = ets:new( gneugneu, [set] )
+          }.
+          
 start_link( Initparam ) ->
 	gen_server:start_link( ?MODULE, [Initparam], []).
 
