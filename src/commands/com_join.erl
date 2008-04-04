@@ -10,8 +10,9 @@
 
 -export([
 			perform_client/3
-			,perform_chan/3
+			,perform_chan/4
 			,server_add/3
+            ,get_password/1
 		]).
 
 perform_client( Msg, Cli, ClientState ) ->
@@ -20,24 +21,18 @@ perform_client( Msg, Cli, ClientState ) ->
 	ServerNode = ClientState#listener.servernode,
 
 	case Lst of
-		[] -> Args = Cli#client.sendArgs,
-					ParamErr = irc:prepare_err(ClientState#listener.server_host,
-												?ERR_NEEDMOREPARAMS),
-					(Cli#client.send)( Args, ParamErr );
-		[Dest | Next] ->
+		[] -> irc:sendErr( ClientState, Cli, ?ERR_NEEDMOREPARAMS );
+        [Dest | _] ->
 				(case server_node:get_chan(ServerNode, Dest) of
 					error -> create_chan( NeoMsg, Cli, ServerNode );
-					{ok, Chan} -> join_chan( NeoMsg, Cli, Chan, Next )
+					{ok, Chan} -> join_chan( NeoMsg, Cli, Chan )
 				end)
 	end,
 	ClientState.
 
-join_chan( Msg, Cli, Chan, [] ) ->
-	chan_manager:send_chan( Chan, {Msg, Cli, ""} )
-	;
 
-join_chan( Msg, Cli, {_Chan,Pid}, [Pass] ) ->
-	chan_manager:send_chan( Pid, {Msg, Cli, Pass} )
+join_chan( Msg, Cli, {Channame,Pid} ) ->
+	chan_manager:send_chan( Pid, {Msg, Channame, Cli} )
 	.
 	
 create_chan( Msg, Cli, ServerNode ) ->
@@ -45,10 +40,72 @@ create_chan( Msg, Cli, ServerNode ) ->
 	server_node:add_chan( ServerNode, ChanName, Cli )
 	.
 
+%% @doc
+%%  Extract the password of a JOIN message
+%% @end
+%% @spec get_password( Msg ) -> Result
+%% where
+%%      Msg = msg()
+%%      Result = string()
+get_password( Msg ) ->
+    case Msg#msg.params of
+        [_, Password | _] -> Password;
+        _ -> ""
+    end.
+
+%% @doc
+%%  Check if the chan is passworded and compare
+%%  given passwords.
+%% @end
+%% @spec check_password( State, Msg, Chan, Cli ) -> bool
+%% where
+%%      State = cmanager()
+%%      Msg = msg()
+%%      Chan = chan()
+%%      Cli = client()
+check_password( State, Msg, Chan, Cli ) ->
+    Passworded = irc_laws:is_chan_passworded(Chan),
+    if Passworded -> 
+            Pass = get_password( Msg ),
+            if Pass /= Chan#chan.password ->
+                    irc:send_err( State, Cli, ?ERR_BADCHANNELKEY );
+                    false;
+               true -> true
+            end;
+        true -> true
+    end.
+
+%% @spec check_user_limit( State, Chan, Cli ) -> bool
+%% where
+%%      State = cmanager()
+%%      Chan = chan()
+%%      Cli = client()
+check_user_limit( State, Cli, Chan ) ->
+    Limited = irc_laws:is_chan_limited( Chan ),
+    if  Limited andalso
+        Chan#chan.userlimit =< Chan#chan.usercount + 1 -> 
+                irc:send_err(State, Cli, ?ERR_CHANNELISFULL),
+                false;
+
+        true -> true
+    end.
+
+%% @spec check_user_ban( State, Chan, Cli ) -> bool
+%% where
+%%      State = cmanager()
+%%      Chan = chan()
+%%      Cli = client()
+check_user_ban( _State, _Cli, _Chan ) ->
+    true.
+
 % perform_server( _Chan, Serverstate, _IrcMsg ) ->
 %	Serverstate.
 	
-perform_chan( _Chan, ChanState, _IrcMsg ) ->
+perform_chan( Msg, Cli, Chan, ChanState ) ->
+    _ValidJoin = check_password( ChanState, Msg, Chan, Cli ) andalso
+                (bnot irc_laws:is_chan_inviteonly( Chan )) andalso
+                check_user_limit( ChanState, Cli, Chan ) andalso
+                check_user_ban( ChanState, Cli, Chan ),
 	ChanState.
 
 %% @doc

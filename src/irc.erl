@@ -16,6 +16,7 @@
 			,send_ident_msg/2
 			,prepare_err/2
 			,update_sender/2
+            ,send_err/3
 		]).
 
 -vsn( p01 ).
@@ -148,4 +149,23 @@ send_ident_msg( CliSock, Message ) ->
 prepare_err( Serverhost, Errmsg ) ->
 	":" ++ Serverhost ++ Errmsg
 	.
+%% @doc
+%%  Given a thread, a client and an error message
+%%  send him an error. It's for numerical error reply.
+%% @end
+%% @spec send_err( State, Client, Errmsg ) -> none
+%% where
+%%      State = string() | listener() | cmanager()
+%%      Client = client()
+%%      Errmsg = string()
+send_err( State, Client, Errmsg )
+        when is_record( State, listener ) ->
+        send_err( State#listener.server_host, Client, Errmsg );
+send_err( State, Client, Errmsg )
+        when is_record( State, cmanager ) ->
+        send_err( State#cmanager.server_host, Client, Errmsg );
 
+send_err( ServHost, Client, Errmsg ) ->
+    ParamErr = prepare_err( ServHost, Errmsg ),
+    (Client#client.send)( Client#client.sendArgs, ParamErr )
+    .

@@ -5,6 +5,8 @@
 %% @end
 -module( irc_laws ).
 
+-include( "irc_struct.hrl" ).
+
 -define( MINVISIBLE, (1 bsl 0) ).
 -define( MNOTIFIED,  (1 bsl 1) ).
 -define( MWALLOP,    (1 bsl 2) ).
@@ -46,6 +48,9 @@
 			check_chanlaw/3
 			,check_granting/2
 %			,mode_translate/1
+            ,is_chan_passworded/1
+            ,is_chan_inviteonly/1
+            ,is_chan_limited/1
 		]).
 
 -define( allow_chan( Command, UserRight, ChanRight ),
@@ -58,7 +63,37 @@
 		check_granting( Mode, FromUser )
 			when (From band FromUser) /= 0  -> true
 		).
-		
+
+%% @doc
+%%  Tell if a chan got the password protection
+%%  enabled (+k)
+%% @end
+%% @spec is_chan_passworded( Chan ) -> bool
+%% where
+%%      Chan = chan()
+is_chan_passworded( Chan ) ->
+    (Chan#chan.mode band ?MKEY) /= 0.
+    
+%% @doc
+%%  Tell if a chan got the password protection
+%%  enabled (+i)
+%% @end
+%% @spec is_chan_passworded( Chan ) -> bool
+%% where
+%%      Chan = chan()
+is_chan_inviteonly( Chan ) ->
+    (Chan#chan.mode band ?MINVITE) /= 0.
+
+%% @doc
+%%  Tell if a chan got the size limit protection.
+%%  enabled (+L)
+%% @end
+%% @spec is_chan_passworded( Chan ) -> bool
+%% where
+%%      Chan = chan()
+is_chan_limited( Chan ) ->
+    (Chan#chan.mode band ?MLIMITED) /=0.
+
 % % We refuse everything, unless the rules is defined below.
 
 ?allow_chan( 'KICK', ?MCHANOP, ?ANYMODE );

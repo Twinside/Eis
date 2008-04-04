@@ -76,13 +76,14 @@ handle_cast( takeany, ChanList ) ->
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-handle_cast({Msg, Data}, State ) ->
-	_Chan = 0,
+handle_cast({Msg, ChanName, Data}, State ) ->
+    Lst = State#cmanager.byname,
+	{_, Chan} = ets:lookup( Lst, ChanName ),
 	{noreply, dispatch(Msg#msg.ircCommand,
+                        Msg,
 						Data,
-						State)
+						Chan, State)
 	}
-	
 	;
 	
 %% @hidden
@@ -100,7 +101,8 @@ terminate(_Reason,_State) ->
 code_change(_OldVsn,_State,_Extra) -> undefined.
 
 
-dispatch( 'JOIN', Data, State ) -> com_join:perform_chan( Data, State );
+dispatch( 'JOIN', Msg, Data, Chan, State ) ->
+    com_join:perform_chan( Msg, Data, Chan, State );
 
-dispatch( _, _Data, State ) ->
+dispatch( _, _Msg, _Data, _Chan, State ) ->
 	State.

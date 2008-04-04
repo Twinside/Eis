@@ -8,6 +8,8 @@
 % replying with a numerical code :)
 -define( ERR_NEEDMOREPARAMS, "461 :Error need more parameters" ).
 -define( ERR_ALREADYREGISTERED, 462 ).
+-define( ERR_BADCHANNELKEY, "475 :Error bad chanel key" ).
+-define( ERR_CHANNELISFULL, "471 :Error channel is full" ).
 
 -define( RPL_WELCOME, 001 ).
 -define( RPL_YOURHOST, 002 ).
@@ -22,12 +24,14 @@
 
 -record(chan,
 		{
-			manager,	%% as pid()
-			channame,	%% as string
-			userlimit,	%% as int
-			banlist,	%% as string list
-			topic,		%% as string
-			mode		%% as int interpreted as flag.
+			manager 	%% as pid()
+			,channame	%% as string
+			,userlimit	%% as int
+            ,usercount  %% as int
+            ,password    %% as string
+			,banlist 	%% as string list
+			,topic 		%% as string
+			,mode		%% as int interpreted as flag.
 		}).
 
 -record(client,
@@ -63,6 +67,7 @@
 			bal			%% PID of balance
 			,serv		%% PID of servernode.
 			,byname		%% association table with chan name in key
+            ,server_host %% as string
 		}).
 
 -record( srvs,
