@@ -17,6 +17,8 @@
 			,prepare_err/2
 			,update_sender/2
             ,send_err/3
+            ,is_channame_valid/1
+            ,is_username_valid/1
 		]).
 
 -vsn( p01 ).
@@ -169,3 +171,56 @@ send_err( ServHost, Client, Errmsg ) ->
     ParamErr = prepare_err( ServHost, Errmsg ),
     (Client#client.send)( Client#client.sendArgs, ParamErr )
     .
+
+-define( MAX_CHANNAME_SIZE, 18 ).
+-define( MAX_NICKNAME_SIZE, 15 ).
+
+%% @doc
+%%  Tell if the chan name is a valid one.
+%% @end
+%% @spec is_channame_valid( Name ) -> bool
+%% where
+%%      Name = string()
+is_channame_valid( [$#|Name] ) -> is_name_valid( Name, ?MAX_CHANNAME_SIZE - 1 );
+is_channame_valid( [$!|Name] ) -> is_name_valid( Name, ?MAX_CHANNAME_SIZE - 1 );
+is_channame_valid( [$&|Name] ) -> is_name_valid( Name, ?MAX_CHANNAME_SIZE - 1 );
+is_channame_valid( [$+|Name] ) -> is_name_valid( Name, ?MAX_CHANNAME_SIZE - 1 );
+is_channame_valid( _ ) -> false.
+
+is_name_valid( _, 0 ) -> false;
+is_name_valid( [], ?MAX_CHANNAME_SIZE ) -> false;
+is_name_valid( [], _ ) -> true;
+is_name_valid( [Char | Next], Size ) ->
+    if Char >= 16#2D andalso
+        Char =< 16#39 -> false;
+
+        Char >= 16#3B andalso
+        Char =< 16#FF -> false;
+
+        true -> is_name_valid( Next, Size - 1 )
+    end.
+
+%% @doc
+%%  Tell if a nickname is valid.
+%% @end
+%% @spec is_username_valid( Name ) -> bool
+%% where
+%%      Name = string()
+is_username_valid( "" ) -> false;
+is_username_valid( [First|Name] ) ->
+    Valid = chars:is_letter( First ) orelse
+             chars:is_ircspecial( First ),
+    if Valid -> is_nick_valid( Name, ?MAX_NICKNAME_SIZE - 1 );
+        true -> false
+    end.    
+
+is_nick_valid( _, 0 ) -> false;
+is_nick_valid( [], _ ) -> true;
+is_nick_valid( [Char | Next], N ) ->
+    Valid = chars:is_letter( Char ) orelse
+            chars:is_ircspecial( Char ) orelse
+            chars:is_digit( Char ),
+    if Valid -> is_nick_valid( Next, N - 1 );
+        true -> false
+    end.
+

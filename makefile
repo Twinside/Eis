@@ -29,7 +29,8 @@ modules=conf_loader \
 		client_listener \
 		chan_manager \
 		ident_checker \
-		eis
+		eis \
+        chars
 
 COMOBJ:=$(addprefix $(OBJDIR),$(addsuffix $(OBJEXT),$(irccommands)))
 COMSRC:=$(addprefix $(COMSOURCEDIR),$(addsuffix $(SRCEXT), $(irccommands)))
