@@ -39,8 +39,8 @@ COMSRC:=$(addprefix $(COMSOURCEDIR),$(addsuffix $(SRCEXT), $(irccommands)))
 SRC:=$(addprefix $(SOURCEDIR),$(addsuffix $(SRCEXT), $(modules)))
 OBJ:=$(addprefix $(OBJDIR),$(addsuffix $(OBJEXT),$(modules)))
 
-ALLSOURCES:=$(SRC) $(COMSRC) $(TSTSRC)
-ALLOBJ:=$(OBJ) $(COMOBJ) $(TSTOBJ)
+ALLSOURCES:=$(SRC) $(COMSRC)
+ALLOBJ:=$(OBJ) $(COMOBJ)
 
 TSTSRC:=$(addprefix $(TESTDIR),$(addsuffix $(SRCEXT), $(testfiles)))
 TSTOBJ:=$(addprefix $(OBJDIR),$(addsuffix $(OBJEXT), $(testfiles)))
