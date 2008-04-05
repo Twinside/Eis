@@ -5,17 +5,17 @@
 %% machine. When a connection uccurs he create a new process.</p>
 %% <p>Second, he contain the code of the just spawned process. This code have
 %% this tasks : <ul><li>Receive initialisations messages from the client (PASS,
-%% NICK, USER as example).</li><li>Register a new client built from the 
+%% NICK, USER as example).</li><li>Register a new client built from the
 %% received %% informations to the rest of the system.</li></ul></p>
 %% <p>The state machine have 3 states :
-%% <ul><li>q1 for waiting the PASS message or the NICK message (only if the 
-%% peer is a client)</li><li>q2 for waiting the NICK message or the SERVER 
+%% <ul><li>q1 for waiting the PASS message or the NICK message (only if the
+%% peer is a client)</li><li>q2 for waiting the NICK message or the SERVER
 %% message</li><li>q3 for waiting USER message</li></ul></p>
 %% @end
 %%
 %% @reference
 %% <p>For more information about the gen_fsm behaviour you are invited to visit
-%% the erlang site : 
+%% the erlang site :
 %% <a href="http://www.erlang.org/doc/design_principles/fsm.html">here</a>.</p>
 %% @end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -58,8 +58,8 @@ log_error( Reason ) ->
 
 %% Function to log that a client has joined the server
 log_ok( Cli ) ->
-	irc_log:logEvent( "A client has just joined : " ++ Cli#client.nick ++ "@" 
-														++ Cli#client.host ).
+	irc_log:logEvent( "A client has just joined : " ++ Cli#client.nick ++ "@"
+							++ Cli#client.host ).
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%% To squeeze warnings  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -80,14 +80,14 @@ handle_info( _, _, _ ) -> undefined.
 %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 start_link( Port, ServPid, CliBalance ) ->
-	{ok, LSocket} = gen_tcp:listen(Port, [{active, false}, {packet, line}, 
-														{reuseaddr, true}]),
+	{ok, LSocket} = gen_tcp:listen(Port, [{active, false}, {packet, line},
+							{reuseaddr, true}]),
 	Pid = spawn(?MODULE, door_loop, [ServPid, CliBalance, LSocket]),
 	{ok, Pid}.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% @doc
-%% <p>Door_loop is the listening loop. When the server runs, it's this loop 
+%% <p>Door_loop is the listening loop. When the server runs, it's this loop
 %% which permits client's connexions. So the function doesn't finish.</p>
 %% @end
 %%
@@ -101,7 +101,7 @@ start_link( Port, ServPid, CliBalance ) ->
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 door_loop( ServPid, CliBalance, LSocket ) ->
 	case gen_tcp:accept( LSocket ) of
-		{ok, CliSock} -> 
+		{ok, CliSock} ->
 			spawn( ?MODULE, auth_process, [ServPid, CliBalance, CliSock] ),
 			door_loop( ServPid, CliBalance, LSocket );
 		{error, Reason} ->
@@ -115,7 +115,7 @@ door_loop( ServPid, CliBalance, LSocket ) ->
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% @doc
 %% <p>Auth_process is in charge to identify a peer who is trying to connect. He
-%% verifies that the firsts received commands are ordered.</p><p>The process 
+%% verifies that the firsts received commands are ordered.</p><p>The process
 %% will launch a finite state machine for constraint received commands. But
 %% before he try to resolve name of peer.</p>
 %% @end
@@ -128,14 +128,14 @@ door_loop( ServPid, CliBalance, LSocket ) ->
 %% 		Result = none()
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 auth_process( ServPid, CliBal, CliSock ) ->
-	irc:send_ident_msg( CliSock, ?LOOKING_HOST_MSG ), 
+	irc:send_ident_msg( CliSock, ?LOOKING_HOST_MSG ),
 	inet:setopts(CliSock, [{active, false}, {packet, line}]),
 	case inet:peername( CliSock ) of
 		{ok, {Address, _}} ->
 			{ok , {hostent,Host,_,_,_,_}} = inet:gethostbyaddr( Address ),
 			irc:send_ident_msg( CliSock, ?HOST_FOUND_MSG ),
 			{ok, Pid} = gen_fsm:start_link( doorman, {Host}, []),
-			auth_loop( Pid, CliSock, ServPid, CliBal ); 
+			auth_loop( Pid, CliSock, ServPid, CliBal );
 		{error, Reason} ->
 	    	irc:send_ident_msg( CliSock, ?HOST_NOT_FOUND_MSG ),
 	   		gen_tcp:close( CliSock ),
@@ -146,7 +146,7 @@ auth_process( ServPid, CliBal, CliSock ) ->
 %% @doc
 %% <p>Auth_loop will listen the socket for irc_commands. When a command occurs,
 %% the associate event is sent to the dedicated state machine.</p><p>The client
-%% have 10 seconds to timeout between two commands. We note that all the 
+%% have 10 seconds to timeout between two commands. We note that all the
 %% logging actions and the socket action are handled by this loop. So the state
 %% machine must return a client, or not. In this case, we deduce that is an
 %% error in commands sequence.</p>
@@ -172,16 +172,15 @@ auth_loop( FsmPid, CliSock, ServPid, CliBal ) ->
 					auth_loop( FsmPid, CliSock, ServPid, CliBal );
 				error ->
 					gen_tcp:close( CliSock ),
-					irc:send_ident_msg( CliSock, ?BAD_SEQUENCE_MSG ), 
+					irc:send_ident_msg( CliSock, ?BAD_SEQUENCE_MSG ),
 					log_error( "Bad commands sequence." ),
 					error;
 				{ok, {Client, _Pass}} ->
-					% envoit on simplement un truc bourrin du genre 
-					% {Socket, Client} au server Node
-					% Pid = 
-					% gen_server:cast( Pid, {add, CliSock} ),
-					% gen_tcp:controlling_process( CliSock, Pid ),
-	     			log_ok( Client ),
+					% @todo check client password
+					{ok, Pid} = load_balancer:add_ressource( CliBal ),
+					gen_server:cast( Pid, {add, CliSock} ),
+					server_node:add_user( ServPid, Client ),
+					log_ok( Client ),
 					irc:send_ident_msg( CliSock, ?VALIDATION_MSG ),
 					ok
 			end;
@@ -190,7 +189,7 @@ auth_loop( FsmPid, CliSock, ServPid, CliBal ) ->
 	    	irc:send_ident_msg( CliSock, ?TIME_OUT_MSG ),
 			gen_tcp:close( CliSock ),
 			log_error( "Time is out." );
-		{error, Reason} -> 
+		{error, Reason} ->
 			gen_tcp:close( CliSock ),
 	    	log_error( inet:format_error( Reason ) )
 	end.
@@ -241,7 +240,7 @@ q1( {msg, _, Dest, Command, _, _}, {Host} ) ->
 		_ -> % Not a valid message to initialise a connection
 			{stop, error, undefined}
 	end.
-			
+
 
 %% @hidden
 q1( {msg, _, Dest, Command, _, _}, _From, {Host} ) ->
