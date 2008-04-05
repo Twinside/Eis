@@ -177,7 +177,7 @@ auth_loop( FsmPid, CliSock, ServPid, CliBal ) ->
 					error;
 				{ok, {Client, _Pass}} ->
 					% @todo check client password
-					{ok, Pid} = load_balancer:add_ressource( CliBal ),
+					{ok, Pid} = load_balancer:add_ressource( CliBal, Client ),
 					gen_server:cast( Pid, {add, CliSock} ),
 					server_node:add_user( ServPid, Client ),
 					log_ok( Client ),
@@ -229,13 +229,13 @@ terminate( Reason, _, _ ) ->
 	end.
 
 %% @hidden
-q1( {msg, _, Dest, Command, _, _}, {Host} ) ->
+q1( {msg, _, Command, Params, _}, {Host} ) ->
 	case Command of
 		'PASS' ->
-			Pass = Dest,
+			Pass = lists:nth( 1, Params ),
 			{next_state, q2, {Host, Pass}};
 		'NICK' -> % Now we know the peer is a simple client
-			Nick = Dest,
+			Nick = lists:nth( 1, Params ),
 			{next_state, q3, {Host, undefined, Nick}};
 		_ -> % Not a valid message to initialise a connection
 			{stop, error, undefined}
@@ -243,13 +243,13 @@ q1( {msg, _, Dest, Command, _, _}, {Host} ) ->
 
 
 %% @hidden
-q1( {msg, _, Dest, Command, _, _}, _From, {Host} ) ->
+q1( {msg, _, Command, Params, _}, _From, {Host} ) ->
 	case Command of
 		'PASS' ->
-			Pass = Dest,
+			Pass = lists:nth( 1, Params ),
 			{reply, continue, q2, {Host, Pass}};
 		'NICK' -> % Now we know the peer is a simple client
-			Nick = Dest,
+			Nick = lists:nth( 1, Params ),
 			{reply, continue, q3, {Host, undefined, Nick}};
 		_ -> % Not a valid message to initialise a connection
 			{stop, error, error, undefined}
@@ -258,13 +258,13 @@ q1( {msg, _, Dest, Command, _, _}, _From, {Host} ) ->
 
 
 %% @hidden
-q2( {msg, _, Dest, Command, _, _}, {Host, Pass} ) ->
+q2( {msg, _, Command, Params, _}, {Host, Pass} ) ->
 	case Command of
 		'PASS' ->
-			NewPass = Dest,
+			NewPass = lists:nth( 1, Params ),
 			{next_state, q2, {Host, NewPass}};
 		'NICK' ->
-			Nick = Dest,
+			Nick = lists:nth( 1, Params ),
 			{next_state, q3, {Host, Pass, Nick}};
 		'SERVER' ->
 			{stop, error, undefined}; % NOT SUPPORTED
@@ -273,13 +273,13 @@ q2( {msg, _, Dest, Command, _, _}, {Host, Pass} ) ->
 	end.
 
 %% @hidden
-q2( {msg, _, Dest, Command, _, _}, _From, {Host, Pass} ) ->
+q2( {msg, _, Command, Params, _}, _From, {Host, Pass} ) ->
 	case Command of
 		'PASS' ->
-			NewPass = Dest,
+			NewPass = lists:nth( 1, Params ),
 			{reply, continue, q2, {Host, NewPass}};
 		'NICK' ->
-			Nick = Dest,
+			Nick = lists:nth( 1, Params ),
 			{next_state, continue, q3, {Host, Pass, Nick}};
 		'SERVER' ->
 			{stop, error, error, undefined}; % NOT SUPPORTED
@@ -288,7 +288,7 @@ q2( {msg, _, Dest, Command, _, _}, _From, {Host, Pass} ) ->
 	end.
 
 %% @hidden
-q3( {msg, _, _, Command, _, _}, _ ) ->
+q3( {msg, _, Command, _, _}, _ ) ->
 	case Command of
 		'USER' ->
 			{stop, normal, undefined};
@@ -297,11 +297,11 @@ q3( {msg, _, _, Command, _, _}, _ ) ->
 	end.
 
 %% @hidden
-q3( {msg, _, Dest, Command, _, Data}, _From, {Host, Pass, Nick} ) ->
+q3( {msg, _, Command, Params, Data}, _From, {Host, Pass, Nick} ) ->
 	case Command of
 		'USER' ->
-			Name = Dest,
-			Send = undefined,
+			Name = lists:nth (1, Params ),
+			Send = undefined, %% @todo
 			Client = {client, Nick, Host, Name, Send, Data},
 			{stop, normal, {ok, {Client, Pass}}, undefined};
 		_ -> % Not a valid message to initialise a connection
