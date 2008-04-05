@@ -9,7 +9,7 @@
         ]).
 
 
-is_between( Val, Max, Min ) ->
+is_between( Val, Min, Max ) ->
     Val >= Min andalso Val =< Max.
 
 %% @doc

@@ -12,7 +12,9 @@ TESTDIR:=$(SOLUTIONDIR)test/
 SRCEXT=.erl
 OBJEXT=.beam
 
-testfiles=doorman_test 
+testfiles=doorman_test \
+            irc_test \
+            chars_test
 
 irccommands=com_join \
 			com_kick \
