@@ -48,12 +48,14 @@ update_sender( Msg, Sender ) ->
 %%		Msg = string
 %%		Result = msg
 msg_of_string( [$: | RawMsg] ) -> %% match if first character is ':'
-	{IrcCommand, Data} = extract_irc_data( RawMsg ),
+    CleanedMsg = chars:cut_endline( RawMsg ),
+	{IrcCommand, Data} = extract_irc_data( CleanedMsg ),
 	[Sender | Next] = string:tokens( IrcCommand, " " ),
 	next_parse( sender_parser( Sender ), Data, Next );
 	
 msg_of_string( RawMsg ) ->
-	{IrcCommand, Data} = extract_irc_data( RawMsg ),
+    CleanedMsg = chars:cut_endline( RawMsg ),
+	{IrcCommand, Data} = extract_irc_data( CleanedMsg ),
 	next_parse( "", Data, string:tokens(IrcCommand, " ")).
 
 
@@ -99,15 +101,27 @@ sender_parser( Msg ) ->
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% -> string
-string_assembler( Sender, IrcCommand, Params, Data ) ->
-	SendedCommand = if is_atom(IrcCommand) -> atom_to_list(IrcCommand);
-						true -> integer_to_list(IrcCommand)
-					end,
-	Prelude = if Sender == "" -> "";
-				true -> lists:concat([":", Sender, " "])
-			end,
-	lists:concat( [Prelude, SendedCommand, " ", lists:append(Params), ":", Data] ).
 
+string_colapser( "", IrcCommand, Params, "" ) ->
+	lists:concat( [IrcCommand, " ", chars:flat_append(Params, $   ), [$\n] ] );
+
+string_colapser( "", IrcCommand, Params, Data ) ->
+	lists:concat( [IrcCommand, " ", chars:flat_append(Params, $   ), " :", Data, [$\n] ] );
+    
+string_colapser( Sender, IrcCommand, Params, "" ) ->
+	Prelude = lists:concat([":", Sender, " "]),
+	lists:concat( [Prelude, IrcCommand, " ", chars:flat_append(Params, $   ), [$\n] ] );
+    
+string_colapser( Sender, IrcCommand, Params, Data ) ->
+	Prelude = lists:concat([":", Sender, " "]),
+	lists:concat( [Prelude, IrcCommand, " ",
+                    chars:flat_append(Params, $   ), " :", Data, [$\n] ] ).
+                    
+string_assembler( Sender, IrcCommand, Params, Data ) when is_atom( IrcCommand ) ->
+    string_colapser( Sender, atom_to_list( IrcCommand ), Params, Data );
+string_assembler( Sender, IrcCommand, Params, Data ) ->
+    string_colapser( Sender, integer_to_list( IrcCommand ), Params, Data ).
+    
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% @doc
 %%	transform a msg structure representing an IRC

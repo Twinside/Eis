@@ -107,7 +107,7 @@ test: $(TSTOBJ)
 
 #####
 # test running.
-tests: test
+tests: $(ALLBOJ) test
 	escript test_generator.erl $(TESTMODULES)
 
 clean:
