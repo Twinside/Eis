@@ -11,12 +11,15 @@
 
 
 -export([
-			is_client_existing/2,
-			is_chan_existing/2,
-			get_client/2,
-			get_chan/2,
-			add_chan/2,
-			add_user/2
+			is_client_existing/2
+			,is_chan_existing/2
+			,get_client/2
+			,get_chan/2
+			,add_chan/2
+			,add_user/2
+            ,is_cli_local/1
+            ,is_cli_foreign/1
+            ,is_cli_virtual/1
 		]).
 
 % export for the gen_server
@@ -31,6 +34,36 @@
 		]).
 
 -vsn( p01 ).
+
+%% @doc
+%%  Tell if a client is a local one registered
+%%  here.
+%% @end
+%% @spec is_cli_local( Client ) -> bool
+%% where
+%%      Client = client()
+is_cli_local( #client{ sendArgs={local,_ }} ) -> true;
+is_cli_local( _ ) -> false.
+
+%% @doc
+%%  Tell if a client is connected to a remote
+%%  server.
+%% @end
+%% @spec is_cli_foreign( Client ) -> bool
+%% where
+%%      Client = client()
+is_cli_foreign( #client{ sendArgs={foreign, _}} ) -> true;
+is_cli_foreign( _ ) -> false.
+
+%% @doc
+%%  Tell if a client is a virtual one. IE a virtual client
+%%  normaly run a service, can be a bot by exemple.
+%% @end
+%% @spec is_cli_virtual( Client ) -> bool
+%% where
+%%      Client = client()
+is_cli_virtual( #client{ sendArgs = {virtual, _}} ) -> true;
+is_cli_virtual( _ ) -> false.
 
 %% @doc
 %%	tell if a client is currently registered in
@@ -128,10 +161,16 @@ extract( Table, Key, State ) ->
 
 %% @hidden
 handle_call( {client_exists, Name}, _From, State ) ->
-	is_existing( State#srvs.clients, Name, State );
+	case is_existing( State#srvs.clients, Name, State ) of
+        {_, false, _} -> is_existing( State#srvs.foreignscli, Name, State );
+        Else -> Else
+    end;
 
 handle_call( {get_client, Nick}, _From, State ) ->
-	extract( State#srvs.clients, Nick, State );
+	case extract( State#srvs.clients, Nick, State ) of
+        {_, error, _} -> extract( State#srvs.foreignscli, Nick, State );
+        Else -> Else
+    end;
 
 handle_call( {chan_exists, Name}, _From, State ) ->
 	is_existing( State#srvs.chans, Name, State );

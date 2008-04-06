@@ -49,7 +49,7 @@
 			,host		%% as string
 			,username	%% as string
 			,send		%% as function/2
-			,sendArgs    %% as socket() | {virtual, Pid}
+			,sendArgs    %% as {local, socket()} | {virtual, Pid} | {foreign, _}
 		}).
 		
 -record(msg,
@@ -83,7 +83,10 @@
 			supervisor
 			,clibal		% load balancer for client
 			,chanbal	% load balancer for channels
-			,clients	% global list of clients connected to this server.
+			
+            ,clients	% global list of clients connected to this server.
+            ,foreignscli% list of clients not on this server.
+            
 			,chans		% global list of chans on the network. {channame, managerPid}
 
 			,maxcli

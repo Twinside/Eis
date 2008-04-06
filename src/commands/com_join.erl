@@ -150,14 +150,28 @@ perform_chan( Msg, Cli, Chan, ChanState ) ->
                 check_user_limit( ChanState, Cli, Chan ) andalso
                 check_user_ban( ChanState, Cli, Chan ),
                 
-    if ValidJoin -> register_user( Cli, ChanState, Chan );
+    if ValidJoin -> register_user( Cli, ChanState, Chan,
+                                    server_node:is_cli_local( Cli ) );
         true -> ChanState
     end
 	.
+%
+% when a foreign connect
+%
+register_user( Cli, ChanState, Chan, false ) ->
+    Right = irc_laws:choose_welcome_right( Chan#chan.usercount ),
+    NeoChan = Chan#chan {usercount = Chan#chan.usercount + 1 },
+    ets:insert( NeoChan#chan.foreignusers,
+                {Cli#client.nick, Right} ),
+    % update the chan information.
+    ets:insert( ChanState#cmanager.byname,
+                {Chan#chan.channame, NeoChan} ),
+    Notif = irc:forge_msg(Cli,'JOIN',[], Chan#chan.channame),
+    chan_manager:broadcast_localusers( Chan, Notif ),
+    ChanState;
 
-% work only for local user, fix it
-% for foreign ones.
-register_user( Cli, ChanState, Chan ) ->
+% when a local connect.
+register_user( Cli, ChanState, Chan, true ) ->
     Right = irc_laws:choose_welcome_right( Chan#chan.usercount ),
     NeoChan = Chan#chan {usercount = Chan#chan.usercount + 1 },
     ets:insert( NeoChan#chan.userlist,
@@ -170,20 +184,15 @@ register_user( Cli, ChanState, Chan ) ->
                 {Chan#chan.channame, NeoChan} ),
     send_welcome_info( ChanState#cmanager.server_host,
                         Cli, Chan ),
-    % broadcaster tous les utilisateurs du chan
+    Notif = irc:forge_msg(Cli,'JOIN',[], Chan#chan.channame),
+    chan_manager:broadcast_localusers( Chan, Notif ),
     % filer la liste des noms aussi, ça peut aider.     
     ChanState
     .
     
-send_welcome_info( Serverhost, Cli, #chan { channame= ChanName,
-                                            topic= "" } ) ->
-    Message = lists:concat([":", Serverhost, ?RPL_NOTOPIC, ChanName, "\n" ]),
-    (Cli#client.send)( Cli#client.sendArgs, Message );
-
 send_welcome_info( Serverhost, Cli, #chan {channame = ChanName,
                                             topic = Topic } ) ->
-    Message = lists:concat([":", Serverhost, ?RPL_TOPIC, ChanName
-                          ," :", Topic, "\n"]),
+    Message = irc:forge_msg( Serverhost, ?RPL_TOPIC, [ChanName], Topic ),
     (Cli#client.send)( Cli#client.sendArgs, Message ).
                                             
     

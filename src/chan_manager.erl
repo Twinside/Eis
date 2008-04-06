@@ -22,6 +22,8 @@
 			send_chan/2
             ,new_chan/1
             ,broadcast_users/2
+            ,broadcast_localusers/2
+            ,broadcast_foreignusers/2
 		]).
 		
 -vsn( p01 ).
@@ -58,12 +60,34 @@ new_chan( Channame ) ->
 %%      Chan = chan()
 %%      Message = string()
 broadcast_users( Chan, Message ) ->
+    broadcast_localusers( Chan, Message ),
+    broadcast_foreignusers( Chan, Message ).
+
+%% @doc
+%%  Send a message to the users on foreign
+%%  server. In reality broadcast the message
+%%  to foreign servers which are in charge
+%%  of redispatching message at their level.
+%% @end
+%% @spec broadcast_foreignusers( Chan , Message ) -> none
+%% where
+%%      Chan = chan()
+%%      Message = string()
+broadcast_foreignusers( _Chan, _Msg ) -> undefined.
+
+%% @doc
+%%  Send a message to all the local members
+%%  of a chan.
+%% @end
+%% @spec broadcast_localusers( Chan , Message ) -> none
+%% where
+%%      Chan = chan()
+%%      Message = string()
+broadcast_localusers( Chan, Message ) ->
     Broadcaster = (fun( Usr, Msg ) ->
                     (Usr#client.send)(Usr#client.sendArgs, Msg )
                    end), 
     ets:foldl( Broadcaster, Message, Chan#chan.userlist )
-    % do something for foreign users, may be send to server
-    % node.
     .
     
 start_link( Initparam ) ->

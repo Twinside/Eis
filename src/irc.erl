@@ -19,6 +19,7 @@
             ,send_err/3
             ,is_channame_valid/1
             ,is_username_valid/1
+            ,forge_msg/4
 		]).
 
 -vsn( p01 ).
@@ -67,7 +68,39 @@ next_parse( Sender, Data, [Command | Params] ) ->
 			params=Params,
 			data=Data
 		}.
-				
+
+%% @doc
+%%  Little helper function to quickly create
+%%  an irc message to send. Automaticaly convert
+%%  client to the good format.
+%% @end
+%% @spec forge_msg( Sender, Com, Params, Data ) -> Result
+%% where
+%%      Sender = client() | string()
+%%      Com = atom()
+%%      Params = [string()]
+%%      Data = string()
+forge_msg( Sender, Com, Params, Data ) 
+    when is_record( Sender, client ) ->
+    Msg = #msg
+          {
+            sender = {
+                         Sender#client.nick
+                        ,Sender#client.username
+                        ,Sender#client.host
+                     },
+            params = Params,
+            ircCommand = Com,
+            data = Data
+           },
+     string_of_msg( Msg );
+
+forge_msg( Sender, Com, Params, Data ) ->     
+    Msg = #msg { sender = Sender, params = Params,
+                ircCommand = Com, data = Data },
+     string_of_msg( Msg ).
+
+
 %% Separate IRC protocol information of
 %% data information.
 extract_irc_data( Str ) ->
