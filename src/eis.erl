@@ -63,10 +63,12 @@ start( _StartType, _StartArgs ) ->
 	LogSpec = make_specserv( irc_log, basic_init, [] ),
 	{ok, RootSupervisor} = supervisor:start_link( ?MODULE, [LogSpec]),	
 	irc_log:logInfo( "Server Initialization begin" ),
-	
-	MaxCli = 10,	% load real constant from conf
-	MaxChan = 10,	% load real constant from conf
-	ListeningPort = 6667,	% load real constant from conf
+	conf_loader:start_link( "eis.conf" ),
+	irc_log:logVerbose( "Started configuration process" ),
+
+	MaxCli = conf_loader:getElement( "server_max_client" ),
+	MaxChan = conf_loader:getElement( "server_max_chan" ),
+	ListeningPort = conf_loader:getElement( "listening_port" ),
 	
 	ServerNode = make_specserv( server_node, start_link, [RootSupervisor] ),
 	{ok, ServerPid} = supervisor:start_child( RootSupervisor, ServerNode ),
