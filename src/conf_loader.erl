@@ -1,18 +1,25 @@
 -module(conf_loader).
--export([loadConf/1]).
--vsn( p01 ).
 
-%% loardConf : Permet d'ouvrir un fichier donnée et de charger les
-%%  configuration.
+% export for the gen_server
+-export([
+			init/1,
+			start_link/1,
+			handle_call/3,
+			handle_cast/2,
+			handle_info/2,
+			terminate/2,
+			code_change/3
+		]).
+
 loadConf(FileName) ->
 	{ok, Device} = file:open(FileName, [read]),
-    loadConf(Device, []).
+	loadConf(Device, []).
 	
 loadConf(Device, Conf) ->
 	case io:get_line(Device, "") of
 		eof  -> 
 			file:close(Device), 
-			wait(Conf);
+			Conf;
 		Line -> 
 			%% Supprime les " ", \n,le "=" et les "
 			loadConf(Device, [string:tokens(
@@ -24,38 +31,67 @@ loadConf(Device, Conf) ->
 								" =")|Conf])
 	end.
 
-%% @doc
-%% Attend un message.
-%% Le message se compose du Pid de l'appelant ainsi que du nom de la configuration a charger
-%%  Ex : dans le fichier de conf charger on a une conf : name = EIS. 
-%%       Le message a envoyer est de la forme : < Pid, name > et le résultat retourné sera EIS
-%% @end
-wait (Conf) ->
-	receive
-		{Pid, Name} -> 
-			getElement (Conf, Name, Pid),
-			wait(Conf);
-		_ -> error
+getElement( [ [Name|Val] | Queue ], Seek ) ->
+	if Name == Seek ->
+		Val;
+	true -> 
+		getElement (Queue, Seek)
+	end;
+
+getElement( [], _Seek) ->
+	not_found.
+
+getConfLoader( ) ->
+	case whereis(conf_loader) of
+		undefined ->
+			error;
+		Pid ->
+			Pid
 	end.
 
-%% @doc
-%% Autre fonction de test
-%% Recherche la valeur correspondant a la clé Seek dans les conf
-%%  et envoi la réponse.
-%% @spec getElement (Conf, Seek) -> Result
-%% where
-%%	conf = [Head|Queue]
-%%	Head = [Name | Val]
-%%	if 
-%%		Name == Seek ->
-%%			Val;
-%%		true ->
-%%			getElement(Queue, Seek)
-%%	end.
-%%	
-getElement ([[ Name| Val] | Queue], Seek, Pid) ->
-	if Name == Seek ->
-		Pid ! Val;
-	true -> 
-		getElement (Queue, Seek, Pid)
+getElement ( Name ) ->
+	case getConfLoader( ) of
+		error ->
+			Reason = "No conf_loader loaded",
+			{error, Reason};
+		Pid -> 
+			gen_server:call( Pid, {get, Name} )
 	end.
+
+
+
+start_link( FileName ) ->
+	gen_server:start_link( ?MODULE, FileName, [] ).
+
+init( FileName ) ->
+	register( conf_loader, self() ),
+	{ok, loadConf( FileName )}.
+
+handle_call( {get, Name}, _From, Conf ) ->
+	Reply = getElement(Conf, Name),	
+	{reply, Reply, Conf};
+
+handle_call( {set, Name, Value ), _From, Conf ) ->
+	NewState = undefined,
+	{noreply, NewState};
+
+handle_call( {reload, FileName}, _From, Conf ) ->
+	NewState = loadConf(FileName),
+	{noreply, NewState};
+
+handle_call( {save, FileName}, _From, Conf ) ->
+	%% Sauver la conf
+	{noreply, Conf}.
+     
+handle_cast( _Command, State ) ->
+	{noreply, State}.
+	
+handle_info(_What, State) ->
+	{noreply, State}.
+
+terminate(_Reason,State) ->
+	%% Sauver la conf	
+	{ok, State}.
+
+code_change(_OldVsn, State,_Extra) ->
+	{ok, State}.
