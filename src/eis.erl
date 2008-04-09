@@ -66,9 +66,9 @@ start( _StartType, _StartArgs ) ->
 	conf_loader:start_link( "eis.conf" ),
 	irc_log:logVerbose( "Started configuration process" ),
 
-	MaxCli = conf_loader:getElement( "cli_per_thread" ),
-	MaxChan = conf_loader:getElement( "chan_per_thread" ),
-	ListeningPort = conf_loader:getElement( "listening_port" ),
+	MaxCli = conf_loader:get_int_conf( "cli_per_thread" ),
+	MaxChan = conf_loader:get_int_conf( "chan_per_thread" ),
+	ListeningPort = conf_loader:get_int_conf( "listening_port" ),
 	
 	ServerNode = make_specserv( server_node, start_link, [RootSupervisor] ),
 	{ok, ServerPid} = supervisor:start_child( RootSupervisor, ServerNode ),

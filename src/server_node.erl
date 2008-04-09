@@ -136,6 +136,7 @@ start_link(Supervisor) ->
 	State = #srvs{ supervisor=Supervisor
 					,clients = ets:new( global_clients, [set] )
 					,chans = ets:new( global_chans, [set] )
+                    ,foreignscli = ets:new( global_foreign, [set] )
 				},
 	gen_server:start_link(?MODULE,
 							[ reload_config( State ) ],
@@ -143,9 +144,9 @@ start_link(Supervisor) ->
 
 reload_config( State ) ->
 	State#srvs{
-				maxcli = conf_loader:getElement( "server_max_client" )
-				,maxchan = conf_loader:getElement( "server_max_chan" )
-				,maxchanpercli = conf_loader:getElement( "chan_per_cli" )
+				maxcli = conf_loader:get_int_conf( "server_max_client" )
+				,maxchan = conf_loader:get_int_conf( "server_max_chan" )
+				,maxchanpercli = conf_loader:get_int_conf( "chan_per_cli" )
 			  }.
 
 %%
@@ -205,12 +206,11 @@ handle_call( _What, _From, State ) ->
 %
 %% @hidden
 %%%%%%
-handle_cast( {set_balance, Clibal, Chanbal}, State) ->
-    {noreply,
-        State#srvs {
-                chanbal = Chanbal,
-                clibal = Clibal}
-    };
+handle_cast( {set_balance, Clibal, Chanbal}, [State]) ->
+    NewState = State#srvs {
+                    chanbal = Chanbal,
+                    clibal = Clibal},
+    {noreply,NewState};
               
 handle_cast( _Command, State ) ->
 	{noreply, State}.

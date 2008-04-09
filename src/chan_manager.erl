@@ -105,7 +105,7 @@ init( [ {Balance, ServerNode} ] ) ->
 
 reload_config( State ) ->
 	State#cmanager {
-		server_host = conf_loader:getElement( "server_host" )
+		server_host = conf_loader:get_conf( "server_host" )
 	}.
 
 %% @hidden

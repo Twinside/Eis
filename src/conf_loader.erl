@@ -11,8 +11,40 @@
 			handle_info/2,
 			terminate/2,
 			code_change/3,
-			getElement/1
+			get_conf/1,
+            get_int_conf/1
 		]).
+
+%% @doc
+%%  Recherche la valeur d'une configuration
+%% @end
+%% @spec get_conf( Name ) -> Result
+%% where
+%%      Name = atom() | string()
+%%      Result = string() | error
+get_conf( Name ) when is_atom( Name ) ->
+    get_conf( atom_to_list( Name ));
+get_conf( Name ) ->
+	case whereis(conf_loader) of
+		undefined ->
+			error;
+		Pid ->
+			gen_server:call( Pid, {get, Name} )
+	end.
+
+%% @doc
+%%  Cherche une configuration et tente de
+%%  la convertir en entier.
+%% @end
+%% @spec get_int_conf( Name ) -> Result
+%% where
+%%      Name = string() | atom()
+%%      Result = int() | error
+get_int_conf( Name ) ->
+    case get_conf( Name ) of
+        error -> error;
+        Rez -> list_to_integer( Rez )
+    end.
 
 loadConf(FileName) ->
 	{ok, Device} = file:open(FileName, [read]),
@@ -51,16 +83,6 @@ getElement( [ {Name, Val} | Queue ], Seek ) ->
 getElement( [], _Seek) ->
 	not_found.
 
-%% @doc
-%% Recherche la valeur d'une configuration
-%% @end
-getElement( Name ) ->
-	case whereis(conf_loader) of
-		undefined ->
-			error;
-		Pid ->
-			gen_server:call( Pid, {get, Name} )
-	end.
 
 %% @doc
 %% Creer un processus pour le conf_loader et charge la configuration
