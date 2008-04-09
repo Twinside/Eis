@@ -197,7 +197,7 @@ init( IniChild ) ->
 	{ok,
 		{						% restart a process for each dead, and stop
 			{one_for_one, 1000,3600},% if more than 1 process stop in 60 seconds.
-			[IniChild]
+			[]
 		}}.
 
 handle_info( _, _ ) -> undefined.
