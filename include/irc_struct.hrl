@@ -90,5 +90,6 @@
 			,chans		% global list of chans on the network. {channame, managerPid}
 
 			,maxcli
+			,maxchan
 			,maxchanpercli	% fuck.
-		} ).
+		}).

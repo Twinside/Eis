@@ -34,10 +34,15 @@ start_link( Initparam ) ->
 
 init( [ {Balance, Servernode} ] ) ->
 	irc_log:logVerbose( "Client Listener created" ),
-	{ok, #listener{ supervisor = Balance,
-                    servernode = Servernode,
-					bynick = ets:new(tabtest, [set]),
-					bysock = ets:new(tabtest, [set]) }
+	State = #listener{ supervisor = Balance
+                    	,servernode = Servernode
+						,bynick = ets:new(tabtest, [set])
+						,bysock = ets:new(tabtest, [set]) },
+	{ok, reload_config( State ) }.
+
+reload_config( State ) ->
+	State#listener{
+		server_host = conf_loader:getElement( "server_host" )
 	}.
 
 %% @hidden

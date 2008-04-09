@@ -133,12 +133,21 @@ add_user( ServerPid, User ) ->
 %%	Launch a new server.
 %% @end
 start_link(Supervisor) ->
+	State = #srvs{ supervisor=Supervisor
+					,clients = ets:new( global_clients, [set] )
+					,chans = ets:new( global_chans, [set] )
+				},
 	gen_server:start_link(?MODULE,
-							[#srvs{supervisor=Supervisor,
-									clients = ets:new( global_clients, [set] ),
-									chans = ets:new( global_chans, [set] ) }],
+							[ reload_config( State ) ],
 							[] ).
-		
+
+reload_config( State ) ->
+	State#srvs{
+				maxcli = conf_loader:getElement( "server_max_client" )
+				,maxchan = conf_loader:getElement( "server_max_chan" )
+				,maxchanpercli = conf_loader:getElement( "chan_per_cli" )
+			  }.
+
 %%
 % gen_server implementation
 %%
@@ -196,17 +205,11 @@ handle_call( _What, _From, State ) ->
 %
 %% @hidden
 %%%%%%
-handle_cast( {set_balance, Clibal, Chanbal},
-            #srvs{supervisor=Sup, clients=Cli, chans=Chan,
-                    maxcli=Max, maxchanpercli=Maxpercli} ) ->
+handle_cast( {set_balance, Clibal, Chanbal}, State) ->
     {noreply,
-        #srvs { supervisor = Sup,
-                clients = Cli,
+        State#srvs {
                 chanbal = Chanbal,
-                clibal = Clibal,
-                chans = Chan,
-                maxcli = Max,
-                maxchanpercli = Maxpercli }
+                clibal = Clibal}
     };
               
 handle_cast( _Command, State ) ->

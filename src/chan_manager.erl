@@ -101,7 +101,12 @@ init( [ {Balance, ServerNode} ] ) ->
 	State = #cmanager { bal = Balance,
 						serv = ServerNode,
 						byname = ets:new(chan_tab, [set]) },
-	{ok, State}.
+	{ok, reload_config( State )}.
+
+reload_config( State ) ->
+	State#cmanager {
+		server_host = conf_loader:getElement( "server_host" )
+	}.
 
 %% @hidden
 handle_call( _Arg, _From, _State ) ->
