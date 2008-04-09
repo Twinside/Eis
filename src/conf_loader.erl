@@ -1,5 +1,7 @@
 -module(conf_loader).
 
+
+
 % export for the gen_server
 -export([
 			init/1,
@@ -8,7 +10,8 @@
 			handle_cast/2,
 			handle_info/2,
 			terminate/2,
-			code_change/3
+			code_change/3,
+			getElement/1
 		]).
 
 loadConf(FileName) ->
@@ -41,23 +44,13 @@ getElement( [ [Name|Val] | Queue ], Seek ) ->
 getElement( [], _Seek) ->
 	not_found.
 
-getConfLoader( ) ->
+getElement( Name ) ->
 	case whereis(conf_loader) of
 		undefined ->
 			error;
 		Pid ->
-			Pid
-	end.
-
-getElement ( Name ) ->
-	case getConfLoader( ) of
-		error ->
-			Reason = "No conf_loader loaded",
-			{error, Reason};
-		Pid -> 
 			gen_server:call( Pid, {get, Name} )
 	end.
-
 
 
 start_link( FileName ) ->
@@ -71,15 +64,15 @@ handle_call( {get, Name}, _From, Conf ) ->
 	Reply = getElement(Conf, Name),	
 	{reply, Reply, Conf};
 
-handle_call( {set, Name, Value ), _From, Conf ) ->
+handle_call( {set, _Name, _Value }, _From, _Conf ) ->
 	NewState = undefined,
 	{noreply, NewState};
 
-handle_call( {reload, FileName}, _From, Conf ) ->
+handle_call( {reload, FileName}, _From, _Conf ) ->
 	NewState = loadConf(FileName),
 	{noreply, NewState};
 
-handle_call( {save, FileName}, _From, Conf ) ->
+handle_call( {save, _FileName}, _From, Conf ) ->
 	%% Sauver la conf
 	{noreply, Conf}.
      
