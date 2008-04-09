@@ -127,7 +127,7 @@ ressource_adding( State, Rsrc ) ->
 									 if Min < PMin -> Min;
 										 true -> PMin end end),
 
-	MinRes = lists:foldl( SmallestProc, State#bconf.children, 999999 ),
+	MinRes = lists:foldl( SmallestProc, 16#7FFFFFFF, State#bconf.children ),
 	
 	if MinRes >= State#bconf.maxress ->	% all our threads are full, launch a new one.
 			Spec = setelement(1, State#bconf.spec, erlang:make_ref() ),
