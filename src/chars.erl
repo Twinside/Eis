@@ -21,6 +21,7 @@ cut_endline( Txt ) ->
     cutaux( Txt, lists:reverse( Txt ) ).
 
 cutaux(   _ , [$\n | Next ] ) -> lists:reverse( Next );
+cutaux(   _ , [$\r | Next ] ) -> lists:reverse( Next );
 cutaux( Orig, []            ) -> Orig;
 cutaux( Orig, [_| Next]     ) -> cutaux( Orig, Next ).
    

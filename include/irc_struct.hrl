@@ -45,11 +45,11 @@
 
 -record(client,
 		{
-			nick		%% as string
-			,host		%% as string
-			,username	%% as string
-			,send		%% as function/2
-			,sendArgs    %% as {local, socket()} | {virtual, Pid} | {foreign, _}
+			nick		    %% as string
+			,host = ""  	%% as string
+			,username = ""	%% as string
+			,send		    %% as function/2
+			,sendArgs       %% as {local, socket()} | {virtual, Pid} | {foreign, _}
 		}).
 		
 -record(msg,

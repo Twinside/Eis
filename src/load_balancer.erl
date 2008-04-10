@@ -170,6 +170,7 @@ handle_call( _, _, State ) ->
 	irc_log:logError( "Unrecognized call to load balancer" ),
 	{noreply, State}.
 
+%% @hidden
 handle_cast( {killressource, Rsc}, State ) ->
 	NeoState = lists:foldl( (fun(Proc,What) -> gen_server:cast(Proc#pinfo.proc, What), What end),
 					{killressource, Rsc}, State#bconf.children ),
@@ -200,7 +201,12 @@ init( IniChild ) ->
 			[]
 		}}.
 
+%% @hidden
 handle_info( _, _ ) -> undefined.
+
+%% @hidden
 terminate( _, _ ) -> undefined.
+
+%% @hidden
 code_change( _, _, _) -> undefined.
 

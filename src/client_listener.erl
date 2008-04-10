@@ -42,7 +42,7 @@ init( [ {Balance, Servernode} ] ) ->
 
 reload_config( State ) ->
 	State#listener{
-		server_host = conf_loader:getElement( "server_host" )
+		server_host = conf_loader:get_conf( "server_host" )
 	}.
 
 %% @hidden
@@ -60,8 +60,9 @@ broadcaster( User, Msg ) ->
 %
 %% @hidden
 handle_cast( {addressource, Client}, State ) ->
+    {local, Sock} = Client#client.sendArgs,
 	ets:insert( State#listener.bynick, {Client#client.nick, Client} ),
-	ets:insert( State#listener.bysock, {Client#client.sendArgs, Client#client.nick} ),
+	ets:insert( State#listener.bysock, {Sock, Client#client.nick} ),
 	{noreply, State};
 
 %% @hidden	
@@ -102,9 +103,18 @@ handle_cast( _Request, State ) -> % ignore invalid cast
 handle_info( {tcp, Socket, Data}, State ) ->
 	Bysock = State#listener.bysock,
 	Msg = irc:msg_of_string( Data ),
-	[{_, Cli}] = ets:lookup( Bysock, Socket ),
-	{noreply, dispatcher( Msg#msg.ircCommand, Msg, Cli, State ) }.
+	[Cli] = ets:lookup( Bysock, Socket ),
+	{noreply, dispatcher( Msg#msg.ircCommand, Msg, Cli, State ) };
 
+handle_info( {tcp_closed, Socket} , State ) ->
+    [Cli] = ets:lookup( State#listener.bysock, Socket ),
+    ets:delete( State#listener.bysock, Socket ),
+    ets:delete( State#listener.bynick, Cli#client.nick ),
+    irc:logEvent( "Client deconnexion : " ++ Cli#client.nick ),
+    % TODO : propagate deconnexion message to everyone.
+    {noreply, State}
+    .
+    
 %% @hidden
 terminate(_Reason,_State) ->
 	irc_log:logVerbose( "Client Listener terminated" ),

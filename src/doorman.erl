@@ -8,9 +8,9 @@
 %% NICK, USER as example).</li><li>Register a new client built from the
 %% received %% informations to the rest of the system.</li></ul></p>
 %% <p>The state machine have 3 states :
-%% <ul><li>q1 for waiting the PASS message or the NICK message (only if the
+%% <ul><li>init_state for waiting the PASS message or the NICK message (only if the
 %% peer is a client)</li><li>q2 for waiting the NICK message or the SERVER
-%% message</li><li>q3 for waiting USER message</li></ul></p>
+%% message</li><li>final_registration_state for waiting USER message</li></ul></p>
 %% @end
 %%
 %% @reference
@@ -28,28 +28,28 @@
 -include( "irc_authstrings.hrl" ).
 
 -export([
-		door_loop/3,
-		auth_process/3,
-		start_link/3
-	]).
+            door_loop/3
+            ,auth_process/3
+            ,start_link/3
+	    ]).
 
 %% Callback from gen_fsm
 -export([
-		init/1,
-		handle_event/3,
-		handle_sync_event/4,
-		q1/2,
-		q1/3,
-		q2/2,
-		q2/3,
-		q3/2,
-		q3/3,
-		terminate/3,
+            init/1
+            ,handle_event/3
+            ,handle_sync_event/4
+            ,terminate/3
 
-		code_change/4,
-		handle_info/3
-	]).
+            ,code_change/4
+            ,handle_info/3
+	    ]).
 
+-export([
+            init_state/3
+            ,q2/3
+            ,final_registration_state/3
+        ]).
+        
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Helpers %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %% Function to log that a client failed to connecting with us
@@ -65,6 +65,7 @@ log_ok( Cli ) ->
 %%%%%%%%%%%%%%%%%%%%%%%%%%%% To squeeze warnings  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 code_change( _, _, _, _ ) -> undefined.
 handle_info( _, _, _ ) -> undefined.
+handle_event( _, _, _ ) -> undefined.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%% First part functions %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -83,6 +84,7 @@ start_link( Port, ServPid, CliBalance ) ->
 	{ok, LSocket} = gen_tcp:listen(Port, [{active, false}, {packet, line},
 							{reuseaddr, true}]),
 	Pid = spawn(?MODULE, door_loop, [ServPid, CliBalance, LSocket]),
+    ok = gen_tcp:controlling_process( LSocket, Pid ),                 
 	{ok, Pid}.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -102,7 +104,8 @@ start_link( Port, ServPid, CliBalance ) ->
 door_loop( ServPid, CliBalance, LSocket ) ->
 	case gen_tcp:accept( LSocket ) of
 		{ok, CliSock} ->
-			spawn( ?MODULE, auth_process, [ServPid, CliBalance, CliSock] ),
+			Pid = spawn( ?MODULE, auth_process, [ServPid, CliBalance, CliSock] ),
+            ok = gen_tcp:controlling_process( CliSock, Pid ),
 			door_loop( ServPid, CliBalance, LSocket );
 		{error, Reason} ->
 			log_error( inet:format_error( Reason ) ),
@@ -130,12 +133,14 @@ door_loop( ServPid, CliBalance, LSocket ) ->
 auth_process( ServPid, CliBal, CliSock ) ->
 	irc:send_ident_msg( CliSock, ?LOOKING_HOST_MSG ),
 	inet:setopts(CliSock, [{active, false}, {packet, line}]),
+    
 	case inet:peername( CliSock ) of
 		{ok, {Address, _}} ->
 			{ok , {hostent,Host,_,_,_,_}} = inet:gethostbyaddr( Address ),
 			irc:send_ident_msg( CliSock, ?HOST_FOUND_MSG ),
 			{ok, Pid} = gen_fsm:start_link( doorman, {Host}, []),
 			auth_loop( Pid, CliSock, ServPid, CliBal );
+            
 		{error, Reason} ->
 	    	irc:send_ident_msg( CliSock, ?HOST_NOT_FOUND_MSG ),
 	   		gen_tcp:close( CliSock ),
@@ -164,22 +169,25 @@ auth_process( ServPid, CliBal, CliSock ) ->
 %% 		SubInfo = string()
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 auth_loop( FsmPid, CliSock, ServPid, CliBal ) ->
-	case gen_tcp:recv( CliSock, 0, 10000 ) of
+	case gen_tcp:recv( CliSock, 0, 100000 ) of
 		{ok, Packet} ->
 			IrcMessage = irc:msg_of_string( Packet ),
 			case gen_fsm:sync_send_event( FsmPid, IrcMessage ) of
 				continue ->
 					auth_loop( FsmPid, CliSock, ServPid, CliBal );
+
 				error ->
 					gen_tcp:close( CliSock ),
 					irc:send_ident_msg( CliSock, ?BAD_SEQUENCE_MSG ),
 					log_error( "Bad commands sequence." ),
 					error;
+                    
 				{ok, {Client, _Pass}} ->
 					% @todo check client password
-					{ok, Pid} = load_balancer:add_ressource( CliBal, Client ),
-					gen_server:cast( Pid, {add, CliSock} ),
-					server_node:add_user( ServPid, Client ),
+			        Send = (fun({local, Sock}, Tosend) -> gen_tcp:send( Sock, Tosend )end),
+                    RealClient = Client#client{ send = Send
+                                             ,sendArgs = {local, CliSock} },
+					server_node:add_user( ServPid, RealClient ),
 					log_ok( Client ),
 					irc:send_ident_msg( CliSock, ?VALIDATION_MSG ),
 					ok
@@ -188,7 +196,8 @@ auth_loop( FsmPid, CliSock, ServPid, CliBal ) ->
 			gen_fsm:send_event( FsmPid, stop ), % We have to stop state machine
 	    	irc:send_ident_msg( CliSock, ?TIME_OUT_MSG ),
 			gen_tcp:close( CliSock ),
-			log_error( "Time is out." );
+			log_error( "Client registration timed out." );
+
 		{error, Reason} ->
 			gen_tcp:close( CliSock ),
 	    	log_error( inet:format_error( Reason ) )
@@ -198,89 +207,41 @@ auth_loop( FsmPid, CliSock, ServPid, CliBal ) ->
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%% The gen_fsm callback %%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %% @hidden
-init( Args ) ->
-	{ok, q1, Args}.
+init( Args ) -> {ok, init_state, Args}.
 
 %% @hidden
-handle_event( Message, CurrentState, StateData ) ->
-	case Message of
-		stop ->
-			{stop, error, StateData};
-		IrcMessage ->
-			CurrentState( IrcMessage, StateData )
-	end.
+handle_sync_event( stop, _From, _CurrentState, StateData ) ->
+    {stop, error, StateData};
+handle_sync_event( IrcMessage, _From, CurrentState, StateData ) ->
+    CurrentState( IrcMessage, 0,StateData ).
 
 %% @hidden
-handle_sync_event( Message, _From, CurrentState, StateData ) ->
-	case Message of
-		stop ->
-			{stop, error, StateData};
-		IrcMessage ->
-			CurrentState( IrcMessage, StateData )
-	end.
+terminate( normal, _, _ ) -> ok;
+terminate( error, _, _ ) -> error.
 
 %% @hidden
-terminate( Reason, _, _ ) ->
-	case Reason of
-		normal ->
-			ok;
-		error ->
-			error
-	end.
-
-%% @hidden
-q1( {msg, _, Command, Params, _}, {Host} ) ->
-	case Command of
+init_state( Msg, _From, {Host} ) ->
+	case Msg#msg.ircCommand of
 		'PASS' ->
-			Pass = lists:nth( 1, Params ),
-			{next_state, q2, {Host, Pass}};
-		'NICK' -> % Now we know the peer is a simple client
-			Nick = lists:nth( 1, Params ),
-			{next_state, q3, {Host, undefined, Nick}};
-		_ -> % Not a valid message to initialise a connection
-			{stop, error, undefined}
-	end.
-
-
-%% @hidden
-q1( {msg, _, Command, Params, _}, _From, {Host} ) ->
-	case Command of
-		'PASS' ->
-			Pass = lists:nth( 1, Params ),
+			[Pass|_] = Msg#msg.params,
 			{reply, continue, q2, {Host, Pass}};
 		'NICK' -> % Now we know the peer is a simple client
-			Nick = lists:nth( 1, Params ),
-			{reply, continue, q3, {Host, undefined, Nick}};
+			[Nick|_] = Msg#msg.params,
+			{reply, continue, final_registration_state, {Host, undefined, Nick}};
 		_ -> % Not a valid message to initialise a connection
 			{stop, error, error, undefined}
 
 	end.
 
-
 %% @hidden
-q2( {msg, _, Command, Params, _}, {Host, Pass} ) ->
-	case Command of
+q2( Msg, _From, {Host, Pass} ) ->
+	case Msg#msg.ircCommand of
 		'PASS' ->
-			NewPass = lists:nth( 1, Params ),
-			{next_state, q2, {Host, NewPass}};
-		'NICK' ->
-			Nick = lists:nth( 1, Params ),
-			{next_state, q3, {Host, Pass, Nick}};
-		'SERVER' ->
-			{stop, error, undefined}; % NOT SUPPORTED
-		_ -> % Not a valid message to initialise a connection
-			{stop, error, undefined}
-	end.
-
-%% @hidden
-q2( {msg, _, Command, Params, _}, _From, {Host, Pass} ) ->
-	case Command of
-		'PASS' ->
-			NewPass = lists:nth( 1, Params ),
+			[NewPass|_] = Msg#msg.params,
 			{reply, continue, q2, {Host, NewPass}};
 		'NICK' ->
-			Nick = lists:nth( 1, Params ),
-			{next_state, continue, q3, {Host, Pass, Nick}};
+			[Nick|_] = Msg#msg.params,
+			{next_state, continue, final_registration_state, {Host, Pass, Nick}};
 		'SERVER' ->
 			{stop, error, error, undefined}; % NOT SUPPORTED
 		_ -> % Not a valid message to initialise a connection
@@ -288,21 +249,13 @@ q2( {msg, _, Command, Params, _}, _From, {Host, Pass} ) ->
 	end.
 
 %% @hidden
-q3( {msg, _, Command, _, _}, _ ) ->
-	case Command of
+final_registration_state( Msg, _From, {Host, Pass, Nick} ) ->
+	case Msg#msg.ircCommand of
 		'USER' ->
-			{stop, normal, undefined};
-		_ -> % Not a valid message to initialise a connection
-			{stop, error, undefined}
-	end.
-
-%% @hidden
-q3( {msg, _, Command, Params, Data}, _From, {Host, Pass, Nick} ) ->
-	case Command of
-		'USER' ->
-			Name = lists:nth (1, Params ),
-			Send = undefined, %% @todo
-			Client = {client, Nick, Host, Name, Send, Data},
+			[Name|_] = Msg#msg.params,
+			Client = #client{ nick = Nick
+                              ,host = Host
+                              ,username = Name},
 			{stop, normal, {ok, {Client, Pass}}, undefined};
 		_ -> % Not a valid message to initialise a connection
 			{stop, error, error, undefined}

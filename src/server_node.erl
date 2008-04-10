@@ -7,6 +7,8 @@
 -module( server_node ).
 
 -behaviour( gen_server ).
+
+-include_lib("kernel/include/inet.hrl").
 -include( "irc_struct.hrl" ).
 
 
@@ -126,21 +128,40 @@ add_chan( ServerPid, Chan ) ->
 %% @doc
 %%	Add a new user into the server.
 %%	Existance is re-checked,
+%% @end
+%% @spec add_user( ServerPid, User ) -> Result
+%% where
+%%      ServerPid = pid()
+%%      User = client()
+%%      Result = ok | error
 add_user( ServerPid, User ) ->
-	gen_server:call( ServerPid, {add_user, User} ).
+    user_adding( ServerPid, User, is_cli_local( User ) ).
+
+user_adding( ServerPid, User, true ) ->
+    {_, Sock} = User#client.sendArgs,
+    ok = gen_tcp:controlling_process( Sock, ServerPid ),
+	gen_server:call( ServerPid, {add_user_local, User} );
+user_adding( _ServerPid, _User, false ) ->
+    ok. % TODO for foreign & virtual users
 
 %% @doc
 %%	Launch a new server.
 %% @end
 start_link(Supervisor) ->
-	State = #srvs{ supervisor=Supervisor
-					,clients = ets:new( global_clients, [set] )
-					,chans = ets:new( global_chans, [set] )
-                    ,foreignscli = ets:new( global_foreign, [set] )
-				},
-	gen_server:start_link(?MODULE,
-							[ reload_config( State ) ],
-							[] ).
+	gen_server:start_link(?MODULE, [ Supervisor ], [] ).
+
+
+%%
+% gen_server implementation
+%%
+%% @hidden
+init( [Supervisor] ) ->
+	irc_log:logVerbose( "Server node spawned" ),
+    NeoState = #srvs{ clients = ets:new( global_clients, [set] )
+                        ,chans = ets:new( global_chans, [set] )
+                        ,foreignscli = ets:new( global_foreign, [set])
+                        ,supervisor = Supervisor },
+	{ok,  reload_config( NeoState ) }.
 
 reload_config( State ) ->
 	State#srvs{
@@ -148,14 +169,6 @@ reload_config( State ) ->
 				,maxchan = conf_loader:get_int_conf( "server_max_chan" )
 				,maxchanpercli = conf_loader:get_int_conf( "chan_per_cli" )
 			  }.
-
-%%
-% gen_server implementation
-%%
-%% @hidden
-init( State ) ->
-	irc_log:logVerbose( "Server node spawned" ),
-	{ok, State}.
 
 is_existing( Table, Key, State ) ->
 	case ets:lookup( Table, Key ) of
@@ -188,14 +201,17 @@ handle_call( {chan_exists, Name}, _From, State ) ->
 handle_call( {get_chan, ChanName}, _From, State ) ->
 	extract( State#srvs.chans, ChanName, State );
 
-handle_call( {add_chan, Chan}, _From, State ) ->
-	{reply,
-        case extract( State#srvs.chans, Chan, State ) of
-		    {_,  error , _} -> com_join:server_add( State, Chan );	% faire un join
-    		{_, {ok, _}, _} -> State
-        end,
-     State
-	};
+handle_call( {add_user_local, User}, _From, State ) ->
+    Exist = handle_call( {client_exists, User#client.nick}, 0, State ),
+    if Exist -> {reply, {error, "Nick already in use"}, State};
+       true ->
+        {_, Sock} = User#client.sendArgs,
+        Pid = load_balancer:add_ressource( State#srvs.clibal, User ),
+        gen_tcp:controlling_process( Sock, Pid ),
+	    inet:setopts(Sock, [{active, true}]),
+        ets:insert( State#srvs.clients, {User#client.nick, User} ),
+        {reply, ok, State}
+    end;
 
 %% @hidden
 handle_call( _What, _From, State ) ->
@@ -206,12 +222,21 @@ handle_call( _What, _From, State ) ->
 %
 %% @hidden
 %%%%%%
-handle_cast( {set_balance, Clibal, Chanbal}, [State]) ->
+handle_cast( {set_balance, Clibal, Chanbal}, State) ->
     NewState = State#srvs {
                     chanbal = Chanbal,
                     clibal = Clibal},
     {noreply,NewState};
               
+
+handle_cast( {add_chan, Chan}, State ) ->
+	{noreply,
+        case extract( State#srvs.chans, Chan, State ) of
+		    {_,  error , _} -> com_join:server_add( State, Chan );	% faire un join
+    		{_, {ok, _}, _} -> State
+        end
+	};
+    
 handle_cast( _Command, State ) ->
 	{noreply, State}.
 	

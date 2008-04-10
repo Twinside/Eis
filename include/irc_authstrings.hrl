@@ -6,5 +6,5 @@
 -define( HOST_NOT_FOUND_MSG, ":*** Unable to find your hostname, closing connection.\n" ).
 -define( BAD_SEQUENCE_MSG, ":***Bad commands sequence.\n" ).
 -define( TIME_OUT_MSG, ":*** Time out, closing connection.\n" ).
--define( VALIDATION_MSG, ":*** You've been regitered !\n" ).
+-define( VALIDATION_MSG, ":*** You've been registered !\n" ).
 
