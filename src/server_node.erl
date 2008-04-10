@@ -37,6 +37,9 @@
 
 -vsn( p01 ).
 
+-export( [allowed/0 ]).
+allowed( ) -> [ 'QUIT', 'NOTICE', 'PRIVMSG', 'KICK', 'MODE', 'WHO', 'WHOIS', 'WHOWAS' , 'NAMES'  ].
+
 %% @doc
 %%  Tell if a client is a local one registered
 %%  here.

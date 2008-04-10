@@ -28,12 +28,12 @@ chanvalid_test_( ) ->
     ,?_assertNot( irc:is_channame_valid( "#&{:" ) )
 ].
 
--define( PTXT1, ":efnet.demon.co.uk 372 Twinside :- ~-=   If you discover illegal images of children are available then   =-~\n" ).
--define( PTXT2, "NOTICE AUTH :*** Processing connection to irc.inet.tele.dk\n" ).
--define( PTXT3, ":efnet.demon.co.uk 366 Twinside #jeanmip :End of /NAMES list.\n" ).
--define( PTXT4, "MODE #jeanmip\n" ).
--define( PTXT5, "PRIVMSG #jeanmip :hahaa aoj\n" ).
--define( PTXT6, ":Twinside!~a@cpy94-4-82-233-227-144.fbx.proxad.net PRIVMSG #jeanmip :fuckings noob\n" ).
+-define( PTXT1, ":efnet.demon.co.uk 372 Twinside :- ~-=   If you discover illegal images of children are available then   =-~\r\n" ).
+-define( PTXT2, "NOTICE AUTH :*** Processing connection to irc.inet.tele.dk\r\n" ).
+-define( PTXT3, ":efnet.demon.co.uk 366 Twinside #jeanmip :End of /NAMES list.\r\n" ).
+-define( PTXT4, "MODE #jeanmip\r\n" ).
+-define( PTXT5, "PRIVMSG #jeanmip :hahaa aoj\r\n" ).
+-define( PTXT6, ":Twinside!~a@cpy94-4-82-233-227-144.fbx.proxad.net PRIVMSG #jeanmip :fuckings noob\r\n" ).
 
 %
 % Seulement pour éviter les problèmes de 'atom not found'

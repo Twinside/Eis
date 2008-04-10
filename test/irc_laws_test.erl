@@ -1,7 +1,8 @@
 -module( irc_laws_test ).
 -include_lib( "eunit/include/eunit.hrl" ).
+-include( "irc_struct.hrl" ).
 
--define( SampChan, chan_manager:new_chan( "Testo" ) ).
+-define( SampChan, #chan{ channame = "", userlist=[], foreignusers=[] } ).
 
 tiny_test_( ) ->
 [

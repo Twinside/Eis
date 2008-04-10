@@ -109,8 +109,8 @@ handle_info( {tcp, Socket, Data}, State ) ->
 	{noreply, dispatcher( Msg#msg.ircCommand, Msg, Cli, State ) };
 
 handle_info( {tcp_closed, Socket} , State ) ->
-	[Nick] = ets:lookup( State#listener.bysock, Socket ),
-    [Cli] = ets:lookup( State#listener.bynick, Nick ),
+	[{_, Nick}] = ets:lookup( State#listener.bysock, Socket ),
+    [{_,Cli}] = ets:lookup( State#listener.bynick, Nick ),
     ets:delete( State#listener.bysock, Socket ),
     ets:delete( State#listener.bynick, Cli#client.nick ),
     irc:logEvent( "Client deconnexion : " ++ Cli#client.nick ),
@@ -131,7 +131,15 @@ code_change(_OldVsn,_State,_Extra) ->
 dispatcher( 'JOIN', Msg, From, State ) ->
 	com_join:perform_client( Msg, From, State );
 dispatcher( 'NOTICE', Msg, From, State ) ->
-	com_notice:perform_client( Msg, From, State ).
+	com_notice:perform_client( Msg, From, State );
+
+dispatcher( Command, _Msg, From, State ) ->
+    Notice = irc:forge_msg( State#listener.server_host, Command
+                            ,[?ERR_UNKNOWNCOMMAND, atom_to_list( Command )]
+                            ,?ERR_UNKNWONCOMMAND_TXT ),
+    (From#client.send)(From#client.sendArgs, Notice ),
+    State 
+    .
 %dispatcher( 'PRIVMSG', Msg, From ) -> command_privmsg( Msg );
 %dispatcher( 'NOTICE', Msg, From ) -> command_notice( Msg ).
 

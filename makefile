@@ -54,7 +54,8 @@ modules:=conf_loader \
 		chan_manager \
 		ident_checker \
 		eis \
-        chars
+        chars \
+        wexpr
 
 ############################################################
 # Here we generate all the required file names.
