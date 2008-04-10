@@ -68,12 +68,12 @@ handle_cast( {addressource, Client}, State ) ->
 %% @hidden	
 handle_cast( {killressource, Client}, State ) ->
 	Bynick = State#listener.bynick,
-	Bysock = State#listener.bysock,
 	case ets:lookup( Bynick, Client#client.nick ) of
 		[] -> {noreply, State};
-		[Cli] -> gen_tcp:close( Cli#client.sendArgs ), % close the connection between us
-				ets:delete( Bynick, Client#client.nick ), % delete his trace from tables
-				ets:delete( Bysock, Client#client.sendArgs ),
+		[Cli] -> {_, Sock} = Cli#client.sendArgs,
+                gen_tcp:close( Sock ), % close the connection between us
+                % rest of the cleaning is made during
+                % the socket cleanup
 				{noreply, State}
 	end;
 
@@ -102,12 +102,15 @@ handle_cast( _Request, State ) -> % ignore invalid cast
 %% @hidden
 handle_info( {tcp, Socket, Data}, State ) ->
 	Bysock = State#listener.bysock,
+    Bynick = State#listener.bynick,
 	Msg = irc:msg_of_string( Data ),
-	[Cli] = ets:lookup( Bysock, Socket ),
+	[{_, Nick}] = ets:lookup( Bysock, Socket ),
+    [{_,Cli}] = ets:lookup( Bynick, Nick ),
 	{noreply, dispatcher( Msg#msg.ircCommand, Msg, Cli, State ) };
 
 handle_info( {tcp_closed, Socket} , State ) ->
-    [Cli] = ets:lookup( State#listener.bysock, Socket ),
+	[Nick] = ets:lookup( State#listener.bysock, Socket ),
+    [Cli] = ets:lookup( State#listener.bynick, Nick ),
     ets:delete( State#listener.bysock, Socket ),
     ets:delete( State#listener.bynick, Cli#client.nick ),
     irc:logEvent( "Client deconnexion : " ++ Cli#client.nick ),

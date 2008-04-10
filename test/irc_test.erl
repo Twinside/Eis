@@ -1,5 +1,7 @@
 -module( irc_test ).
 
+-include( "irc_struct.hrl" ).
+
 -include_lib( "eunit/include/eunit.hrl" ).
 
 -export([ allowance/0 ]).
@@ -18,6 +20,12 @@ nickvalid_test_( ) ->
     ?_assert( irc:is_username_valid( "^__________^" ) ),
     ?_assert( irc:is_username_valid( "nico" ) ),
     ?_assert( irc:is_username_valid( "Twinside`" ) )
+].
+
+chanvalid_test_( ) ->
+[
+    ?_assert( irc:is_channame_valid( "#pouet" ) )
+    ,?_assertNot( irc:is_channame_valid( "#&{:" ) )
 ].
 
 -define( PTXT1, ":efnet.demon.co.uk 372 Twinside :- ~-=   If you discover illegal images of children are available then   =-~\n" ).
@@ -47,3 +55,14 @@ parseremake_test_( ) ->
     ,?_assertEqual( ?PTXT6, irc:string_of_msg( irc:msg_of_string( ?PTXT6 ) ) )
 ].
 
+
+pureparse_test_( ) ->
+[
+    ?_assertEqual( #msg { ircCommand = 'NICK',
+                         data = "",
+                         sender = "",
+                         params = [ "Youpi" ] },
+
+                    irc:msg_of_string( "NICK Youpi\r\n" ) )
+].
+    

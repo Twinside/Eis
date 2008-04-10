@@ -47,7 +47,8 @@ perform_client( Msg, Cli, ClientState ) ->
 name_validation( ClientState, Cli, Channame ) ->
     Valid = irc:is_channame_valid( Channame ),
     if Valid -> true;
-        true -> irc:send_err( ClientState, Cli, ?ERR_NOSUCHCHANNEL ),
+        true -> Msg = ?ERR_NOSUCHCHANNEL ++ Channame ++ ?ERR_NOSUCHCHANNEL_TXT, 
+                irc:send_err( ClientState, Cli, Msg ),
                 false
     end.
 

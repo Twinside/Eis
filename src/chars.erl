@@ -6,6 +6,7 @@
             is_letter/1
             ,is_digit/1
             ,is_ircspecial/1
+            ,is_between/3
             ,flat_append/2
             ,cut_endline/1
         ]).
@@ -20,8 +21,9 @@
 cut_endline( Txt ) ->
     cutaux( Txt, lists:reverse( Txt ) ).
 
-cutaux(   _ , [$\n | Next ] ) -> lists:reverse( Next );
-cutaux(   _ , [$\r | Next ] ) -> lists:reverse( Next );
+cutaux(   _ , [$\n, $\r | Next ] ) -> lists:reverse( Next );
+cutaux(   _ , [$\r      | Next ] ) -> lists:reverse( Next );
+cutaux(   _ , [$\n      | Next ] ) -> lists:reverse( Next );
 cutaux( Orig, []            ) -> Orig;
 cutaux( Orig, [_| Next]     ) -> cutaux( Orig, Next ).
    
@@ -47,6 +49,10 @@ flat_appendaux( Sep, Acc, [Last]     ) -> Acc ++ [Sep|Last];
 flat_appendaux( Sep, Acc, [Obj|Next] ) ->
     flat_appendaux( Sep, Acc ++ [Sep | Obj], Next ).
 
+%% @doc
+%%  Check if a value is in an interval.
+%% @end
+%% @spec is_between( Val, Min, Max ) -> bool
 is_between( Val, Min, Max ) ->
     Val >= Min andalso Val =< Max.
 

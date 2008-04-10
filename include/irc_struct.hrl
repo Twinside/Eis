@@ -10,7 +10,9 @@
 -define( ERR_ALREADYREGISTERED, 462 ).
 -define( ERR_BADCHANNELKEY, "475 :Error bad chanel key" ).
 -define( ERR_CHANNELISFULL, "471 :Error channel is full" ).
--define( ERR_NOSUCHCHANNEL, "403 :Error no such channel" ).
+
+-define( ERR_NOSUCHCHANNEL, "403 " ).
+-define( ERR_NOSUCHCHANNEL_TXT, " :Error no such channel" ).
 
 -define( RPL_TOPIC, " 322 " ).
 -define( RPL_NOTOPIC, " 331 " ).

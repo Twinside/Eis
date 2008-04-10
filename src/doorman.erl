@@ -49,7 +49,10 @@
             ,q2/3
             ,final_registration_state/3
         ]).
-        
+
+%-define( STATE_DEBUG, {debug, [trace] } ).
+-define( STATE_DEBUG,  ).
+    
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Helpers %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %% Function to log that a client failed to connecting with us
@@ -114,7 +117,15 @@ door_loop( ServPid, CliBalance, LSocket ) ->
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%% Second part functions %%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
+-record( auth,
+        {
+            host = ""   %% as string
+            ,server     %% as pid()
+            ,sock       %% as socket()
+            ,nick = ""  %% as string()
+            ,pass = ""  %% as string()
+            ,user = ""  %% as string()
+        }).
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% @doc
 %% <p>Auth_process is in charge to identify a peer who is trying to connect. He
@@ -138,7 +149,10 @@ auth_process( ServPid, CliBal, CliSock ) ->
 		{ok, {Address, _}} ->
 			{ok , {hostent,Host,_,_,_,_}} = inet:gethostbyaddr( Address ),
 			irc:send_ident_msg( CliSock, ?HOST_FOUND_MSG ),
-			{ok, Pid} = gen_fsm:start_link( doorman, {Host}, []),
+            State = #auth { host = Host
+                            ,server = ServPid
+                            ,sock = CliSock },
+			{ok, Pid} = gen_fsm:start_link( doorman, State, [?STATE_DEBUG]),
 			auth_loop( Pid, CliSock, ServPid, CliBal );
             
 		{error, Reason} ->
@@ -169,10 +183,10 @@ auth_process( ServPid, CliBal, CliSock ) ->
 %% 		SubInfo = string()
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 auth_loop( FsmPid, CliSock, ServPid, CliBal ) ->
-	case gen_tcp:recv( CliSock, 0, 100000 ) of
+	case gen_tcp:recv( CliSock, 0 ) of %, 100000 ) of
 		{ok, Packet} ->
 			IrcMessage = irc:msg_of_string( Packet ),
-			case gen_fsm:sync_send_event( FsmPid, IrcMessage ) of
+			case gen_fsm:sync_send_event( FsmPid, IrcMessage, 100000 ) of
 				continue ->
 					auth_loop( FsmPid, CliSock, ServPid, CliBal );
 
@@ -182,7 +196,7 @@ auth_loop( FsmPid, CliSock, ServPid, CliBal ) ->
 					log_error( "Bad commands sequence." ),
 					error;
                     
-				{ok, {Client, _Pass}} ->
+				{ok, {Client, _Auth}} ->
 					% @todo check client password
 			        Send = (fun({local, Sock}, Tosend) -> gen_tcp:send( Sock, Tosend )end),
                     RealClient = Client#client{ send = Send
@@ -213,50 +227,59 @@ init( Args ) -> {ok, init_state, Args}.
 handle_sync_event( stop, _From, _CurrentState, StateData ) ->
     {stop, error, StateData};
 handle_sync_event( IrcMessage, _From, CurrentState, StateData ) ->
-    CurrentState( IrcMessage, 0,StateData ).
+    CurrentState( IrcMessage, 0, StateData ).
 
 %% @hidden
 terminate( normal, _, _ ) -> ok;
 terminate( error, _, _ ) -> error.
 
 %% @hidden
-init_state( Msg, _From, {Host} ) ->
+init_state( Msg, _From, Auth ) ->
 	case Msg#msg.ircCommand of
 		'PASS' ->
 			[Pass|_] = Msg#msg.params,
-			{reply, continue, q2, {Host, Pass}};
-		'NICK' -> % Now we know the peer is a simple client
-			[Nick|_] = Msg#msg.params,
-			{reply, continue, final_registration_state, {Host, undefined, Nick}};
+			{reply, continue, q2, Auth#auth{ pass = Pass} };
+		'NICK' -> valid_nick( Msg, Auth );
 		_ -> % Not a valid message to initialise a connection
 			{stop, error, error, undefined}
 
 	end.
 
 %% @hidden
-q2( Msg, _From, {Host, Pass} ) ->
+q2( Msg, _From, Auth ) ->
 	case Msg#msg.ircCommand of
 		'PASS' ->
 			[NewPass|_] = Msg#msg.params,
-			{reply, continue, q2, {Host, NewPass}};
-		'NICK' ->
-			[Nick|_] = Msg#msg.params,
-			{next_state, continue, final_registration_state, {Host, Pass, Nick}};
-		'SERVER' ->
-			{stop, error, error, undefined}; % NOT SUPPORTED
+			{reply, continue, q2, Auth#auth{ pass = NewPass } };
+		'NICK' -> valid_nick( Msg, Auth );
+		'SERVER' -> {stop, error, error, undefined}; % NOT SUPPORTED
 		_ -> % Not a valid message to initialise a connection
 			{stop, error, error, undefined}
 	end.
 
+valid_nick( Msg, Auth ) ->
+    [Nick|_] = Msg#msg.params,
+    Used = server_node:is_client_existing( Auth#auth.server, Nick ),
+    if Used -> irc:send_ident_msg( Auth#auth.sock, ?NICK_ALREADY_USED ),
+                % TODO : renvoyer le vrai message d'erreur
+                %       ERR_NICKNAMEINUSE...
+                {reply, continue, q2, Auth};
+                
+       true -> {reply, continue, final_registration_state, Auth#auth{ nick = Nick } }
+    end.
+
 %% @hidden
-final_registration_state( Msg, _From, {Host, Pass, Nick} ) ->
+final_registration_state( Msg, _From, Auth ) ->
 	case Msg#msg.ircCommand of
 		'USER' ->
 			[Name|_] = Msg#msg.params,
-			Client = #client{ nick = Nick
-                              ,host = Host
-                              ,username = Name},
-			{stop, normal, {ok, {Client, Pass}}, undefined};
+			Client = #client{ nick = Auth#auth.nick
+                              ,host = Auth#auth.host
+                              ,username = Name },
+			{stop, normal, {ok, {Client, Auth#auth{user=Name} }
+                            },
+                            undefined
+             };
 		_ -> % Not a valid message to initialise a connection
 			{stop, error, error, undefined}
 	end.

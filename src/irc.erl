@@ -32,12 +32,15 @@
 %%	Change the sender field of a msg
 %% @end
 %% @spec update_sender( Msg, Sender ) -> Msg
+%% where
+%%      Sender = string() | client()
+%%      Msg = msg()
+update_sender( Msg, Cli ) when is_record( Cli, client ) ->
+    Msg#msg { sender = {Cli#client.nick,
+                        Cli#client.username,
+                        Cli#client.host} };
 update_sender( Msg, Sender ) ->
-	#msg{ sender = Sender,
-			ircCommand = Msg#msg.ircCommand,
-			params = Msg#msg.params,
-			data = Msg#msg.data
-		}.
+	Msg#msg{ sender = Sender }.
 
 %% @doc
 %%	Transform a text representation of IRC
@@ -232,16 +235,14 @@ is_channame_valid( [$+|Name] ) -> is_name_valid( Name, ?MAX_CHANNAME_SIZE - 1 );
 is_channame_valid( _ ) -> false.
 
 is_name_valid( _, 0 ) -> false;
-is_name_valid( [], ?MAX_CHANNAME_SIZE ) -> false;
+is_name_valid( [], ?MAX_CHANNAME_SIZE - 1 ) -> false;
 is_name_valid( [], _ ) -> true;
 is_name_valid( [Char | Next], Size ) ->
-    if Char >= 16#2D andalso
-        Char =< 16#39 -> false;
-
-        Char >= 16#3B andalso
-        Char =< 16#FF -> false;
-
-        true -> is_name_valid( Next, Size - 1 )
+    Valid = chars:is_between( Char, $-, $9 ) orelse
+            chars:is_between( Char, $;, 16#FF ),
+            
+    if Valid -> is_name_valid( Next, Size - 1 );
+       true -> false
     end.
 
 %% @doc
