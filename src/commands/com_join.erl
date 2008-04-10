@@ -103,7 +103,10 @@ check_password( State, Msg, Chan, Cli ) ->
     if Passworded -> 
             Pass = get_password( Msg ),
             if Pass /= Chan#chan.password ->
-                    irc:send_err( State, Cli, ?ERR_BADCHANNELKEY );
+                    Msg = ?ERR_BADCHANNELKEY
+                            ++ Chan#chan.channame
+                            ++ ?ERR_BADCHANNELKEY_TXT,
+                    irc:send_err( State, Cli, Msg );
                     false;
                true -> true
             end;
@@ -119,7 +122,10 @@ check_user_limit( State, Cli, Chan ) ->
     Limited = irc_laws:is_chan_limited( Chan ),
     if  Limited andalso
         Chan#chan.userlimit =< Chan#chan.usercount + 1 -> 
-                irc:send_err(State, Cli, ?ERR_CHANNELISFULL),
+                Msg = ?ERR_CHANNELISFULL
+                        ++ Chan#chan.channame
+                        ++ ?ERR_CHANNELISFULL_TXT,
+                irc:send_err(State, Cli, Msg),
                 false;
 
         true -> true
@@ -130,8 +136,25 @@ check_user_limit( State, Cli, Chan ) ->
 %%      State = cmanager()
 %%      Chan = chan()
 %%      Cli = client()
-check_user_ban( _State, _Cli, _Chan ) ->
-    true.
+check_user_ban( State, Cli, Chan ) ->
+    Clhost = irc:cli_to_string( Cli ),
+    Banned = check_ban_list( Chan#chan.banlist, Clhost, Cli, State ),
+    if Banned ->
+            Msg = ?ERR_BANNEDFROMCHAN
+                    ++ Chan#chan.channame
+                    ++ ?ERR_BANNEDFROMCHAN_TXT,
+            irc:send_err( State, Cli, Msg ),
+            false;
+       true -> true
+    end.
+
+check_ban_list( [], _, _, _ ) -> false;        
+check_ban_list( [Banned | Bagnar], Clhost, Cli, State ) ->
+    Matched = wexpr:match( Banned, Clhost ),
+    if Matched -> false;
+          true -> check_ban_list( Bagnar, Clhost, Cli, State )
+    end.
+
 
 %% @doc
 %%  Perform validation and registering of the JOIN

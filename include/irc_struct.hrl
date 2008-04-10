@@ -8,14 +8,21 @@
 % replying with a numerical code :)
 -define( ERR_NEEDMOREPARAMS, "461 :Error need more parameters" ).
 -define( ERR_ALREADYREGISTERED, 462 ).
--define( ERR_BADCHANNELKEY, "475 :Error bad chanel key" ).
--define( ERR_CHANNELISFULL, "471 :Error channel is full" ).
+
+-define( ERR_BADCHANNELKEY, " 475 " ).
+-define( ERR_BADCHANNELKEY_TXT, ":Error bad channel key" ).
+
+-define( ERR_CHANNELISFULL, " 471 " ).
+-define( ERR_CHANNELISFULL_TXT, ": Error channel is full" ).
 
 -define( ERR_NOSUCHCHANNEL, " 403 " ).
--define( ERR_NOSUCHCHANNEL_TXT, " :Error no such channel" ).
+-define( ERR_NOSUCHCHANNEL_TXT, ":Error no such channel" ).
 
 -define( ERR_UNKNOWNCOMMAND, " 421 " ).
--define( ERR_UNKNWONCOMMAND_TXT, " :Unknown command" ).
+-define( ERR_UNKNWONCOMMAND_TXT, ":Unknown command" ).
+
+-define( ERR_BANNEDFROMCHAN, " 461 " ).
+-define( ERR_BANNEDFROMCHAN_TXT, ": You are banned from the chan" ).
 
 -define( RPL_TOPIC, " 322 " ).
 -define( RPL_NOTOPIC, " 331 " ).

@@ -20,6 +20,7 @@
             ,is_channame_valid/1
             ,is_username_valid/1
             ,forge_msg/4
+            ,cli_to_string/1
 		]).
 
 -vsn( p01 ).
@@ -73,6 +74,19 @@ next_parse( Sender, Data, [Command | Params] ) ->
 		}.
 
 %% @doc
+%%  Transform a client or a tuple to it's IRC full
+%%  host counterpart.
+%% @end
+%% @spec cli_to_string( Cli ) -> Result
+%% where
+%%      Cli = {Nick, Username, Host} | client()
+%%      Result = string()
+cli_to_string( #client{nick = N, username= U, host = H} ) ->
+    cli_to_string( {N,U,H} );
+cli_to_string( {N,U,H} ) ->
+    lists:concat([N, "!", U, "@", H ]).
+
+%% @doc
 %%  Little helper function to quickly create
 %%  an irc message to send. Automaticaly convert
 %%  client to the good format.
@@ -83,25 +97,10 @@ next_parse( Sender, Data, [Command | Params] ) ->
 %%      Com = atom()
 %%      Params = [string()]
 %%      Data = string()
-forge_msg( Sender, Com, Params, Data ) 
-    when is_record( Sender, client ) ->
-    Msg = #msg
-          {
-            sender = {
-                         Sender#client.nick
-                        ,Sender#client.username
-                        ,Sender#client.host
-                     },
-            params = Params,
-            ircCommand = Com,
-            data = Data
-           },
-     string_of_msg( Msg );
-
 forge_msg( Sender, Com, Params, Data ) ->     
     Msg = #msg { sender = Sender, params = Params,
                 ircCommand = Com, data = Data },
-     string_of_msg( Msg ).
+    string_of_msg( Msg ).
 
 
 %% Separate IRC protocol information of
@@ -169,20 +168,14 @@ string_assembler( Sender, IrcCommand, Params, Data ) ->
 %% @spec string_of_msg( Msg ) -> Result
 %% where Msg = msg()
 %%		Result = string()
-string_of_msg( Msg ) ->
-	case Msg of
-		#msg {sender={Nick,Username,Host},
-				ircCommand=IrcCommand,
-				params=Params,
-				data=Data } ->
-			string_assembler(lists:concat([Nick, "!", Username, "@", Host ]),
-											IrcCommand, Params, Data);
-		#msg { sender=Server,
-				ircCommand=IrcCommand,
-				params=Params,
-				data=Data } ->
-			string_assembler( Server, IrcCommand, Params, Data )
-	end.
+string_of_msg( #msg { sender=Server, ircCommand=IrcCommand,
+                      params=Params, data=Data }) when is_list(Server) ->
+    
+        string_assembler( Server, IrcCommand, Params, Data );
+
+string_of_msg( #msg {sender=Sender, ircCommand=IrcCommand,
+				    params=Params, data=Data } ) ->
+		string_assembler(cli_to_string( Sender ), IrcCommand, Params, Data).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Helpers %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% @doc
