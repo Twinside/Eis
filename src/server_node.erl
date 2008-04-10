@@ -123,7 +123,7 @@ get_chan( ServerPid, ChanName ) ->
 %%		Chan = chan()
 %%		Result = none
 add_chan( ServerPid, Chan ) ->
-	gen_server:cast( ServerPid, {add_chan, Chan} ).
+	gen_server:call( ServerPid, {add_chan, Chan} ).
 
 %% @doc
 %%	Add a new user into the server.
@@ -179,7 +179,7 @@ is_existing( Table, Key, State ) ->
 extract( Table, Key, State ) ->
 	case ets:lookup( Table, Key ) of
 		[] -> {reply, error ,State};
-		Obj -> {reply, {ok, Obj}, State}
+		[{_, Obj}] -> {reply, {ok, Obj}, State}
 	end.
 
 %% @hidden
@@ -195,6 +195,14 @@ handle_call( {get_client, Nick}, _From, State ) ->
         Else -> Else
     end;
 
+
+handle_call( {add_chan, Chan}, _From, State ) ->
+    case extract( State#srvs.chans, Chan, State ) of
+        {_,  error , _} -> {Pid, St} = com_join:server_add( State, Chan ),
+                            {reply, Pid, St};
+        {_, {ok, Pid}, _} -> {reply, Pid, State}
+    end;
+    
 handle_call( {chan_exists, Name}, _From, State ) ->
 	is_existing( State#srvs.chans, Name, State );
 		
@@ -228,14 +236,6 @@ handle_cast( {set_balance, Clibal, Chanbal}, State) ->
                     clibal = Clibal},
     {noreply,NewState};
               
-
-handle_cast( {add_chan, Chan}, State ) ->
-	{noreply,
-        case extract( State#srvs.chans, Chan, State ) of
-		    {_,  error , _} -> com_join:server_add( State, Chan );	% faire un join
-    		{_, {ok, _}, _} -> State
-        end
-	};
     
 handle_cast( _Command, State ) ->
 	{noreply, State}.

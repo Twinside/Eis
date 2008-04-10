@@ -139,20 +139,22 @@ sender_parser( Msg ) ->
 %% -> string
 
 string_colapser( "", IrcCommand, Params, "" ) ->
-	lists:concat( [IrcCommand, " ", chars:flat_append(Params, $   ), [$\n] ] );
+	lists:concat( [IrcCommand, " ", chars:flat_append(Params, $   ), "\r\n" ] );
 
 string_colapser( "", IrcCommand, Params, Data ) ->
-	lists:concat( [IrcCommand, " ", chars:flat_append(Params, $   ), " :", Data, [$\n] ] );
+	lists:concat( [IrcCommand, " ", chars:flat_append(Params, $   ), " :", Data, "\r\n" ] );
     
 string_colapser( Sender, IrcCommand, Params, "" ) ->
 	Prelude = lists:concat([":", Sender, " "]),
-	lists:concat( [Prelude, IrcCommand, " ", chars:flat_append(Params, $   ), [$\n] ] );
+	lists:concat( [Prelude, IrcCommand, " ", chars:flat_append(Params, $   ), "\r\n"] );
     
 string_colapser( Sender, IrcCommand, Params, Data ) ->
 	Prelude = lists:concat([":", Sender, " "]),
 	lists:concat( [Prelude, IrcCommand, " ",
-                    chars:flat_append(Params, $   ), " :", Data, [$\n] ] ).
+                    chars:flat_append(Params, $   ), " :", Data, "\r\n" ] ).
                     
+string_assembler( Sender, IrcCommand, Params, Data ) when is_list( IrcCommand ) ->
+    string_colapser( Sender, IrcCommand, Params, Data );
 string_assembler( Sender, IrcCommand, Params, Data ) when is_atom( IrcCommand ) ->
     string_colapser( Sender, atom_to_list( IrcCommand ), Params, Data );
 string_assembler( Sender, IrcCommand, Params, Data ) ->

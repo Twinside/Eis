@@ -56,10 +56,8 @@ do_client_join( Dest, Msg, Cli, CliState ) ->
     Continue = name_validation( CliState, Cli, Dest ),
 	ServerNode = CliState#listener.servernode,
     if Continue -> case server_node:get_chan(ServerNode, Dest) of
-                    error -> create_chan( Msg, Cli, ServerNode ),
-                             {_, Chan} = server_node:get_chan( ServerNode, Dest ),
-                             join_chan( Msg, Cli, Chan );
-                    {ok, Chan} -> join_chan( Msg, Cli, Chan )
+                    error -> create_chan( Msg, Cli, ServerNode );
+                    {ok, Chan} -> join_chan( Msg, Cli, {Dest, Chan} )
                 end;
 
        true -> false
@@ -74,7 +72,7 @@ join_chan( Msg, Cli, {Channame,Pid} ) ->
 create_chan( Msg, Cli, ServerNode ) ->
 	[ChanName|_] = Msg#msg.params,
 	Pid = server_node:add_chan( ServerNode, ChanName ),
-    chan_manger:send( Pid, {Msg, ChanName, Cli} )
+    chan_manager:send_chan( Pid, {Msg, ChanName, Cli} )
 	.
 
 %% @doc
@@ -147,7 +145,7 @@ check_user_ban( _State, _Cli, _Chan ) ->
 %%      ChanState = cmanager()
 perform_chan( Msg, Cli, Chan, ChanState ) ->
     ValidJoin = check_password( ChanState, Msg, Chan, Cli ) andalso
-                (bnot irc_laws:is_chan_inviteonly( Chan )) andalso
+                (not irc_laws:is_chan_inviteonly( Chan )) andalso
                 check_user_limit( ChanState, Cli, Chan ) andalso
                 check_user_ban( ChanState, Cli, Chan ),
                 
@@ -182,7 +180,7 @@ register_user( Cli, ChanState, Chan, true ) ->
                 } ),
     % update the chan information.
     ets:insert( ChanState#cmanager.byname,
-                {Chan#chan.channame, NeoChan} ),
+                {NeoChan#chan.channame, NeoChan} ),
     send_welcome_info( ChanState#cmanager.server_host,
                         Cli, Chan ),
     Notif = irc:forge_msg(Cli,'JOIN',[], Chan#chan.channame),
@@ -208,9 +206,8 @@ send_welcome_info( Serverhost, Cli, #chan {channame = ChanName,
 %%      Result = srvs()
 server_add( ServerState, Channame ) ->
 	Bal = ServerState#srvs.chanbal,
-    Chan = chan_manager:new_chan( Channame ),
-	{ok, Pid} = load_balancer:add_ressource( Bal, Chan ),
-	ets:add( ServerState#srvs.chans, {Chan, Pid} ),
-    ServerState
+	Pid = load_balancer:add_ressource( Bal, Channame ),
+	ets:insert( ServerState#srvs.chans, {Channame, Pid} ),
+    {Pid, ServerState}
 	.
 

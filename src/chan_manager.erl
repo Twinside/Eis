@@ -20,7 +20,6 @@
 
 -export([
 			send_chan/2
-            ,new_chan/1
             ,broadcast_users/2
             ,broadcast_localusers/2
             ,broadcast_foreignusers/2
@@ -37,20 +36,8 @@
 %%		What = term()
 %%		Result = ok
 send_chan( Chan, What ) ->
-	gen_server:handle_cast( Chan, What ).
+	gen_server:cast( Chan, What ).
 
-%% @doc
-%%  Instantiate a new chan.
-%% @spec new_chan( Channame ) -> Result
-%% where
-%%      Channame = string()
-%%      Result = chan()
-new_chan( Channame ) ->
-    #chan {
-            channame = Channame,
-            userlist = ets:new( gnalist, [set] ),
-            foreignusers = ets:new( gneugneu, [set] )
-          }.
 
 %% @doc
 %%  Send a message to all members of a chan.
@@ -84,7 +71,7 @@ broadcast_foreignusers( _Chan, _Msg ) -> undefined.
 %%      Chan = chan()
 %%      Message = string()
 broadcast_localusers( Chan, Message ) ->
-    Broadcaster = (fun( Usr, Msg ) ->
+    Broadcaster = (fun( {_,{Usr,_Right}}, Msg ) ->
                     (Usr#client.send)(Usr#client.sendArgs, Msg )
                    end), 
     ets:foldl( Broadcaster, Message, Chan#chan.userlist )
@@ -112,13 +99,25 @@ reload_config( State ) ->
 handle_call( _Arg, _From, _State ) ->
 	undefined.
 
+%% @doc
+%%  Instantiate a new chan.
+%% @spec new_chan( Channame ) -> Result
+%% where
+%%      Channame = string()
+%%      Result = chan()
+new_chan( Channame ) ->
+    #chan {
+            channame = Channame,
+            userlist = ets:new( gnalist, [set] ),
+            foreignusers = ets:new( gneugneu, [set] )
+          }.
+          
 %
 % Different call used by the load balancer.
 %
 %% @hidden
 handle_cast( {addressource, Chan}, State ) ->
-	ets:insert( State#cmanager.byname,
-				{Chan#chan.channame, Chan} ),
+	ets:insert( State#cmanager.byname, {Chan, new_chan( Chan ) } ),
 	{noreply, State};
 
 %% @hidden
@@ -137,7 +136,7 @@ handle_cast( takeany, ChanList ) ->
 
 handle_cast({Msg, ChanName, Data}, State ) ->
     Lst = State#cmanager.byname,
-	{_, Chan} = ets:lookup( Lst, ChanName ),
+	[{_, Chan}] = ets:lookup( Lst, ChanName ),
 	{noreply, dispatch(Msg#msg.ircCommand,
                         Msg,
 						Data,
