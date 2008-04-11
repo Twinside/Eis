@@ -186,7 +186,6 @@ reload_config( State ) ->
 	State#srvs{
 				maxcli = conf_loader:get_int_conf( "server_max_client" )
 				,maxchan = conf_loader:get_int_conf( "server_max_chan" )
-				,maxchanpercli = conf_loader:get_int_conf( "chan_per_cli" )
 			  }.
 
 is_existing( Table, Key, State ) ->

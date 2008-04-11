@@ -26,14 +26,34 @@
 %%      ClientState = listener()
 %%      Result = listener()
 perform_client( Msg, Cli, ClientState ) ->
-	Lst = Msg#msg.params,
-	NeoMsg = irc:update_sender( Msg, Cli#client.nick ),
+	Valid = validate_message( Msg, Cli, ClientState ) andalso
+            check_chan_limit( Msg, Cli, ClientState ) andalso
+            name_validation( Msg, Cli, ClientState ),
+	
+    if Valid -> NeoMsg = irc:update_sender( Msg, Cli#client.nick ),
+                [Dest|_] = NeoMsg#msg.params,
+                do_client_join( Dest, NeoMsg, Cli, ClientState );
+       true -> ClientState
+    end.   
 
+validate_message( Msg, Cli, State ) ->
+    Lst = Msg#msg.params,
 	case Lst of
-		[] -> irc:sendErr( ClientState, Cli, ?ERR_NEEDMOREPARAMS );
-        [Dest | _] -> do_client_join( Dest, NeoMsg, Cli, ClientState )
-	end,
-	ClientState.
+		[] -> irc:sendErr( State, Cli, ?ERR_NEEDMOREPARAMS ),
+              false;
+        [_Dest | _] -> true
+	end.
+
+check_chan_limit( #msg{ params = [CName|_] }, Cli, ClientState ) ->
+    Valid = length( Cli#client.is_in ) =< ClientState#listener.maxchanpercli,
+    if Valid -> true;
+       true -> Msg = ?ERR_TOOMANYCHANNELS
+                    ++ CName
+                    ++ ?ERR_TOOMANYCHANNELS_TXT,
+               irc:sendErr( ClientState, Cli, Msg ),
+               false
+    end
+    .
 
 %% @doc
 %%  Validate a channel name and send the
@@ -44,7 +64,7 @@ perform_client( Msg, Cli, ClientState ) ->
 %%      ClientState = listener()
 %%      Cli = client()
 %%      Channame = string()
-name_validation( ClientState, Cli, Channame ) ->
+name_validation( #msg{ params = [Channame|_]}, Cli, ClientState ) ->
     Valid = irc:is_channame_valid( Channame ),
     if Valid -> true;
         true -> Msg = ?ERR_NOSUCHCHANNEL ++ Channame ++ ?ERR_NOSUCHCHANNEL_TXT, 
@@ -53,16 +73,12 @@ name_validation( ClientState, Cli, Channame ) ->
     end.
 
 do_client_join( Dest, Msg, Cli, CliState ) ->
-    Continue = name_validation( CliState, Cli, Dest ),
 	ServerNode = CliState#listener.servernode,
-    if Continue -> case server_node:get_chan(ServerNode, Dest) of
-                    error -> create_chan( Msg, Cli, ServerNode );
-                    {ok, Chan} -> join_chan( Msg, Cli, {Dest, Chan} )
-                end;
-
-       true -> false
-    end.
-
+    case server_node:get_chan(ServerNode, Dest) of
+        error -> create_chan( Msg, Cli, ServerNode );
+        {ok, Chan} -> join_chan( Msg, Cli, {Dest, Chan} )
+    end,
+    CliState.
      
 join_chan( Msg, Cli, {Channame,Pid} ) ->
 	chan_manager:send_chan( Pid, {Msg, Channame, Cli} )

@@ -35,6 +35,9 @@
 -define( ERR_CANNOTSENDTOCHAN, " 404 " ).
 -define( ERR_CANNOTSENDTOCHAN_TXT, " :Cannot send to channel" ).
 
+-define( ERR_TOOMANYCHANNELS, " 405 " ).
+-define( ERR_TOOMANYCHANNELS_TXT, " :You have joined too many channels\r\n" ).
+
 -define( ERR_UNKNOWNCOMMAND, "421" ).
 -define( ERR_UNKNWONCOMMAND_TXT, "Unknown command " ).
 
@@ -105,6 +108,7 @@
 			,servernode	%% pid of the server node.
 			,bynick
 			,bysock
+            ,maxchanpercli
 		}).
 
 -record( cmanager,
@@ -128,5 +132,4 @@
 
 			,maxcli
 			,maxchan
-			,maxchanpercli	% fuck.
 		}).

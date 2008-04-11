@@ -43,6 +43,7 @@ init( [ {Balance, Servernode} ] ) ->
 reload_config( State ) ->
 	State#listener{
 		server_host = conf_loader:get_conf( "server_host" )
+		,maxchanpercli = conf_loader:get_int_conf( "chan_per_cli" )
 	}.
 
 %% @hidden
