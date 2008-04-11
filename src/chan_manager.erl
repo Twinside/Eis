@@ -120,17 +120,9 @@ handle_cast( {addressource, Chan}, State ) ->
 	ets:insert( State#cmanager.byname, {Chan, new_chan( Chan ) } ),
 	{noreply, State};
 
-%% @hidden
 handle_cast( {killressource, Chan}, ChanList ) ->
 	ets:delete( ChanList, Chan#chan.channame ),
 	{noreply, ChanList};
-	
-%% @hidden
-handle_cast( takeany, ChanList ) ->
-	Key = ets:first( ChanList ),
-	[{_, Chan}] = ets:lookup( ChanList, Key ),
-	ets:delete(ChanList, Key),
-	{reply, {takeany, Chan}, ChanList};
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 

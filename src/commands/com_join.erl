@@ -214,6 +214,8 @@ register_user( Cli, ChanState, Chan, true ) ->
     
 send_welcome_info( Serverhost, Cli, #chan {channame = ChanName,
                                             topic = Topic } ) ->
+    SyncMsg =  {notifjoin, Cli#client.nick, {ChanName, self()}},
+    gen_server:cast( Cli#client.cli_listener, SyncMsg ),
     Message = irc:forge_msg( Serverhost, ?RPL_TOPIC, [ChanName], Topic ),
     (Cli#client.send)( Cli#client.sendArgs, Message ).
                                             

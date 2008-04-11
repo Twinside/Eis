@@ -9,20 +9,26 @@
 -define( ERR_NEEDMOREPARAMS, "461 :Error need more parameters" ).
 -define( ERR_ALREADYREGISTERED, 462 ).
 
--define( ERR_BADCHANNELKEY, " 475 " ).
+-define( ERR_BADCHANNELKEY, "475" ).
 -define( ERR_BADCHANNELKEY_TXT, ":Error bad channel key" ).
 
--define( ERR_CHANNELISFULL, " 471 " ).
+-define( ERR_CHANNELISFULL, "471" ).
 -define( ERR_CHANNELISFULL_TXT, ": Error channel is full" ).
 
--define( ERR_NOSUCHCHANNEL, " 403 " ).
+-define( ERR_NOSUCHCHANNEL, "403" ).
 -define( ERR_NOSUCHCHANNEL_TXT, ":Error no such channel" ).
 
--define( ERR_UNKNOWNCOMMAND, " 421 " ).
--define( ERR_UNKNWONCOMMAND_TXT, ":Unknown command" ).
+-define( ERR_UNKNOWNCOMMAND, "421" ).
+-define( ERR_UNKNWONCOMMAND_TXT, "Unknown command " ).
 
--define( ERR_BANNEDFROMCHAN, " 461 " ).
+-define( ERR_BANNEDFROMCHAN, "461" ).
 -define( ERR_BANNEDFROMCHAN_TXT, ": You are banned from the chan" ).
+
+-define( ERR_NORECIPIENT, "411" ).
+-define( ERR_NORECIPIENT_TXT, " : There is no recipient in your command" ).
+
+-define( ERR_NOTEXTTOSEND, "412" ).
+-define( ERR_NOTEXTTOSEND_TXT, ": There is no text to send" ).
 
 -define( RPL_TOPIC, " 322 " ).
 -define( RPL_NOTOPIC, " 331 " ).
@@ -57,9 +63,11 @@
 
 -record(client,
 		{
-			nick		    %% as string
+            cli_listener    %% as pid()
+			,nick		    %% as string
 			,host = ""  	%% as string
 			,username = ""	%% as string
+            ,is_in = []     %% as [{string(),Pid}]
 			,send		    %% as function/2
 			,sendArgs       %% as {local, socket()} | {virtual, Pid} | {foreign, _}
 		}).

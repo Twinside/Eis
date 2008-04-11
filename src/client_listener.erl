@@ -61,7 +61,8 @@ broadcaster( User, Msg ) ->
 %% @hidden
 handle_cast( {addressource, Client}, State ) ->
     {local, Sock} = Client#client.sendArgs,
-	ets:insert( State#listener.bynick, {Client#client.nick, Client} ),
+    Neocli = Client#client{ cli_listener = self() },
+	ets:insert( State#listener.bynick, {Client#client.nick, Neocli} ),
 	ets:insert( State#listener.bysock, {Sock, Client#client.nick} ),
 	{noreply, State};
 
@@ -77,20 +78,13 @@ handle_cast( {killressource, Client}, State ) ->
 				{noreply, State}
 	end;
 
-handle_cast( takeany, State ) ->
-	Bynick = State#listener.bynick,
-	Bysock = State#listener.bysock,
-	
-	Key = ets:first( Bynick ),
-	[{_, Cli}] = ets:lookup( Bynick, Key ),
-	ets:delete( Bynick, Cli#client.sendArgs ), % deleting from tables
-	ets:delete( Bysock, Cli#client.nick ),
-	
-	% we give the responsabilitie of the socket to the supervisor
-	gen_tcp:controlling_process( Cli#client.sendArgs,
-								 State#listener.supervisor ),
-	{reply, {takeany, Cli}, State};
-
+handle_cast( {notifjoin, Cliname, Chaninfo}, State ) ->
+    [{_,Cli}] = ets:lookup( State#listener.bynick, Cliname ),
+    Neocli = Cli#client{ is_in = [Chaninfo|Cli#client.is_in] },
+    ets:insert( State#listener.bynick, {Cliname,Neocli} ),
+    {noreply, State};
+                                        
+    
 handle_cast( Msg, State ) when is_record( Msg, msg ) ->
 	% do not convert Msg to StrMsg before know if the client is virtual or not
 	% ets:foldl(broadcaster, Msg, UserTable),
@@ -112,8 +106,10 @@ handle_info( {tcp_closed, Socket} , State ) ->
 	[{_, Nick}] = ets:lookup( State#listener.bysock, Socket ),
     [{_,Cli}] = ets:lookup( State#listener.bynick, Nick ),
     ets:delete( State#listener.bysock, Socket ),
-    ets:delete( State#listener.bynick, Cli#client.nick ),
-    irc:logEvent( "Client deconnexion : " ++ Cli#client.nick ),
+    ets:delete( State#listener.bynick, Nick ),
+    server_node:del_user( State#listener.servernode, Nick ),
+    load_balancer:notif_killed( State#listener.supervisor ),
+    irc_log:logEvent( "Client deconnexion : " ++ Cli#client.nick ),
     % TODO : propagate deconnexion message to everyone.
     {noreply, State}
     .
@@ -135,9 +131,10 @@ dispatcher( 'NOTICE', Msg, From, State ) ->
 dispatcher( 'PRIVMSG', Msg, From, State ) ->
     com_privmsg:perform_client( Msg, From, State );
 dispatcher( Command, _Msg, From, State ) ->
-    Notice = irc:forge_msg( State#listener.server_host, Command
-                            ,[?ERR_UNKNOWNCOMMAND, atom_to_list( Command )]
-                            ,?ERR_UNKNWONCOMMAND_TXT ),
+    ComStr = atom_to_list( Command ),
+    Notice = irc:forge_msg( State#listener.server_host, ?ERR_UNKNOWNCOMMAND
+                            ,[ComStr]
+                            ,?ERR_UNKNWONCOMMAND_TXT ++ ComStr ),
     (From#client.send)(From#client.sendArgs, Notice ),
     State 
     .

@@ -93,10 +93,10 @@ $(OBJDIR)%$(OBJEXT): $(COMSOURCEDIR)%$(SRCEXT)
 
 #####
 # for tests
-$(OBJDIR)%$(OBJEXT): $(TESTDIR)%$(SRCEXT)
+$(OBJDIR)%$(OBJEXT): $(TESTDIR)%$(SRCEXT) $(HEADERDIR)irc_struct.hrl
 	$(ECC) $(EFLAGS) $<
 
-$(OBJDIR)%$(OBJEXT): $(TESTCOMDIR)%$(SRCEXT)
+$(OBJDIR)%$(OBJEXT): $(TESTCOMDIR)%$(SRCEXT) $(HEADERDIR)irc_struct.hrl
 	$(ECC) $(EFLAGS) $<
 
 #####

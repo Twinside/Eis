@@ -19,6 +19,7 @@
 			,get_chan/2
 			,add_chan/2
 			,add_user/2
+            ,del_user/2
             ,is_cli_local/1
             ,is_cli_foreign/1
             ,is_cli_virtual/1
@@ -38,7 +39,11 @@
 -vsn( p01 ).
 
 -export( [allowed/0 ]).
-allowed( ) -> [ 'QUIT', 'NOTICE', 'PRIVMSG', 'KICK', 'MODE', 'WHO', 'WHOIS', 'WHOWAS' , 'NAMES'  ].
+allowed( ) -> [ 'QUIT', 'PART'
+                , 'NOTICE', 'PRIVMSG'
+                , 'KICK', 'MODE'
+                , 'WHO', 'WHOIS'
+                , 'WHOWAS' , 'NAMES'  ].
 
 %% @doc
 %%  Tell if a client is a local one registered
@@ -148,6 +153,17 @@ user_adding( _ServerPid, _User, false ) ->
     ok. % TODO for foreign & virtual users
 
 %% @doc
+%%  Unregister an user from the server.
+%%  No notification of failure.
+%% @end
+%% @spec del_user( ServerPid, Nick ) -> none
+%% where
+%%      ServerPid = pid()
+%%      UsrNick = string()
+del_user( ServerPid, UsrNick ) ->
+    gen_server:cast( ServerPid, {del_local_user, UsrNick} ).
+    
+%% @doc
 %%	Launch a new server.
 %% @end
 start_link(Supervisor) ->
@@ -238,7 +254,10 @@ handle_cast( {set_balance, Clibal, Chanbal}, State) ->
                     chanbal = Chanbal,
                     clibal = Clibal},
     {noreply,NewState};
-              
+
+handle_cast( {del_local_user, Cliname}, State ) ->
+    ets:delete( State#srvs.clients, Cliname ),
+    {noreply, State};      
     
 handle_cast( _Command, State ) ->
 	{noreply, State}.

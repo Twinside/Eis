@@ -25,7 +25,8 @@
 -export([
 			start_link/3		% to launch a blancer.
 			,add_ressource/2	% helper to add a ressource
-			,kill_ressource/2	% helper to add a ressource.
+			,kill_ressource/2	% helper to kill a ressource.
+            ,notif_killed/1
 		]).
 
 -record( bconf,
@@ -100,6 +101,16 @@ add_ressource( BalancerPid, Rsrc ) ->
 %%		Rsrc = term()
 kill_ressource( BalancerPid, Rsrc ) ->
 	gen_server:cast( BalancerPid, {killressource, Rsrc} ).
+
+%% @doc
+%%  Signal to the balancer that the manager
+%%  has killed a ressource.
+%% @end
+%% @spec notif_killed( BalancerPid ) -> true
+%% where
+%%      BalancerPid = pid()
+notif_killed( BalancerPid ) ->
+    gen_server:cast( BalancerPid, {killedaressource, self()} ).
 
 %
 % Update the balanced process list to
