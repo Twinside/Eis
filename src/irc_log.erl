@@ -14,13 +14,14 @@
 -define( LogFatal, 4 ).
 
 -export([
-			basic_init/0,
-			init/2,
-			logVerbose/1,
-			logInfo/1,
-			logEvent/1,
-			logError/1,
-			logFatal/1
+			basic_init/0
+			,init/2
+			,logVerbose/1
+			,logInfo/1
+			,logEvent/1
+			,logError/1
+			,logFatal/1
+            ,logDebug/1
 		]).
 
 % export only to get correct working status.
@@ -59,6 +60,18 @@ init( Function, FuncArg ) ->
 		true -> {error, "Problem while launching logger thread"}
 	end.
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% @doc
+%%  Used to log debug information, should
+%%  not be used in the final release.
+%% @end
+%%
+%% @spec logDebug( Txt ) -> nil
+%% where
+%%		Txt = string()
+logDebug( Txt ) ->
+	logmsg( debug, Txt ).
+    
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% @doc
 %%	Log marginaly informative messages, used
@@ -145,8 +158,12 @@ logmsg( ?LogError, Txt ) ->
 	
 logmsg( ?LogFatal, Txt ) ->
 	Logger = whereis( irc_serv_logger ),
-	Logger!{?LogFatal, "! " ++ Txt}.
+	Logger!{?LogFatal, "! " ++ Txt};
 
+logmsg( Level, Txt ) ->
+	Logger = whereis( irc_serv_logger ),
+	Logger!{Level, "! " ++ Txt}.
+    
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% @doc
 %%	Transform a date/time information to
@@ -171,7 +188,9 @@ logthread( Func, Args ) ->
 		{?LogVerbose, What} -> Func( Args, prepare(What) );
 		{?LogInfo, What} -> Func( Args, prepare(What) );
 		{?LogEvent, What} -> Func( Args, prepare(What) );
-		{?LogError, What} -> Func( Args, prepare(What) )
+		{?LogError, What} -> Func( Args, prepare(What) );
+
+        {debug, What} -> Func( Args, What )
 	end,
 	irc_log:logthread( Func, Args ).
 

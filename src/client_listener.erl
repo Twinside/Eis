@@ -132,7 +132,8 @@ dispatcher( 'JOIN', Msg, From, State ) ->
 	com_join:perform_client( Msg, From, State );
 dispatcher( 'NOTICE', Msg, From, State ) ->
 	com_notice:perform_client( Msg, From, State );
-
+dispatcher( 'PRIVMSG', Msg, From, State ) ->
+    com_privmsg:perform_client( Msg, From, State );
 dispatcher( Command, _Msg, From, State ) ->
     Notice = irc:forge_msg( State#listener.server_host, Command
                             ,[?ERR_UNKNOWNCOMMAND, atom_to_list( Command )]

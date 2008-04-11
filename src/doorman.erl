@@ -52,7 +52,11 @@
 
 %-define( STATE_DEBUG, {debug, [trace] } ).
 -define( STATE_DEBUG,  ).
-    
+   
+%-define( LOCAL_SEND, (fun({local, Sock}, Tosend) -> gen_tcp:send( Sock, Tosend )end)).
+-define( LOCAL_SEND, (fun({local, Sock}, Tosend) -> irc_log:logDebug( "----> " ++ Tosend ++ "\n"),
+                                                    gen_tcp:send( Sock, Tosend )end)).
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Helpers %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %% Function to log that a client failed to connecting with us
@@ -198,7 +202,7 @@ auth_loop( FsmPid, CliSock, ServPid, CliBal ) ->
                     
 				{ok, {Client, _Auth}} ->
 					% @todo check client password
-			        Send = (fun({local, Sock}, Tosend) -> gen_tcp:send( Sock, Tosend )end),
+			        Send = ?LOCAL_SEND, 
                     RealClient = Client#client{ send = Send
                                              ,sendArgs = {local, CliSock} },
 					server_node:add_user( ServPid, RealClient ),

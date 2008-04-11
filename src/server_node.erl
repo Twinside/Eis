@@ -99,7 +99,7 @@ is_chan_existing( ServerPid, NickName ) ->
 %% where
 %%		ServerPid = pid()
 %%		Nickname = string()
-%%		Result = {ok, {nick,client()}} | error
+%%		Result = {ok, client()} | error
 get_client( ServerPid, Nickname ) ->
 	gen_server:call( ServerPid, {get_client, Nickname} ).
 

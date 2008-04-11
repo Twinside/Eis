@@ -10,13 +10,29 @@
 
 -export([
 			perform_client/3
+            ,perform_chan/4
 		]).
 
-perform_client(Msg, _From, _State) ->
+perform_client(Msg, From, State) ->
 	Lst = Msg#msg.params,
-	Dest = 0, % à modif ici	
-	case Lst of
-		[Sender | Text] ->
-					(Dest#client.send)((Sender#client.sendArgs), Text)
-	end
-.
+    NeoMess = irc:update_sender( Msg, From ),
+	
+    case Lst of
+		[Dest |_ ] -> send_notice( NeoMess, Dest, State, irc:is_username_valid( Dest ) ),
+                      State;
+         
+         _ -> State % just ignore           
+	end.
+
+send_notice( Msg, Dst, State, true ) ->
+    case server_node:get_client( State#listener.servernode, Dst ) of
+        {ok, Cli} -> Notice = irc:string_of_msg( Msg ),
+                     (Cli#client.send)(Cli#client.sendArgs, Notice),
+                     ok;
+        _ -> ok
+    end;
+send_notice( _, _, _, _ ) ->
+    ok.
+    
+perform_chan( _Msg, _Cli, _Chan, ChanState ) -> ChanState.
+
