@@ -26,13 +26,13 @@ validate_command( Msg, Cli, ClientState ) ->
     check_text( Msg, Cli, ClientState ).
 
 check_recipient( #msg{ params = [] }, Cli, State ) ->
-    Errmsg = ?ERR_NORECIPIENT ++ ?ERR_NORECIPIENT_TXT,
+    Errmsg = ?ERR_NORECIPIENT ++ ?ERR_NORECIPIENT_TXT ++ "\r\n",
     irc:send_err( State, Cli, Errmsg ),
     false;
 check_recipient( _, _ ,_ ) -> true.
  
 check_text( #msg{ data= "" }, Cli, State ) ->
-    Errmsg = ?ERR_NOTEXTTOSEND ++ ?ERR_NOTEXTTOSEND_TXT,
+    Errmsg = ?ERR_NOTEXTTOSEND ++ ?ERR_NOTEXTTOSEND_TXT ++ "\r\n",
     irc:send_err( State, Cli, Errmsg ),
     false;
 check_text( _, _, _ ) -> true.
@@ -52,7 +52,7 @@ do_chan_send( Msg, Cli, State, true ) ->
 privmsg_to_wild( {ok, {_,Pid}}, Msg, Cli, _State, Name ) ->
     chan_manager:send_chan( Pid, {{notin_chan, Msg}, Name, Cli} );
 privmsg_to_wild( _, _Msg, Cli, State, Name ) ->
-    Msgtxt = ?ERR_NOSUCHCHANNEL ++ Name ++ ?ERR_NOSUCHCHANNEL_TXT ++ Name,
+    Msgtxt = ?ERR_NOSUCHCHANNEL ++ Name ++ ?ERR_NOSUCHCHANNEL_TXT ++ Name ++ "\r\n",
     irc:send_err( State, Cli, Msgtxt ).
 
 do_cli_send( Msg, Cli, CliState, true ) ->
@@ -63,7 +63,7 @@ do_cli_send( Msg, Cli, CliState, true ) ->
         _ -> do_cli_send( Msg, Cli, CliState, false )
     end;
 do_cli_send( #msg{ params=[Nick|_] }, Cli, CliState, _ ) ->
-    ErrMsg = ?ERR_NOSUCHNICK ++ Nick ++ ?ERR_NOSUCHNICK_TXT ++ Nick,
+    ErrMsg = ?ERR_NOSUCHNICK ++ Nick ++ ?ERR_NOSUCHNICK_TXT ++ Nick ++ "\r\n",
     irc:send_err( CliState, Cli, ErrMsg ).
 
 % ok user not in chan, problematic...
@@ -72,7 +72,7 @@ perform_chan( {notin_chan, Msg}, {Cli,Right}, Chan, ChanState ) ->
     if Allowed -> perform_chan( Msg, {Cli,Right}, Chan, ChanState );
        true -> Errmsg = ?ERR_CANNOTSENDTOCHAN
                         ++ Chan#chan.channame
-                        ++ ?ERR_CANNOTSENDTOCHAN_TXT,
+                        ++ ?ERR_CANNOTSENDTOCHAN_TXT ++ "\r\n",
                irc:send_err( ChanState, Cli, Errmsg ),
                ChanState
     end;   
