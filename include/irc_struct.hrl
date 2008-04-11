@@ -15,8 +15,14 @@
 -define( ERR_CHANNELISFULL, "471" ).
 -define( ERR_CHANNELISFULL_TXT, ": Error channel is full" ).
 
--define( ERR_NOSUCHCHANNEL, "403" ).
--define( ERR_NOSUCHCHANNEL_TXT, ":Error no such channel" ).
+-define( ERR_NOSUCHNICK, " 401 " ).
+-define( ERR_NOSUCHNICK_TXT, " :Error no such nick " ).
+
+-define( ERR_NOSUCHCHANNEL, " 403 " ).
+-define( ERR_NOSUCHCHANNEL_TXT, " :Error no such channel " ).
+
+-define( ERR_CANNOTSENDTOCHAN, " 404 " ).
+-define( ERR_CANNOTSENDTOCHAN_TXT, ":Cannot send to channel" ).
 
 -define( ERR_UNKNOWNCOMMAND, "421" ).
 -define( ERR_UNKNWONCOMMAND_TXT, "Unknown command " ).

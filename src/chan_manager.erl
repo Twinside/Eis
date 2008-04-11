@@ -72,7 +72,8 @@ broadcast_foreignusers( _Chan, _Msg ) -> undefined.
 %%      Message = string()
 broadcast_localusers( Chan, Message ) ->
     Broadcaster = (fun( {_,{Usr,_Right}}, Msg ) ->
-                    (Usr#client.send)(Usr#client.sendArgs, Msg )
+                    (Usr#client.send)(Usr#client.sendArgs, Msg ),
+                    Msg
                    end), 
     ets:foldl( Broadcaster, Message, Chan#chan.userlist )
     .
@@ -153,6 +154,7 @@ code_change(_OldVsn,_State,_Extra) -> undefined.
 
 dispatch( 'JOIN', Msg, Data, Chan, State ) ->
     com_join:perform_chan( Msg, Data, Chan, State );
-
+dispatch( 'PRIVMSG', Msg, Data, Chan, State ) ->
+    com_privmsg:perform_chan( Msg, Data, Chan, State );
 dispatch( _, _Msg, _Data, _Chan, State ) ->
 	State.
