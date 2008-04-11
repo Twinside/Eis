@@ -26,13 +26,13 @@ validate_command( Msg, Cli, ClientState ) ->
     check_text( Msg, Cli, ClientState ).
 
 check_recipient( #msg{ params = [] }, Cli, State ) ->
-    Errmsg = ?ERR_NORECIPIENT ++ ?ERR_NORECIPIENT_TXT ++ "\r\n",
+    Errmsg = ?ERR_NORECIPIENT ++ ?ERR_NORECIPIENT_TXT,
     irc:send_err( State, Cli, Errmsg ),
     false;
 check_recipient( _, _ ,_ ) -> true.
  
 check_text( #msg{ data= "" }, Cli, State ) ->
-    Errmsg = ?ERR_NOTEXTTOSEND ++ ?ERR_NOTEXTTOSEND_TXT ++ "\r\n",
+    Errmsg = ?ERR_NOTEXTTOSEND ++ ?ERR_NOTEXTTOSEND_TXT,
     irc:send_err( State, Cli, Errmsg ),
     false;
 check_text( _, _, _ ) -> true.
@@ -49,8 +49,8 @@ do_chan_send( Msg, Cli, State, true ) ->
               privmsg_to_wild( Rez , Msg, Cli, State, Dest )
     end.
  
-privmsg_to_wild( {ok, {_,Pid}}, Msg, Cli, _State, Name ) ->
-    chan_manager:send_chan( Pid, {{notin_chan, Msg}, Name, Cli} );
+privmsg_to_wild( {ok, Pid}, Msg, Cli, _State, Name ) ->
+    chan_manager:send_chan( Pid, {Msg, Name, {notin_chan,Cli}} );
 privmsg_to_wild( _, _Msg, Cli, State, Name ) ->
     Msgtxt = ?ERR_NOSUCHCHANNEL ++ Name ++ ?ERR_NOSUCHCHANNEL_TXT ++ Name ++ "\r\n",
     irc:send_err( State, Cli, Msgtxt ).
@@ -67,17 +67,25 @@ do_cli_send( #msg{ params=[Nick|_] }, Cli, CliState, _ ) ->
     irc:send_err( CliState, Cli, ErrMsg ).
 
 % ok user not in chan, problematic...
-perform_chan( {notin_chan, Msg}, {Cli,Right}, Chan, ChanState ) ->
-    Allowed = irc_laws:check_chanlaw( 'PRIVMSG', Right, Chan#chan.mode ),
-    if Allowed -> perform_chan( Msg, {Cli,Right}, Chan, ChanState );
-       true -> Errmsg = ?ERR_CANNOTSENDTOCHAN
-                        ++ Chan#chan.channame
-                        ++ ?ERR_CANNOTSENDTOCHAN_TXT ++ "\r\n",
-               irc:send_err( ChanState, Cli, Errmsg ),
+perform_chan( Msg, {notin_chan, Cli}, Chan, ChanState ) ->
+    Allowed = not irc_laws:is_chan_inmsgonly( Chan ),
+    if Allowed -> perform_chan( Msg, Cli, Chan, ChanState );
+       true -> send_cannotsenderr( Chan, Cli, ChanState ),
                ChanState
     end;   
 % client is in chan or allowed.
 perform_chan( Msg, Cli, Chan, ChanState ) ->
-    NeoMsg = irc:update_sender( Msg, Cli ),
-    chan_manager:broadcast_users( Chan, irc:string_of_msg( NeoMsg ) ),
+    Right = chan_manager:get_user_right( Chan, Cli ),
+    Allowed = irc_laws:check_chanlaw( 'PRIVMSG', Right, Chan#chan.mode ),
+    if Allowed -> NeoMsg = irc:update_sender( Msg, Cli ),
+                  chan_manager:broadcast_diff_users( Chan, irc:string_of_msg( NeoMsg ), Cli#client.nick );
+       true -> send_cannotsenderr( Chan, Cli, ChanState )
+    end,   
     ChanState.
+
+send_cannotsenderr( Chan, Cli, State ) ->
+    Errmsg = ?ERR_CANNOTSENDTOCHAN
+            ++ Chan#chan.channame
+            ++ ?ERR_CANNOTSENDTOCHAN_TXT ++ "\r\n",
+    irc:send_err( State, Cli, Errmsg ).
+

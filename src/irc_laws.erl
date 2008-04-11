@@ -24,7 +24,8 @@
 -define( MVOICED,	 (1 bsl 13) ).
 -define( MHALFED,	 (1 bsl 14) ).
 
--define( MODE_LAST,	 (1 bsl 15) ).
+-define( INSIDE,     (1 bsl 15) ).
+-define( MODE_LAST,	 (1 bsl 16) ).
 
 -define( NOT_MINVISIBLE,	(bnot ?MINVISIBLE)).
 -define( NOT_MNOTIFIED,		(bnot ?MNOTIFIED)).
@@ -51,13 +52,15 @@
             ,is_chan_passworded/1
             ,is_chan_inviteonly/1
             ,is_chan_limited/1
+            ,is_chan_private/1
+            ,is_chan_inmsgonly/1
             ,choose_welcome_right/1
 		]).
 
--define( allow_chan( Command, UserRight, ChanRight ),
+-define( allow_chan( Command, ChanRight, UserRight ),
 		check_chanlaw( Command, User, Chan )
-			when ((UserRight band User) == UserRight) and
-				 ((ChanRight band Chan) == Chan) -> true
+			when (not (UserRight band User /= 0)) or
+				 (ChanRight band Chan /= 0) -> true
 		).
 
 -define( allow_grant( Mode, From ),
@@ -65,6 +68,22 @@
 			when (From band FromUser) /= 0  -> true
 		).
 
+%% @doc
+%%  Tell if a chan is private (+p).
+%% @end
+%% @spec is_chan_private( Chan ) -> bool
+is_chan_private( Chan ) ->
+    (Chan#chan.mode band ?MPRIVATE) /= 0.
+
+%% @doc
+%%  Tell if chan accept only message from
+%%  inside.
+%%  Only message of users within the
+%%  chan are allowed in private chans.
+%% @end
+is_chan_inmsgonly( Chan ) ->
+    (Chan#chan.mode band ?MFROMINSIDE) /= 0.
+    
 %% @doc
 %%  Tell if a chan got the password protection
 %%  enabled (+k)
@@ -103,19 +122,15 @@ is_chan_limited( Chan ) ->
 %% where
 %%      N = int()
 %%      Result = rights()
-choose_welcome_right( 0 ) -> ?MCHANOP;
-choose_welcome_right( _ ) -> 0.
+choose_welcome_right( 0 ) -> ?MCHANOP bor ?INSIDE;
+choose_welcome_right( _ ) -> ?INSIDE.
+
+imply( A, B ) -> (not (A /= 0)) or (B /= 0).
 
 % % We refuse everything, unless the rules is defined below.
-
-?allow_chan( 'KICK', ?MCHANOP, ?ANYMODE );
-?allow_chan( 'KICK', ?MHALFED, ?ANYMODE );
-?allow_chan( 'TOPIC', ?MCHANOP, ?MTOPIC );
-?allow_chan( 'TOPIC', ?ANYUSER, ?NOT_MTOPIC );
-?allow_chan( 'PRIVMSG', ?ANYMODE, ?NOT_MMODERATED );
-?allow_chan( 'PRIVMSG', ?MVOICED, ?MMODERATED );
-
-
+check_chanlaw( 'PRIVMSG', Ur, Cr ) ->
+    imply( Ur band ?MMODERATED, Cr band ?MVOICED ) and
+    imply( Ur band ?MFROMINSIDE, Cr band ?INSIDE );
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% @doc
 %%  Check if an user can do the action in
@@ -131,9 +146,9 @@ choose_welcome_right( _ ) -> 0.
 %%		ChanRight = int
 check_chanlaw( _Command, _User, _Chan) -> false.
 
-?allow_grant( ?MCHANOP, ?MCHANOP );
-?allow_grant( ?MHALFED, ?MCHANOP );
-?allow_grant( ?MVOICED, ?MCHANOP bor ?MHALFED );
+%?allow_grant( ?MCHANOP, ?MCHANOP );
+%?allow_grant( ?MHALFED, ?MCHANOP );
+%?allow_grant( ?MVOICED, ?MCHANOP bor ?MHALFED );
 %?allow_grant( ?MSECRET, );
 %?allow_grant( , );
 check_granting( _Mode, _From ) -> false.

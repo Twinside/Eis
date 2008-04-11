@@ -20,9 +20,12 @@
 
 -export([
 			send_chan/2
+            ,get_user_right/2
             ,broadcast_users/2
             ,broadcast_localusers/2
             ,broadcast_foreignusers/2
+            ,broadcast_diff_users/3
+            ,broadcast_difflocal/3
 		]).
 		
 -vsn( p01 ).
@@ -38,7 +41,29 @@
 send_chan( Chan, What ) ->
 	gen_server:cast( Chan, What ).
 
+%% @doc
+%%  Get the user rights in a chan.
+%% @end
+%% @spec get_user_right( Chan, Nick ) -> int()
+get_user_right( Chan, Nick ) ->
+    case ets:lookup( Chan#chan.userlist, Nick ) of
+        [{_,{_, Right}}] -> Right;
+        _ -> 0
+    end.    
 
+%% @doc
+%%  Send message to all members of a chan,
+%%  but not to the sender, if he's in.
+%% @end
+%% @spec broadcast_diff_users( Chan, Message, Nick ) -> none
+%% where
+%%      Chan = chan()
+%%      Message = string()
+%%      Nick = string()
+broadcast_diff_users( Chan, Message, Nick ) ->
+    broadcast_foreignusers( Chan, Message ),
+    broadcast_difflocal( Chan, Message, Nick ).
+    
 %% @doc
 %%  Send a message to all members of a chan.
 %% @end
@@ -77,7 +102,28 @@ broadcast_localusers( Chan, Message ) ->
                    end), 
     ets:foldl( Broadcaster, Message, Chan#chan.userlist )
     .
-    
+
+%% @doc
+%%  Send a message to all the local members
+%%  of a chan except the user with a specified
+%%  nick.
+%% @end
+%% @spec broadcast_localusers( Chan , Message, Nick ) -> none
+%% where
+%%      Chan = chan()
+%%      Message = string()
+%%      Nick = string()
+broadcast_difflocal( Chan, Message, Nick ) ->
+    Broadcaster = (fun( {_,{Usr,_Right}}, Msg ) ->
+                    Send = Usr#client.nick /= Nick,
+                    if Send -> (Usr#client.send)(Usr#client.sendArgs, Msg ),
+                               Msg;
+                       true -> Msg
+                    end
+                   end), 
+    ets:foldl( Broadcaster, Message, Chan#chan.userlist )
+    .
+
 start_link( Initparam ) ->
 	gen_server:start_link( ?MODULE, [Initparam], []).
 
@@ -156,5 +202,9 @@ dispatch( 'JOIN', Msg, Data, Chan, State ) ->
     com_join:perform_chan( Msg, Data, Chan, State );
 dispatch( 'PRIVMSG', Msg, Data, Chan, State ) ->
     com_privmsg:perform_chan( Msg, Data, Chan, State );
+dispatch( 'NAMES', Msg, Data, Chan, State ) ->
+    com_names:perform_chan( Msg, Data, Chan, State );
+dispatch( 'WHO', Msg, Data, Chan, State ) ->
+    com_who:perform_chan( Msg, Data, Chan, State );
 dispatch( _, _Msg, _Data, _Chan, State ) ->
 	State.

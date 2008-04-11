@@ -26,10 +26,10 @@ EFLAGS:=$(DEBUG) -o $(OBJDIR) -I $(HEADERDIR) -Wall
 # Test configuration
 # 
 ###########################################
-TESTDIR:=$(SOLUTIONDIR)test/
-TESTCOMDIR:=$(TESTDIR)commands/
-TESTTAG=_test
-TESTSUFIX:=$(TESTTAG)$(SRCEXT)
+TESTDIR     :=$(SOLUTIONDIR)test/
+TESTCOMDIR  :=$(TESTDIR)commands/
+TESTTAG     :=_test
+TESTSUFIX   :=$(TESTTAG)$(SRCEXT)
 TESTOBJSUFIX:=$(TESTTAG)$(OBJEXT)
 
 ###########################################
@@ -41,7 +41,9 @@ irccommands:=com_join \
 			com_kill \
 			com_notice \
 			com_part \
-			com_privmsg
+			com_privmsg \
+            com_names \
+            com_who
 
 modules:=conf_loader \
 		irc_log \

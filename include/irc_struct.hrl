@@ -4,6 +4,17 @@
 % store content.
 %
 
+-define( RPL_WHOREPLY, " 352 " ).
+
+-define( RPL_ENDOFWHO, " 315 " ).
+-define( RPL_ENDOFWHO_TXT, ":End of /WHO list" ).
+
+-define( RPL_NAMEREPLY, " 353 " ).
+
+-define( RPL_ENDOFNAMES, " 366 " ).
+-define( RPL_ENDOFNAMES_TXT, ":End of /Names list" ).
+
+
 % Defining IRC error codes for use when
 % replying with a numerical code :)
 -define( ERR_NEEDMOREPARAMS, "461 :Error need more parameters" ).
@@ -22,7 +33,7 @@
 -define( ERR_NOSUCHCHANNEL_TXT, " :Error no such channel " ).
 
 -define( ERR_CANNOTSENDTOCHAN, " 404 " ).
--define( ERR_CANNOTSENDTOCHAN_TXT, ":Cannot send to channel" ).
+-define( ERR_CANNOTSENDTOCHAN_TXT, " :Cannot send to channel" ).
 
 -define( ERR_UNKNOWNCOMMAND, "421" ).
 -define( ERR_UNKNWONCOMMAND_TXT, "Unknown command " ).
@@ -31,10 +42,10 @@
 -define( ERR_BANNEDFROMCHAN_TXT, ": You are banned from the chan" ).
 
 -define( ERR_NORECIPIENT, "411" ).
--define( ERR_NORECIPIENT_TXT, " : There is no recipient in your command" ).
+-define( ERR_NORECIPIENT_TXT, " : There is no recipient in your command\r\n" ).
 
 -define( ERR_NOTEXTTOSEND, "412" ).
--define( ERR_NOTEXTTOSEND_TXT, ": There is no text to send" ).
+-define( ERR_NOTEXTTOSEND_TXT, ": There is no text to send\r\n" ).
 
 -define( RPL_TOPIC, " 322 " ).
 -define( RPL_NOTOPIC, " 331 " ).

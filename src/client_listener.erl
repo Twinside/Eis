@@ -130,6 +130,10 @@ dispatcher( 'NOTICE', Msg, From, State ) ->
 	com_notice:perform_client( Msg, From, State );
 dispatcher( 'PRIVMSG', Msg, From, State ) ->
     com_privmsg:perform_client( Msg, From, State );
+dispatcher( 'NAMES', Msg, From, State ) ->
+    com_names:perform_client( Msg, From, State );
+dispatcher( 'WHO', Msg, From, State ) ->
+    com_who:perform_client( Msg, From, State );
 dispatcher( Command, _Msg, From, State ) ->
     ComStr = atom_to_list( Command ),
     Notice = irc:forge_msg( State#listener.server_host, ?ERR_UNKNOWNCOMMAND

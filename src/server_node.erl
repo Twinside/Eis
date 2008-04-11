@@ -115,7 +115,7 @@ get_client( ServerPid, Nickname ) ->
 %% where
 %%		ServerPid = pid()
 %%		ChanName = string()
-%%		Result = {ok, {Channame,pid()}} | error
+%%		Result = {ok, pid()} | error
 get_chan( ServerPid, ChanName ) ->
 	gen_server:call( ServerPid, {get_chan, ChanName} ).
 
