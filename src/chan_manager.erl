@@ -206,5 +206,7 @@ dispatch( 'NAMES', Msg, Data, Chan, State ) ->
     com_names:perform_chan( Msg, Data, Chan, State );
 dispatch( 'WHO', Msg, Data, Chan, State ) ->
     com_who:perform_chan( Msg, Data, Chan, State );
+dispatch( 'QUIT', Msg, Data, Chan, State ) ->
+    com_quit:perform_chan( Msg, Data, Chan, State );
 dispatch( _, _Msg, _Data, _Chan, State ) ->
 	State.

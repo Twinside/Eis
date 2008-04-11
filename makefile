@@ -43,7 +43,8 @@ irccommands:=com_join \
 			com_part \
 			com_privmsg \
             com_names \
-            com_who
+            com_who \
+            com_quit
 
 modules:=conf_loader \
 		irc_log \
