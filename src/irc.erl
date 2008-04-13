@@ -114,13 +114,55 @@ extract_irc_data( Remain, [Car | Tail] ) ->
 	extract_irc_data( [Car | Remain], Tail );
 extract_irc_data( InvertedMsg, [] ) ->
 	{lists:reverse( InvertedMsg ), ""}.
-	
+
+irc_command_list() ->	
+[
+     {"PRIVMSG", 'PRIVMSG' }
+    ,{ "PONG"  , 'PONG'    }
+    ,{"NOTICE" , 'NOTICE'  }
+    ,{ "NICK"  , 'NICK'    }
+    ,{ "JOIN"  , 'JOIN'    }
+    ,{  "WHO"  , 'WHO'     }
+    ,{ "PART"  , 'PART'    }
+    ,{ "MODE"  , 'MODE'    }
+    ,{ "TOPIC" , 'TOPIC'   }
+    ,{ "NAMES" , 'NAMES'   }
+    ,{"INVITE" , 'INVITE'  }
+    ,{ "QUIT"  , 'QUIT'    }
+    ,{ "KICK"  , 'KICK'    }
+    ,{ "PASS"  , 'PASS'    }
+    ,{ "USER"  , 'USER'    }
+    ,{ "OPER"  , 'OPER'    }
+    ,{ "SQUIT" , 'SQUIT'   }
+    ,{ "MOTD"  , 'MOTD'    }
+    ,{"LUSERS" , 'LUSERS'  }
+    ,{"VERSION", 'VERSION' }
+    ,{ "STATS" , 'STATS'   }
+    ,{ "LINKS" , 'LINKS'   }
+    ,{  "TIME" , 'TIME'    }
+    ,{"CONNECT", 'CONNECT' }
+    ,{ "TRACE" , 'TRACE'   }
+    ,{ "ADMIN" , 'ADMIN'   }
+    ,{"SERVLIST",'SERVLIST'}
+    ,{"SQUERY" , 'SQUERY'  }
+    ,{ "WHOIS" , 'WHOIS'   }
+    ,{"WHOWAS" , 'WHOWAS'  }
+    ,{ "PING"  , 'PING'    }
+    ,{ "KILL"  , 'KILL'    }
+    ,{"ERRROR" , 'ERROR'   }
+].
+
+ircatom_of_text( Txt ) ->
+    case lists:keysearch( Txt, 1, irc_command_list() ) of
+        {value, {_,Atom}} -> Atom;
+        false             -> {unknown_command, Txt}
+    end.
 
 %% Convert an IRC command to an atom
 %% or to it's numeric code.
 extract_command_code( Command ) ->
 	case string:to_integer( Command ) of
-		{error, _} -> list_to_existing_atom( Command );
+		{error, _} -> ircatom_of_text( string:to_upper(Command) );
 		{Numeric, _} -> Numeric
 	end.
 

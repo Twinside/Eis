@@ -38,13 +38,6 @@
 
 -vsn( p01 ).
 
--export( [allowed/0 ]).
-allowed( ) -> [ 'QUIT', 'PART'
-                , 'NOTICE', 'PRIVMSG'
-                , 'KICK', 'MODE'
-                , 'WHO', 'WHOIS'
-                , 'WHOWAS' , 'NAMES'  ].
-
 %% @doc
 %%  Tell if a client is a local one registered
 %%  here.
@@ -53,6 +46,7 @@ allowed( ) -> [ 'QUIT', 'PART'
 %% where
 %%      Client = client()
 is_cli_local( #client{ sendArgs={local,_ }} ) -> true;
+is_cli_local( #client{ sendArgs={local_test,_}} ) -> true;
 is_cli_local( _ ) -> false.
 
 %% @doc
@@ -141,13 +135,15 @@ add_chan( ServerPid, Chan ) ->
 %% where
 %%      ServerPid = pid()
 %%      User = client()
-%%      Result = ok | error
+%%      Result = {ok,pid()} | {error Reason}
 add_user( ServerPid, User ) ->
     user_adding( ServerPid, User, is_cli_local( User ) ).
 
 user_adding( ServerPid, User, true ) ->
-    {_, Sock} = User#client.sendArgs,
-    ok = gen_tcp:controlling_process( Sock, ServerPid ),
+    case User#client.sendArgs of
+        {local, Sock} -> ok = gen_tcp:controlling_process( Sock, ServerPid );
+        _ -> ok
+    end,
 	gen_server:call( ServerPid, {add_user_local, User} );
 user_adding( _ServerPid, _User, false ) ->
     ok. % TODO for foreign & virtual users
@@ -231,18 +227,23 @@ handle_call( {add_user_local, User}, _From, State ) ->
     Exist = handle_call( {client_exists, User#client.nick}, 0, State ),
     if Exist -> {reply, {error, "Nick already in use"}, State};
        true ->
-        {_, Sock} = User#client.sendArgs,
         Pid = load_balancer:add_ressource( State#srvs.clibal, User ),
-        gen_tcp:controlling_process( Sock, Pid ),
-	    inet:setopts(Sock, [{active, true}]),
+        attrib_socket( Pid, User ),
         ets:insert( State#srvs.clients, {User#client.nick, User} ),
-        {reply, ok, State}
+        {reply, {ok,Pid}, State}
     end;
-
+    
 %% @hidden
 handle_call( _What, _From, State ) ->
 	{noreply, State}.	
 	
+
+attrib_socket( Pid, User ) ->
+    case User#client.sendArgs of
+        {local, Sock} -> ok = gen_tcp:controlling_process( Sock, Pid ),
+	                    inet:setopts(Sock, [{active, true}]);
+        _ -> ok
+    end.
 %
 % Different call used by the load balancer.
 %

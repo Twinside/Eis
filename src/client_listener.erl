@@ -61,7 +61,7 @@ broadcaster( User, Msg ) ->
 %
 %% @hidden
 handle_cast( {addressource, Client}, State ) ->
-    {local, Sock} = Client#client.sendArgs,
+    {_, Sock} = Client#client.sendArgs,
     Neocli = Client#client{ cli_listener = self() },
 	ets:insert( State#listener.bynick, {Client#client.nick, Neocli} ),
 	ets:insert( State#listener.bysock, {Sock, Client#client.nick} ),
@@ -85,6 +85,15 @@ handle_cast( {notifjoin, Cliname, Chaninfo}, State ) ->
     ets:insert( State#listener.bynick, {Cliname,Neocli} ),
     {noreply, State};
                                         
+%% @doc
+%%  Clause made uniquely to inject
+%%  data for unit testing.
+%% @end
+handle_cast( {test, Nick, Data}, State ) ->
+    Bynick = State#listener.bynick,
+	Msg = irc:msg_of_string( Data ),
+    [{_,Cli}] = ets:lookup( Bynick, Nick ),
+	{noreply, dispatcher( Msg#msg.ircCommand, Msg, Cli, State ) };
     
 handle_cast( Msg, State ) when is_record( Msg, msg ) ->
 	% do not convert Msg to StrMsg before know if the client is virtual or not
@@ -93,6 +102,7 @@ handle_cast( Msg, State ) when is_record( Msg, msg ) ->
 
 handle_cast( _Request, State ) -> % ignore invalid cast
 	{noreply, State}.
+
 	
 %% @hidden
 handle_info( {tcp, Socket, Data}, State ) ->
@@ -116,9 +126,11 @@ handle_info( {tcp_closed, Socket} , State ) ->
     .
     
 %% @hidden
-terminate(_Reason,_State) ->
+terminate(Reason, State) ->
 	irc_log:logVerbose( "Client Listener terminated" ),
-	undefined.
+    ets:delete( State#listener.bysock ),
+    ets:delete( State#listener.bynick ),
+    Reason.
 
 %% @hidden
 code_change(_OldVsn,_State,_Extra) ->
@@ -137,17 +149,14 @@ dispatcher( 'WHO', Msg, From, State ) ->
     com_who:perform_client( Msg, From, State );
 dispatcher( 'QUIT', Msg, From, State ) ->
     com_quit:perform_client( Msg, From, State );
-dispatcher( Command, _Msg, From, State ) ->
-    ComStr = atom_to_list( Command ),
-    Notice = irc:forge_msg( State#listener.server_host, ?ERR_UNKNOWNCOMMAND
-                            ,[ComStr]
-                            ,?ERR_UNKNWONCOMMAND_TXT ++ ComStr ),
-    (From#client.send)(From#client.sendArgs, Notice ),
-    State 
-    .
-%dispatcher( 'PRIVMSG', Msg, From ) -> command_privmsg( Msg );
-%dispatcher( 'NOTICE', Msg, From ) -> command_notice( Msg ).
 
-% command_privmsg( Msg ) -> true.  
-% command_notice( Msg ) -> true.  
-%command_join( Msg ) -> true.
+dispatcher( {unknown_command, Txt}, _Msg, From, State ) ->
+    Notice = irc:forge_msg( State#listener.server_host, ?ERR_UNKNOWNCOMMAND
+                            ,[Txt]
+                            ,?ERR_UNKNWONCOMMAND_TXT ++ Txt ),
+    (From#client.send)(From#client.sendArgs, Notice ),
+    State; 
+dispatcher( Command, Msg, From, State ) ->
+    dispatcher( {unknown_command, atom_to_list( Command )}, Msg, From, State )
+    .
+

@@ -118,9 +118,11 @@ handle_cast( _Command, State ) ->
 handle_info(_What, State) ->
 	{noreply, State}.
 %% @hidden
-terminate(_Reason,State) ->
+terminate(Reason,_State) ->
+    unregister( conf_loader ),
 	%% Sauver la conf	
-	{ok, State}.
+    Reason.
+    
 %% @hidden
 code_change(_OldVsn, State,_Extra) ->
 	{ok, State}.

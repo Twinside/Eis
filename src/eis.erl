@@ -32,7 +32,7 @@ make_specserv( Module, Func, Args ) ->
 	{Module,
 		{Module, Func, Args},
 		permanent,
-		1000,
+		100,
 		worker,
 		[Module]}.
 
@@ -40,7 +40,7 @@ make_specbalance( Name, Module, Func, Args ) ->
 	{Name,
 		{Module, Func, Args},
 		permanent,
-		1000,
+		100,
 		supervisor,
 		[Module]}.
 
@@ -50,16 +50,6 @@ make_specbalance( Name, Module, Func, Args ) ->
 %%	during the debuging period.
 %% @end
 dlaunch() ->
-	start( 0, 0 ).
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% @doc
-%%	Really start the IRC server, parameters are
-%%	an application parameter.
-%% @end
-%% @see application
-%% @spec start( StartType, StartArgs ) -> term()
-start( _StartType, _StartArgs ) ->
 	LogSpec = make_specserv( irc_log, basic_init, [] ),
 	{ok, RootSupervisor} = supervisor:start_link( ?MODULE, [LogSpec]),	
 	irc_log:logInfo( "Server Initialization begin" ),
@@ -90,7 +80,21 @@ start( _StartType, _StartArgs ) ->
 	irc_log:logVerbose( "Doorman launched" ),
 
 	irc_log:logInfo( "End of server initialization" ),
-	ok.
+	{ok, ServerPid, RootSupervisor}.
+    
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% @doc
+%%	Really start the IRC server, parameters are
+%%	an application parameter. Return the PID of
+%%  the server node
+%% @end
+%% @see application
+%% @spec start( StartType, StartArgs ) -> Result
+%% where
+%%      Result = {ok, pid()}
+start( _StartType, _StartArgs ) ->
+    {ok, _, Root} = dlaunch(),
+    {ok, Root}.
 
 %% @hidden
 init( Args ) ->

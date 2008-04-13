@@ -88,10 +88,10 @@ $(OUTPUT): $(ALLOBJ)
 
 ####
 # Software build
-$(OBJDIR)%$(OBJEXT): $(SOURCEDIR)%$(SRCEXT)
+$(OBJDIR)%$(OBJEXT): $(SOURCEDIR)%$(SRCEXT) $(HEADERDIR)irc_struct.hrl
 	$(ECC) $(EFLAGS) $<
 
-$(OBJDIR)%$(OBJEXT): $(COMSOURCEDIR)%$(SRCEXT)
+$(OBJDIR)%$(OBJEXT): $(COMSOURCEDIR)%$(SRCEXT) $(HEADERDIR)irc_struct.hrl
 	$(ECC) $(EFLAGS) $<
 
 #####
@@ -107,7 +107,7 @@ $(OBJDIR)%$(OBJEXT): $(TESTCOMDIR)%$(SRCEXT) $(HEADERDIR)irc_struct.hrl
 docs: $(ALLSOURCES)
 	escript doc_generator.erl $^
 
-test: $(TSTOBJ)
+test: $(TSTOBJ) $(OBJDIR)tests.beam
 
 #####
 # test running.
