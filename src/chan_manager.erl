@@ -108,7 +108,7 @@ broadcast_localusers( Chan, Message ) ->
 %%  of a chan except the user with a specified
 %%  nick.
 %% @end
-%% @spec broadcast_localusers( Chan , Message, Nick ) -> none
+%% @spec broadcast_difflocal( Chan , Message, Nick ) -> none
 %% where
 %%      Chan = chan()
 %%      Message = string()

@@ -20,6 +20,7 @@
 			,add_chan/2
 			,add_user/2
             ,del_user/2
+            ,del_chan/2
             ,is_cli_local/1
             ,is_cli_foreign/1
             ,is_cli_virtual/1
@@ -135,7 +136,7 @@ add_chan( ServerPid, Chan ) ->
 %% where
 %%      ServerPid = pid()
 %%      User = client()
-%%      Result = {ok,pid()} | {error Reason}
+%%      Result = {ok,pid()} | {error, Reason}
 add_user( ServerPid, User ) ->
     user_adding( ServerPid, User, is_cli_local( User ) ).
 
@@ -150,7 +151,9 @@ user_adding( _ServerPid, _User, false ) ->
 
 %% @doc
 %%  Unregister an user from the server.
-%%  No notification of failure.
+%%  No notification of failure. You still
+%%  have to destroy the client in the client_listener
+%%  process.
 %% @end
 %% @spec del_user( ServerPid, Nick ) -> none
 %% where
@@ -158,7 +161,19 @@ user_adding( _ServerPid, _User, false ) ->
 %%      UsrNick = string()
 del_user( ServerPid, UsrNick ) ->
     gen_server:cast( ServerPid, {del_local_user, UsrNick} ).
-    
+
+%% @doc
+%%  Unregister a chan. You still have
+%%  to remove the chan in the chan_manager
+%%  process.
+%% @end
+%% @spec del_chan( ServerPid, Name ) -> none
+%% where
+%%      ServerPid = pid()
+%%      Name = string()
+del_chan( ServerPid, Name ) ->
+    gen_server:cast( ServerPid, {del_chan, Name} ).
+
 %% @doc
 %%	Launch a new server.
 %% @end
@@ -258,7 +273,11 @@ handle_cast( {set_balance, Clibal, Chanbal}, State) ->
 handle_cast( {del_local_user, Cliname}, State ) ->
     ets:delete( State#srvs.clients, Cliname ),
     {noreply, State};      
-    
+
+handle_cast( {del_chan, Name}, State ) ->
+    ets:delete( State#srvs.chans, Name ),
+    {noreply, State};
+
 handle_cast( _Command, State ) ->
 	{noreply, State}.
 	

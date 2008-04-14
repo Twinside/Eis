@@ -98,7 +98,7 @@ is_chan_passworded( Chan ) ->
 %%  Tell if a chan got the password protection
 %%  enabled (+i)
 %% @end
-%% @spec is_chan_passworded( Chan ) -> bool
+%% @spec is_chan_inviteonly( Chan ) -> bool
 %% where
 %%      Chan = chan()
 is_chan_inviteonly( Chan ) ->
@@ -108,7 +108,7 @@ is_chan_inviteonly( Chan ) ->
 %%  Tell if a chan got the size limit protection.
 %%  enabled (+L)
 %% @end
-%% @spec is_chan_passworded( Chan ) -> bool
+%% @spec is_chan_limited( Chan ) -> bool
 %% where
 %%      Chan = chan()
 is_chan_limited( Chan ) ->

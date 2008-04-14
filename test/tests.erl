@@ -58,7 +58,7 @@ wait( N ) ->
 test_scenario( Tests ) ->
     {setup, local
         ,(fun () -> prep_empty_server() end) % setup
-        ,(fun ({_,Root,_}) -> exit( Root, normal ), wait( 200 ) end) % cleanup
+        ,(fun ({_,Root,_}) -> exit( Root, shutdown ), wait( 200 ) end) % cleanup
         ,(fun (State) -> ?_test(perform_scenario(Tests, State)) end)}.
       
 perform_scenario( [], _ ) -> ok;
