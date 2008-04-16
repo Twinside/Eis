@@ -120,7 +120,7 @@ handle_info( {tcp_closed, Socket} , State ) ->
     ets:delete( State#listener.bynick, Nick ),
     server_node:del_user( State#listener.servernode, Nick ),
     load_balancer:notif_killed( State#listener.supervisor ),
-    irc_log:logEvent( "Client deconnexion : " ++ Cli#client.nick ),
+    irc_log:logEvent( "Client deconnexion : " ++ irc:cli_to_string( Cli) ),
     % TODO : propagate deconnexion message to everyone.
     {noreply, State}
     .

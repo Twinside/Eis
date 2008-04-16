@@ -44,7 +44,8 @@ irccommands:=com_join \
 			com_privmsg \
             com_names \
             com_who \
-            com_quit
+            com_quit \
+            com_mode
 
 modules:=conf_loader \
 		irc_log \
