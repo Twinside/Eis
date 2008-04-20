@@ -204,6 +204,8 @@ dispatch( 'PRIVMSG', Msg, Data, Chan, State ) ->
     com_privmsg:perform_chan( Msg, Data, Chan, State );
 dispatch( 'NAMES', Msg, Data, Chan, State ) ->
     com_names:perform_chan( Msg, Data, Chan, State );
+dispatch( 'MODE', Msg, Data, Chan, State ) ->
+    com_mode:perform_chan( Msg, Data, Chan, State );
 dispatch( 'WHO', Msg, Data, Chan, State ) ->
     com_who:perform_chan( Msg, Data, Chan, State );
 dispatch( 'QUIT', Msg, Data, Chan, State ) ->

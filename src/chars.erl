@@ -9,8 +9,28 @@
             ,is_between/3
             ,flat_append/2
             ,cut_endline/1
+            ,int_from_string/1
         ]).
 
+%% @doc
+%%  Safely transform a string
+%%  to an integer.
+%% @end
+%% @spec int_from_string( Str ) -> Result
+%% where
+%%      Str = [char()]
+%%      Result = error | int()
+int_from_string( Str ) ->
+    secure_int( Str, 0 ).
+    
+secure_int( [], N ) -> N;
+secure_int( [C|Next], N ) ->
+    Digi = is_digit( C ),
+    if Digi -> secure_int( Next, N * 10 + (C - $0) );
+       true -> error
+    end;
+secure_int( _, _ ) -> error.
+   
 %% @doc
 %%  Remove the endline marker in a list.
 %% @end

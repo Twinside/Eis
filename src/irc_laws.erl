@@ -65,23 +65,29 @@
             ,prefix_nick/2
 		]).
 
--define( ac(A,V), mc( S, [A|_] ) -> {S,V} ).
--define( au(A,V), mu( S, [A|_] ) -> {S,V} ).
-
 chan_modes( ) ->
+    simple_chan_modes()
+    ++ param_chan_modes()
+    .
+
+simple_chan_modes( ) ->
 [
-     { $v, ?MVOICED  }
-    ,{ $o, ?MCHANOP  }
-    ,{ $h, ?MHALFED  }
-    ,{ $p, ?MPRIVATE }
+     { $p, ?MPRIVATE }
     ,{ $s, ?MSECRET  }
     ,{ $i, ?MINVITE  }
     ,{ $n, ?MFROMINSIDE }
     ,{ $t, ?MTOPIC }
     ,{ $m, ?MMODERATED }
-    ,{ $l, ?MLIMITED }
-    ,{ $k, ?MKEY }
-    ,{ $b, ?MBAN }
+].
+
+param_chan_modes( ) ->
+[
+     { $l, ?MLIMITED, param }
+    ,{ $k, ?MKEY, param }
+    ,{ $b, ?MBAN, param }
+    ,{ $v, ?MVOICED, param  }
+    ,{ $o, ?MCHANOP, param  }
+    ,{ $h, ?MHALFED, param  }
 ].
 
 global_modes( ) ->
@@ -118,9 +124,10 @@ prefix_nick( St, _ ) -> St.
 %% where
 %%      Str = string()
 %%      Result = {Side, Mode}
-%%              | {unknwon, Side, Mode}
+%%              | {unknwon, Side, C}
 %%      Side = plus | minus
 %%      Mode = int()
+%%      C = char()
 string_to_globalmode( Str ) ->
     string_to_mode(global_modes() , $+, Str )
     .
@@ -135,9 +142,10 @@ string_to_globalmode( Str ) ->
 %% where
 %%      Str = string()
 %%      Result = {Side, Mode}
-%%              | {unknwon, Side, Mode}
+%%              | {unknwon, Side, C}
 %%      Side = plus | minus
 %%      Mode = int()
+%%      C = char()
 string_to_usermode( Str ) ->
     string_to_mode(chan_modes() , $+, Str )
     .
@@ -162,9 +170,9 @@ string_to_mode( Lst, Side, [C|_] ) ->
 %%      Mode = int()
 %%      Result = string()
 chan_mode_to_string( Mode ) ->
-    [$+ | mode_to_string( Mode
-                        ,chan_modes()
-                        ,?MODE_LAST - 1) ]
+    mode_to_string( Mode
+                   ,chan_modes()
+                   ,?MODE_LAST - 1)
     .
 
 %% @doc
@@ -176,19 +184,25 @@ chan_mode_to_string( Mode ) ->
 %%      Mode = int()
 %%      Result = string()
 global_mode_to_string( Mode ) ->
-    [$+ | mode_to_string( Mode
-                        ,global_modes()
-                        ,?MODE_LAST - 1) ]
+    mode_to_string( Mode
+                  ,global_modes()
+                  ,?MODE_LAST - 1)
     .
-
-mode_to_string( _, _, 0 ) -> [];
 mode_to_string( Mode, Lassoc, I ) ->
+    Rez = mmode_to_string( Mode, Lassoc, I ),
+    case Rez of
+           [] -> [];
+        [_|_] -> [$+|Rez] 
+    end.
+    
+mmode_to_string( _, _, 0 ) -> [];
+mmode_to_string( Mode, Lassoc, I ) ->
     Val = 1 bsl I,
     if Val band Mode ->
-                {value, {Ch,_}} = lists:keysearch( (1 bsl I), 2, Lassoc ),
-                [Ch | mode_to_string(Mode, Lassoc, I - 1)];
+            {value, {Ch,_}} = lists:keysearch( (1 bsl I), 2, Lassoc ),
+            [Ch | mmode_to_string(Mode, Lassoc, I - 1)];
 
-       true -> mode_to_string( Mode, Lassoc, I - 1 )
+       true -> mmode_to_string( Mode, Lassoc, I - 1 )
     end
     .
 
@@ -214,9 +228,12 @@ is_chan_inmsgonly( Chan ) ->
 %% @end
 %% @spec is_chan_passworded( Chan ) -> bool
 %% where
-%%      Chan = chan()
-is_chan_passworded( Chan ) ->
-    (Chan#chan.mode band ?MKEY) /= 0.
+%%      Chan = chan() | int()
+is_chan_passworded( Chan )
+    when is_record( Chan, chan )->
+    (Chan#chan.mode band ?MKEY) /= 0;
+is_chan_passworded( Mode ) ->
+    (Mode band ?MKEY) /= 0.
     
 %% @doc
 %%  Tell if a chan got the password protection
@@ -234,9 +251,12 @@ is_chan_inviteonly( Chan ) ->
 %% @end
 %% @spec is_chan_limited( Chan ) -> bool
 %% where
-%%      Chan = chan()
-is_chan_limited( Chan ) ->
-    (Chan#chan.mode band ?MLIMITED) /=0.
+%%      Chan = chan() | int()
+is_chan_limited( Chan )
+    when is_record( Chan, chan ) ->
+    (Chan#chan.mode band ?MLIMITED) /=0;
+is_chan_limited( Mode ) ->
+    (Mode band ?MLIMITED) /= 0.
 
 %% @doc
 %%  Give the initial user right in function

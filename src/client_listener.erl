@@ -147,6 +147,8 @@ dispatcher( 'NAMES', Msg, From, State ) ->
     com_names:perform_client( Msg, From, State );
 dispatcher( 'WHO', Msg, From, State ) ->
     com_who:perform_client( Msg, From, State );
+dispatcher( 'MODE', Msg, From, State ) ->
+    com_mode:perform_client( Msg, From, State );
 dispatcher( 'QUIT', Msg, From, State ) ->
     com_quit:perform_client( Msg, From, State );
 

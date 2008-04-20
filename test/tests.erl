@@ -58,7 +58,7 @@ wait( N ) ->
 test_scenario( Tests ) ->
     {setup, local
         ,(fun () -> prep_empty_server() end) % setup
-        ,(fun ({_,Root,_}) -> exit( Root, shutdown ), wait( 200 ) end) % cleanup
+        ,(fun ({_,Root,_}) -> exit( Root, shutdown ), wait( 400 ) end) % cleanup
         ,(fun (State) -> ?_test(perform_scenario(Tests, State)) end)}.
       
 perform_scenario( [], _ ) -> ok;
@@ -69,11 +69,11 @@ perform_scenario( [{Performer, norecv} | Next], State ) ->
         
 perform_scenario( [{Performer, recv, LstMatch} | Next], State ) ->
     receive
-        {'EXIT', _, normal} -> perform_scenario( [{Performer, recv, LstMatch} | Next], State );
+        {'EXIT', _, _} -> perform_scenario( [{Performer, recv, LstMatch} | Next], State );
         Data -> validate_matches( Data, ["^" ++ Performer ++ "_" |LstMatch] ),
                 perform_scenario( Next, State )
     after
-        5000 -> throw( {performer,recv, LstMatch} )
+        10000 -> throw( {performer,recv, LstMatch} )
     end;
 
 perform_scenario( [{Performer, send, Text}|Next], State ) ->
@@ -81,6 +81,6 @@ perform_scenario( [{Performer, send, Text}|Next], State ) ->
     {_Nick, {_,Pid}} = lists:keysearch( Performer, 1, NickList ),
     gen_server:cast(Pid, {test, Performer, Text} ),
     perform_scenario( Next, State );
-    
+
 perform_scenario( _, _ ) -> false.
     
