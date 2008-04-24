@@ -6,37 +6,37 @@
 
 -include( "irc_struct.hrl" ).
 
--export([
-		perform_client/3,
-		perform_chan/4
-        ]).
+%%-export([
+%%		perform_client/3,
+%%		perform_chan/4
+%%      ]).
 
 -vsn( p01 ).
 
 
-perform_client( _Msg, _Cli, ClientState ) ->
-	ClientState.
+%%perform_client( _Msg, _Cli, ClientState ) ->
+%%	ClientState.
 
-perform_chan( Msg, Cli, Chan, ChanState ) ->
-	MsgTosend = prepare_sended_text( Msg, Cli ),
-	CheckRight = check_granting( ?MCHANOP, chan_manager:get_user_right( Chan, Cli#client.nick ) ),	
-	if 
-		CheckRight ->
-			[ Dest|_ ] = Msg#msg.params,
-			Ok = irc:is_username_valid(Dest),
-			if 
-				Ok ->
-					case com_part:cleanup_chan( Chan, Dest, ChanState ) of
-						{ removed, NeoState } -> NeoState;
-						{ ok, State } ->
-							[ { _,NeoChan } ] = ets:lookup( State#cmanager.byname, Chan#chan.channame ),
-							chan_manager:broadcast_users( NeoChan, MsgTosend ),
-							State
-					end
-			end
-	end.
+%%perform_chan( Msg, Cli, Chan, ChanState ) ->
+%%	MsgTosend = prepare_sended_text( Msg, Cli ),
+%%	CheckRight = check_granting( ?MCHANOP, chan_manager:get_user_right( Chan, Cli#client.nick ) ),	
+%%	if 
+%%		CheckRight ->
+%%			[ Dest|_ ] = Msg#msg.params,
+%%			Ok = irc:is_username_valid(Dest),
+%%			if 
+%%				Ok ->
+%%					case com_part:cleanup_chan( Chan, Dest, ChanState ) of
+%%						{ removed, NeoState } -> NeoState;
+%%						{ ok, State } ->
+%%							[ { _,NeoChan } ] = ets:lookup( State#cmanager.byname, Chan#chan.channame ),
+%%							chan_manager:broadcast_users( NeoChan, MsgTosend ),
+%%							State
+%%					end
+%%			end
+%%	end.
 	
-prepare_sended_text( Msg, Cli ) ->
-    NeoMessage = irc:update_sender( Msg, Cli ),
-    irc:string_of_msg( NeoMessage ).
+%%prepare_sended_text( Msg, Cli ) ->
+%%	NeoMessage = irc:update_sender( Msg, Cli ),
+%%	irc:string_of_msg( NeoMessage ).
 	
