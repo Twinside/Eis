@@ -157,6 +157,7 @@ string_to_mode( Lst, _, [$-|St] ) ->
 string_to_mode( Lst, Side, [C|_] ) ->
     case lists:keysearch( C , 1, Lst ) of
         {value, {_,M}} -> {Side, M};
+        {value, {_,M,_}} -> {Side, M};
         _              -> {unknown, Side, C}
     end
     .
@@ -195,12 +196,14 @@ mode_to_string( Mode, Lassoc, I ) ->
         [_|_] -> [$+|Rez] 
     end.
     
-mmode_to_string( _, _, 0 ) -> [];
+mmode_to_string( _, _, -1 ) -> [];
 mmode_to_string( Mode, Lassoc, I ) ->
     Val = 1 bsl I,
-    if Val band Mode ->
-            {value, {Ch,_}} = lists:keysearch( (1 bsl I), 2, Lassoc ),
-            [Ch | mmode_to_string(Mode, Lassoc, I - 1)];
+    if (Val band Mode) /= 0 ->
+            case lists:keysearch( (1 bsl I), 2, Lassoc ) of
+                {value, {Ch,_}}    -> [Ch | mmode_to_string(Mode, Lassoc, I - 1)];
+                {value, {Ch,_, _}} -> [Ch | mmode_to_string(Mode, Lassoc, I - 1)]
+            end;
 
        true -> mmode_to_string( Mode, Lassoc, I - 1 )
     end
