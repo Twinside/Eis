@@ -204,7 +204,7 @@ register_user( Cli, ChanState, Chan, false ) ->
     % update the chan information.
     ets:insert( ChanState#cmanager.byname,
                 {Chan#chan.channame, NeoChan} ),
-    Notif = irc:forge_msg(Cli,'JOIN',[], Chan#chan.channame),
+    Notif = irc:forge_msg(Cli,'JOIN',[Chan#chan.channame], ""),
     chan_manager:broadcast_localusers( Chan, Notif ),
     ChanState;
 
@@ -222,11 +222,18 @@ register_user( Cli, ChanState, Chan, true ) ->
                 {NeoChan#chan.channame, NeoChan} ),
     send_welcome_info( ChanState#cmanager.server_host,
                         Cli, Chan ),
-    Notif = irc:forge_msg(Cli,'JOIN',[], Chan#chan.channame),
+    Notif = irc:forge_msg(Cli,'JOIN',[Chan#chan.channame], ""),
     chan_manager:broadcast_localusers( Chan, Notif ),
     % filer la liste des noms aussi, ça peut aider.     
     ChanState
     .
+    
+send_welcome_info( Serverhost, Cli, #chan {channame = ChanName,
+                                            topic = "" } ) ->
+    SyncMsg =  {notifjoin, Cli#client.nick, {ChanName, self()}},
+    gen_server:cast( Cli#client.cli_listener, SyncMsg ),
+    Message = irc:forge_msg( Serverhost, ?RPL_NOTOPIC, [ChanName], "" ),
+    (Cli#client.send)( Cli#client.sendArgs, Message );
     
 send_welcome_info( Serverhost, Cli, #chan {channame = ChanName,
                                             topic = Topic } ) ->

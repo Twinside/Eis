@@ -16,14 +16,14 @@
 
 -define( RPL_BANLIST, " 367 " ).
 
--define( RPL_ENDOFBANLIST, "368 " ).
+-define( RPL_ENDOFBANLIST, " 368 " ).
 -define( RPL_ENDOFBANLIST_TXT, " :End of ban list\r\n" ).
 
 -define( RPL_CHANNELMODEIS, " 324 " ).
 
 % Defining IRC error codes for use when
 % replying with a numerical code :)
--define( ERR_NEEDMOREPARAMS, "461 :Error need more parameters" ).
+-define( ERR_NEEDMOREPARAMS, "461 :Error need more parameters\r\n" ).
 -define( ERR_ALREADYREGISTERED, 462 ).
 
 -define( ERR_BADCHANNELKEY, "475" ).
@@ -68,8 +68,8 @@
 -define( ERR_USERDONTMATCH, " 502 " ).
 -define( ERR_USERDONTMATCH_TXT, ":Cannot change mode for other users\r\n" ).
 
--define( RPL_TOPIC, " 322 " ).
--define( RPL_NOTOPIC, " 331 " ).
+-define( RPL_TOPIC, "322 " ).
+-define( RPL_NOTOPIC, "331 " ).
 
 -define( RPL_WELCOME, 001 ).
 -define( RPL_YOURHOST, 002 ).

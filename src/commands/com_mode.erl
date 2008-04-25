@@ -33,7 +33,7 @@ msg_dispatch( Msg, Cli, State, [Name|_] ) ->
     end.
 
 send_wrongnick( State, Cli, Name ) ->
-    Msg = ?ERR_NOSUCHNICK ++ Name ++ ?ERR_NOSUCHNICK_TXT,
+    Msg = ?ERR_NOSUCHNICK ++ Name ++ [?ERR_NOSUCHNICK_TXT|"\r\n"],
     irc:send_err( State, Cli, Msg ),
     State.
 
@@ -44,7 +44,7 @@ client_request( #msg{ params =[Nick] }, Cli, State ) ->
     case server_node:get_client( State#listener.servernode, Nick ) of
         {ok, Ncli} ->
                 Smode = irc_laws:global_mode_to_string( Ncli#client.rights ),
-                Msg = ?RPL_UMODEIS ++ Smode ++ "\r\n",
+                Msg = ?RPL_UMODEIS ++ [Smode | "\r\n"],
                 irc:send_err( State, Cli, Msg ),
                 State;
         _ -> send_wrongnick( State, Cli, Nick )
@@ -97,7 +97,7 @@ chan_request( Msg, Cli, State ) ->
         _ -> Msg = ?ERR_NOTONCHANNEL
                     ++ Name
                     ++ ?ERR_NOTONCHANNEL_TXT
-                    ++ Name,
+                    ++ [Name | "\r\n"],
             irc:send_err( State, Cli, Msg )
     end,
     State.
@@ -182,7 +182,8 @@ send_chan_info( Cli, Chan, State ) ->
             make_pass_info( Chan, "" ),
     Msg = ?RPL_CHANNELMODEIS
         ++ Chan#chan.channame
-        ++ [$  |Mode],
+        ++ [$  |Mode]
+        ++ "\r\n",
     irc:send_err( State, Cli, Msg ),
     State.
     

@@ -62,6 +62,9 @@ modules:=conf_loader \
         chars \
         wexpr
 
+recompile_header:=  irc_struct.hrl \
+                    irc_text.hrl
+
 ############################################################
 # Here we generate all the required file names.
 # do not touch unless you really know what you're doing.
@@ -75,11 +78,13 @@ OBJ:=$(addprefix $(OBJDIR),$(addsuffix $(OBJEXT),$(modules)))
 TESTMODULES:=$(addsuffix $(TESTTAG), $(irccommands)) \
              $(addsuffix $(TESTTAG), $(modules))
 
+HDEP:=$(addprefix $(HEADERDIR), $(recompile_header))
+
 TSTSRC:=$(addprefix $(TESTDIR), $(addsuffix $(TESTSUFIX), $(modules))) \
         $(addprefix $(TESTCOMDIR), $(addsuffix $(TESTSUFIX), $(irccommands)))
 TSTOBJ:=$(addprefix $(OBJDIR),$(addsuffix $(TESTOBJSUFIX), $(modules))) \
         $(addprefix $(OBJDIR), $(addsuffix $(TESTOBJSUFIX), $(irccommands)))
-        
+ 
 ALLSOURCES:=$(SRC) $(COMSRC)
 ALLOBJ:=$(OBJ) $(COMOBJ)
 ############################################################
@@ -90,18 +95,18 @@ $(OUTPUT): $(ALLOBJ)
 
 ####
 # Software build
-$(OBJDIR)%$(OBJEXT): $(SOURCEDIR)%$(SRCEXT) $(HEADERDIR)irc_struct.hrl
+$(OBJDIR)%$(OBJEXT): $(SOURCEDIR)%$(SRCEXT) $(HDEP)
 	$(ECC) $(EFLAGS) $<
 
-$(OBJDIR)%$(OBJEXT): $(COMSOURCEDIR)%$(SRCEXT) $(HEADERDIR)irc_struct.hrl
+$(OBJDIR)%$(OBJEXT): $(COMSOURCEDIR)%$(SRCEXT) $(HDEP)
 	$(ECC) $(EFLAGS) $<
 
 #####
 # for tests
-$(OBJDIR)%$(OBJEXT): $(TESTDIR)%$(SRCEXT) $(HEADERDIR)irc_struct.hrl
+$(OBJDIR)%$(OBJEXT): $(TESTDIR)%$(SRCEXT) $(HDEP)
 	$(ECC) $(EFLAGS) $<
 
-$(OBJDIR)%$(OBJEXT): $(TESTCOMDIR)%$(SRCEXT) $(HEADERDIR)irc_struct.hrl
+$(OBJDIR)%$(OBJEXT): $(TESTCOMDIR)%$(SRCEXT) $(HDEP)
 	$(ECC) $(EFLAGS) $<
 
 #####
