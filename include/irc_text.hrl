@@ -80,3 +80,9 @@
 -define( RPL_MOTDSTART, 375 ).
 -define( RPL_MOTD, 372 ).
 -define( RPL_ENDOFMOTD, 476 ).
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% non-IRC text, but still usefull.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+-define( CONNEC_PEER_RESET, "Connection reset by peer" ).
+

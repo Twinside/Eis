@@ -116,13 +116,9 @@ handle_info( {tcp, Socket, Data}, State ) ->
 handle_info( {tcp_closed, Socket} , State ) ->
 	[{_, Nick}] = ets:lookup( State#listener.bysock, Socket ),
     [{_,Cli}] = ets:lookup( State#listener.bynick, Nick ),
-    ets:delete( State#listener.bysock, Socket ),
-    ets:delete( State#listener.bynick, Nick ),
-    server_node:del_user( State#listener.servernode, Nick ),
-    load_balancer:notif_killed( State#listener.supervisor ),
-    irc_log:logEvent( "Client deconnexion : " ++ irc:cli_to_string( Cli) ),
-    % TODO : propagate deconnexion message to everyone.
-    {noreply, State}
+    Msg = irc:forge_msg( Cli, 'QUIT', [], ?CONNEC_PEER_RESET ),
+    Neos = com_quit:client_cleanup( Msg, Cli, State ),
+    {noreply, Neos}
     .
     
 %% @hidden
