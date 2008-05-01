@@ -51,7 +51,7 @@ make_specbalance( Name, Module, Func, Args ) ->
 %% @end
 dlaunch() ->
 	LogSpec = make_specserv( irc_log, basic_init, [] ),
-	{ok, RootSupervisor} = supervisor:start_link( ?MODULE, [LogSpec]),	
+	{ok, RootSupervisor} = supervisor:start_link( ?MODULE, [LogSpec]),
 	irc_log:logInfo( "Server Initialization begin" ),
 	conf_loader:start_link( "eis.conf" ),
 	irc_log:logVerbose( "Started configuration process" ),
@@ -59,29 +59,30 @@ dlaunch() ->
 	MaxCli = conf_loader:get_int_conf( "cli_per_thread" ),
 	MaxChan = conf_loader:get_int_conf( "chan_per_thread" ),
 	ListeningPort = conf_loader:get_int_conf( "listening_port" ),
-	
-	ServerNode = make_specserv( server_node, start_link, [RootSupervisor] ),
+	MotdPath = conf_loader:get_conf( "motd_file" ),
+
+	ServerNode = make_specserv( server_node, start_link, [RootSupervisor, MotdPath] ),
 	{ok, ServerPid} = supervisor:start_child( RootSupervisor, ServerNode ),
-	
+
 	CliBalance = make_specbalance( 'CLIBALANCE', load_balancer, start_link,
 									[client_listener, start_link, {MaxCli, ServerPid}] ),
 	{ok, CliBalPid} = supervisor:start_child( RootSupervisor, CliBalance ),
 	irc_log:logVerbose( "Client balance launched" ),
-	
+
 	ChanBalance = make_specbalance( 'CHANBALANCE', load_balancer, start_link,
 									[chan_manager, start_link, {MaxChan, ServerPid}] ),
 	{ok, ChanBalPid} = supervisor:start_child( RootSupervisor, ChanBalance ),
 	irc_log:logVerbose( "Chan balance launched" ),
     gen_server:cast( ServerPid, {set_balance, CliBalPid, ChanBalPid } ),
-    	
-	DoormanNode = make_specserv( doorman, start_link, [ListeningPort, 
+
+	DoormanNode = make_specserv( doorman, start_link, [ListeningPort,
 													ServerPid, CliBalPid] ),
 	{ok, _DoormanPid} = supervisor:start_child( RootSupervisor, DoormanNode ),
 	irc_log:logVerbose( "Doorman launched" ),
 
 	irc_log:logInfo( "End of server initialization" ),
 	{ok, ServerPid, RootSupervisor}.
-    
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% @doc
 %%	Really start the IRC server, parameters are

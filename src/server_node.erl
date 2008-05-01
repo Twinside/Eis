@@ -24,12 +24,13 @@
             ,is_cli_local/1
             ,is_cli_foreign/1
             ,is_cli_virtual/1
+	    ,read_motd/1
 		]).
 
 % export for the gen_server
 -export([
 			init/1,
-			start_link/1,
+			start_link/2,
 			handle_call/3,
 			handle_cast/2,
 			handle_info/2,
@@ -39,13 +40,42 @@
 
 -vsn( p01 ).
 
-%% @doc
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% MOTD features %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+read_motd( FileName ) ->
+	{ok, Device} = file:open( FileName, [read] ),
+	lists:reverse( read_motd_loop( Device, [] ) ).
+
+remove_last( List ) ->
+    [_Last|Rest] = lists:reverse( List ),
+    lists:reverse( Rest ).
+
+read_motd_loop( Device, Lines ) ->
+	case io:get_line(Device, "") of
+		eof  -> file:close(Device), Lines;
+		Line -> read_motd_loop( Device, [remove_last( Line )|Lines] )
+	end.
+
+send_motd( Client, Motd ) ->
+    Msg = #msg{
+	    sender = "Serveur",
+	    ircCommand = ?RPL_MOTD,
+	    params = [Client#client.nick]
+	},
+    Fun = fun( MotdLine ) ->
+	    ToSend = irc:string_of_msg( Msg#msg{data = MotdLine} ),
+	    ( Client#client.send ) ( Client#client.sendArgs, ToSend )
+	end,
+    lists:foreach( Fun, Motd ).
+
+
+% @doc
 %%  Tell if a client is a local one registered
 %%  here.
 %% @end
 %% @spec is_cli_local( Client ) -> bool
 %% where
-%%      Client = client()
+%%      Client = client()eis:dlaunch().
+
 is_cli_local( #client{ sendArgs={local,_ }} ) -> true;
 is_cli_local( #client{ sendArgs={local_test,_}} ) -> true;
 is_cli_local( _ ) -> false.
@@ -177,26 +207,28 @@ del_chan( ServerPid, Name ) ->
 %% @doc
 %%	Launch a new server.
 %% @end
-start_link(Supervisor) ->
-	gen_server:start_link(?MODULE, [ Supervisor ], [] ).
+start_link(Supervisor, MotdPath) ->
+	gen_server:start_link(?MODULE, [ Supervisor, MotdPath ], [] ).
 
 
 %%
 % gen_server implementation
 %%
 %% @hidden
-init( [Supervisor] ) ->
+init( [Supervisor, MotdPath] ) ->
 	irc_log:logVerbose( "Server node spawned" ),
     NeoState = #srvs{ clients = ets:new( global_clients, [set] )
                         ,chans = ets:new( global_chans, [set] )
                         ,foreignscli = ets:new( global_foreign, [set])
-                        ,supervisor = Supervisor },
+                        ,supervisor = Supervisor
+			,motd = server_node:read_motd( MotdPath ) },
 	{ok,  reload_config( NeoState ) }.
 
 reload_config( State ) ->
 	State#srvs{
 				maxcli = conf_loader:get_int_conf( "server_max_client" )
 				,maxchan = conf_loader:get_int_conf( "server_max_chan" )
+				,motd = server_node:read_motd( conf_loader:get_conf( "motd_file" ) )
 			  }.
 
 is_existing( Table, Key, State ) ->
@@ -231,10 +263,10 @@ handle_call( {add_chan, Chan}, _From, State ) ->
                             {reply, Pid, St};
         {_, {ok, Pid}, _} -> {reply, Pid, State}
     end;
-    
+
 handle_call( {chan_exists, Name}, _From, State ) ->
 	is_existing( State#srvs.chans, Name, State );
-		
+
 handle_call( {get_chan, ChanName}, _From, State ) ->
 	extract( State#srvs.chans, ChanName, State );
 
@@ -242,16 +274,17 @@ handle_call( {add_user_local, User}, _From, State ) ->
     Exist = handle_call( {client_exists, User#client.nick}, 0, State ),
     if Exist -> {reply, {error, "Nick already in use"}, State};
        true ->
+        send_motd( User, State#srvs.motd ),
         Pid = load_balancer:add_ressource( State#srvs.clibal, User ),
         attrib_socket( Pid, User ),
         ets:insert( State#srvs.clients, {User#client.nick, User} ),
         {reply, {ok,Pid}, State}
     end;
-    
+
 %% @hidden
 handle_call( _What, _From, State ) ->
-	{noreply, State}.	
-	
+	{noreply, State}.
+
 
 attrib_socket( Pid, User ) ->
     case User#client.sendArgs of
@@ -272,7 +305,7 @@ handle_cast( {set_balance, Clibal, Chanbal}, State) ->
 
 handle_cast( {del_local_user, Cliname}, State ) ->
     ets:delete( State#srvs.clients, Cliname ),
-    {noreply, State};      
+    {noreply, State};
 
 handle_cast( {del_chan, Name}, State ) ->
     ets:delete( State#srvs.chans, Name ),
@@ -280,7 +313,7 @@ handle_cast( {del_chan, Name}, State ) ->
 
 handle_cast( _Command, State ) ->
 	{noreply, State}.
-	
+
 %% @hidden
 handle_info(_What, State) ->
 	{noreply, State}.

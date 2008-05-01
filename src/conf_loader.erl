@@ -49,13 +49,13 @@ get_int_conf( Name ) ->
 loadConf(FileName) ->
 	{ok, Device} = file:open(FileName, [read]),
 	loadConf(Device, []).
-	
+
 loadConf(Device, Conf) ->
 	case io:get_line(Device, "") of
-		eof  -> 
-			file:close(Device), 
+		eof  ->
+			file:close(Device),
 			Conf;
-		Line -> 
+		Line ->
 			case parse_line( Line ) of
 				[Key, Val|_] -> loadConf( Device, [{Key,Val} | Conf] );
 				_ -> loadConf( Device, Conf )
@@ -69,14 +69,14 @@ parse_line( [$\n | _] ) -> none;
 parse_line( Line ) ->
 	Endcleaned = string:strip(Line, both, $\n),
 	Cuted = string:strip( Endcleaned, both, $  ),
-	Dequoted = string:strip( Cuted, both, $"),
+	Dequoted = string:strip( Cuted, both, $"), %"
 	string:tokens( Dequoted, "=").
 
 %% @hidden
 getElement( [ {Name, Val} | Queue ], Seek ) ->
 	if Name == Seek ->
 		Val;
-	true -> 
+	true ->
 		getElement (Queue, Seek)
 	end;
 
@@ -97,7 +97,7 @@ init( FileName ) ->
 
 %% @hidden
 handle_call( {get, Name}, _From, Conf ) ->
-	Reply = getElement(Conf, Name),	
+	Reply = getElement(Conf, Name),
 	{reply, Reply, Conf};
 
 handle_call( {set, _Name, _Value }, _From, _Conf ) ->
@@ -111,18 +111,18 @@ handle_call( {reload, FileName}, _From, _Conf ) ->
 handle_call( {save, _FileName}, _From, Conf ) ->
 	%% Sauver la conf
 	{noreply, Conf}.
-%% @hidden     
+%% @hidden
 handle_cast( _Command, State ) ->
 	{noreply, State}.
-%% @hidden	
+%% @hidden
 handle_info(_What, State) ->
 	{noreply, State}.
 %% @hidden
 terminate(Reason,_State) ->
     unregister( conf_loader ),
-	%% Sauver la conf	
+	%% Sauver la conf
     Reason.
-    
+
 %% @hidden
 code_change(_OldVsn, State,_Extra) ->
 	{ok, State}.

@@ -52,7 +52,7 @@
 
 %-define( STATE_DEBUG, {debug, [trace] } ).
 -define( STATE_DEBUG,  ).
-   
+
 %-define( LOCAL_SEND, (fun({local, Sock}, Tosend) -> gen_tcp:send( Sock, Tosend )end)).
 -define( LOCAL_SEND, (fun({local, Sock}, Tosend) -> irc_log:logDebug( "----> " ++ Tosend ++ "\n"),
                                                     gen_tcp:send( Sock, Tosend )end)).
@@ -91,7 +91,7 @@ start_link( Port, ServPid, CliBalance ) ->
 	{ok, LSocket} = gen_tcp:listen(Port, [{active, false}, {packet, line},
 							{reuseaddr, true}]),
 	Pid = spawn(?MODULE, door_loop, [ServPid, CliBalance, LSocket]),
-    ok = gen_tcp:controlling_process( LSocket, Pid ),                 
+    ok = gen_tcp:controlling_process( LSocket, Pid ),
 	{ok, Pid}.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -148,17 +148,17 @@ door_loop( ServPid, CliBalance, LSocket ) ->
 auth_process( ServPid, CliBal, CliSock ) ->
 	irc:send_ident_msg( CliSock, ?LOOKING_HOST_MSG ),
 	inet:setopts(CliSock, [{active, false}, {packet, line}]),
-    
+
 	case inet:peername( CliSock ) of
 		{ok, {Address, _}} ->
 			{ok , {hostent,Host,_,_,_,_}} = inet:gethostbyaddr( Address ),
 			irc:send_ident_msg( CliSock, ?HOST_FOUND_MSG ),
-            State = #auth { host = Host
+			State = #auth { host = Host
                             ,server = ServPid
                             ,sock = CliSock },
 			{ok, Pid} = gen_fsm:start_link( doorman, State, [?STATE_DEBUG]),
 			auth_loop( Pid, CliSock, ServPid, CliBal );
-            
+
 		{error, Reason} ->
 	    	irc:send_ident_msg( CliSock, ?HOST_NOT_FOUND_MSG ),
 	   		gen_tcp:close( CliSock ),
@@ -199,23 +199,22 @@ auth_loop( FsmPid, CliSock, ServPid, CliBal ) ->
 					irc:send_ident_msg( CliSock, ?BAD_SEQUENCE_MSG ),
 					log_error( "Bad commands sequence." ),
 					error;
-                    
+
 				{ok, {Client, _Auth}} ->
 					% @todo check client password
-			        Send = ?LOCAL_SEND, 
-                    RealClient = Client#client{ send = Send
+				    Send = ?LOCAL_SEND,
+				    RealClient = Client#client{ send = Send
                                              ,sendArgs = {local, CliSock} },
-					server_node:add_user( ServPid, RealClient ),
-					log_ok( Client ),
-					irc:send_ident_msg( CliSock, ?VALIDATION_MSG ),
-					ok
+				    irc:send_ident_msg( CliSock, ?VALIDATION_MSG ),
+				    server_node:add_user( ServPid, RealClient ),
+				    log_ok( Client ),
+				    ok
 			end;
 		{error, etimedout} ->
 			gen_fsm:send_event( FsmPid, stop ), % We have to stop state machine
 	    	irc:send_ident_msg( CliSock, ?TIME_OUT_MSG ),
 			gen_tcp:close( CliSock ),
 			log_error( "Client registration timed out." );
-
 		{error, Reason} ->
 			gen_tcp:close( CliSock ),
 	    	log_error( inet:format_error( Reason ) )
@@ -268,7 +267,7 @@ valid_nick( Msg, Auth ) ->
                 % TODO : renvoyer le vrai message d'erreur
                 %       ERR_NICKNAMEINUSE...
                 {reply, continue, q2, Auth};
-                
+
        true -> {reply, continue, final_registration_state, Auth#auth{ nick = Nick } }
     end.
 

@@ -1,0 +1,5 @@
+Debut du MOTD
+Hello world.
+/!\ /!\ /!\ /!\
+Goodbye world.
+Fin du MOTD
