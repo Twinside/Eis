@@ -33,10 +33,10 @@
 
 -record(msg,
 		{
-			sender		%% as a tuple : { nick, username, host } | server
+			sender = ""	%% as a tuple : { nick, username, host } | server
 			,ircCommand	%% as atom or int
-			,params		%% as list of string
-			,data		%% as string
+			,params = []%% as list of string
+			,data = ""	%% as string
 		}).
 
 

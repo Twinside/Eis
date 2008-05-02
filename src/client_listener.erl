@@ -34,6 +34,10 @@ start_link( Initparam ) ->
 
 init( [ {Balance, Servernode} ] ) ->
 	irc_log:logVerbose( "Client Listener created" ),
+
+    % TODO : uncomment and debug this.
+    % pinger:start_link(),
+
 	State = #listener{ supervisor = Balance
                     	,servernode = Servernode
 						,bynick = ets:new(tabtest, [set])
@@ -60,6 +64,10 @@ broadcaster( User, Msg ) ->
 % Different call used by the load balancer.
 %
 %% @hidden
+%% @doc
+%%  Clause which handle client adding to
+%%  the listener.
+%% @end
 handle_cast( {addressource, Client}, State ) ->
     {_, Sock} = Client#client.sendArgs,
     Neocli = Client#client{ cli_listener = self() },
@@ -79,6 +87,10 @@ handle_cast( {killressource, Client}, State ) ->
 				{noreply, State}
 	end;
 
+%% @doc
+%%  Clause used by a chan to validate a
+%%  client join, so we can register this.
+%% @end
 handle_cast( {notifjoin, Cliname, Chaninfo}, State ) ->
     [{_,Cli}] = ets:lookup( State#listener.bynick, Cliname ),
     Neocli = Cli#client{ is_in = [Chaninfo|Cli#client.is_in] },
@@ -94,17 +106,33 @@ handle_cast( {test, Nick, Data}, State ) ->
 	Msg = irc:msg_of_string( Data ),
     [{_,Cli}] = ets:lookup( Bynick, Nick ),
 	{noreply, dispatcher( Msg#msg.ircCommand, Msg, Cli, State ) };
-    
+
+%% @doc
+%%  General close when receiving
+%%  a casted message.
+%% @end
 handle_cast( Msg, State ) when is_record( Msg, msg ) ->
 	% do not convert Msg to StrMsg before know if the client is virtual or not
 	% ets:foldl(broadcaster, Msg, UserTable),
 	{noreply, State};
+
+
+%% @doc
+%%  Clause used to call the ping/pong
+%%  alive check.
+%% @end
+handle_cast( ping, State ) -> {noreply, pinger:send_ping( State ) };
+handle_cast( pong, State ) -> {noreply, pinger:clean_unponged( State ) };
 
 handle_cast( _Request, State ) -> % ignore invalid cast
 	{noreply, State}.
 
 	
 %% @hidden
+%% @doc
+%%  Clause which is in charge of receiving data
+%%  sended by the client.
+%% @end
 handle_info( {tcp, Socket, Data}, State ) ->
 	Bysock = State#listener.bysock,
     Bynick = State#listener.bynick,
@@ -113,6 +141,10 @@ handle_info( {tcp, Socket, Data}, State ) ->
     [{_,Cli}] = ets:lookup( Bynick, Nick ),
 	{noreply, dispatcher( Msg#msg.ircCommand, Msg, Cli, State ) };
 
+%% @doc
+%%  Clause called when the socket got a problem.
+%%  Remove the client from the server.
+%% @end
 handle_info( {tcp_closed, Socket} , State ) ->
 	[{_, Nick}] = ets:lookup( State#listener.bysock, Socket ),
     [{_,Cli}] = ets:lookup( State#listener.bynick, Nick ),
@@ -147,7 +179,8 @@ dispatcher( 'MODE', Msg, From, State ) ->
     com_mode:perform_client( Msg, From, State );
 dispatcher( 'QUIT', Msg, From, State ) ->
     com_quit:perform_client( Msg, From, State );
-
+dispatcher( 'PONG', Msg, From, State ) ->
+    pinger:perform_client( Msg, From, State );
 dispatcher( {unknown_command, Txt}, _Msg, From, State ) ->
     Notice = irc:forge_msg( State#listener.server_host, ?ERR_UNKNOWNCOMMAND
                             ,[Txt]
