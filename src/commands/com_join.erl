@@ -224,19 +224,19 @@ register_user( Cli, ChanState, Chan, true ) ->
                         Cli, Chan ),
     Notif = irc:forge_msg(Cli,'JOIN',[Chan#chan.channame], ""),
     chan_manager:broadcast_localusers( Chan, Notif ),
-    % filer la liste des noms aussi, ça peut aider.     
+    com_names:send_namelist( Chan, Cli, ChanState#cmanager.server_host ),
     ChanState
     .
     
 send_welcome_info( Serverhost, Cli, #chan {channame = ChanName,
-                                            topic = "" } ) ->
+                                            topic = "" }) ->
     SyncMsg =  {notifjoin, Cli#client.nick, {ChanName, self()}},
     gen_server:cast( Cli#client.cli_listener, SyncMsg ),
     Message = irc:forge_msg( Serverhost, ?RPL_NOTOPIC, [ChanName], "" ),
     (Cli#client.send)( Cli#client.sendArgs, Message );
     
 send_welcome_info( Serverhost, Cli, #chan {channame = ChanName,
-                                            topic = Topic } ) ->
+                                            topic = Topic }) ->
     SyncMsg =  {notifjoin, Cli#client.nick, {ChanName, self()}},
     gen_server:cast( Cli#client.cli_listener, SyncMsg ),
     Message = irc:forge_msg( Serverhost, ?RPL_TOPIC, [ChanName], Topic ),

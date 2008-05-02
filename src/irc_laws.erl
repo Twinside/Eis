@@ -56,6 +56,7 @@
             ,is_chan_limited/1
             ,is_chan_private/1
             ,is_chan_inmsgonly/1
+            ,is_chan_secret/1
             ,choose_welcome_right/1
             ,chan_mode_to_string/1
             ,global_mode_to_string/1
@@ -226,6 +227,13 @@ mmode_to_string( Mode, Lassoc, I ) ->
        true -> mmode_to_string( Mode, Lassoc, I - 1 )
     end
     .
+
+%% @doc
+%%  Tell if a chan is secret (+s).
+%% @end
+%% @spec is_chan_secret( Chan ) -> bool
+is_chan_secret( Chan ) ->
+    (Chan#chan.mode band ?MSECRET) /= 0.
 
 %% @doc
 %%  Tell if a chan is private (+p).
