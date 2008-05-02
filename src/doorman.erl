@@ -51,7 +51,7 @@
         ]).
 
 -define( IDENT_TIMEOUT, 6 ).
--define( TIMEOUT, 10 ).
+-define( TIMEOUT, 10000 ).
 
 %-define( STATE_DEBUG, {debug, [trace] } ).
 -define( STATE_DEBUG,  ).
@@ -201,7 +201,7 @@ auth_process( ServPid, CliBal, CliSock ) ->
 %% 		SubInfo = string()
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 auth_loop( FsmPid, CliSock, ServPid, CliBal ) ->
-	case gen_tcp:recv( CliSock, ?TIMEOUT ) of
+	case gen_tcp:recv( CliSock, 0, ?TIMEOUT ) of
 	    {ok, Packet} ->
 		IrcMessage = irc:msg_of_string( Packet ),
 		case gen_fsm:sync_send_event( FsmPid, IrcMessage, 100000 ) of
