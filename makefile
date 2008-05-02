@@ -2,25 +2,33 @@
 # Global configuration
 #
 ##########################################
-OUTPUT=all
+OUTPUT      :=all
 
-SRCEXT=.erl
-OBJEXT=.beam
-SOLUTIONDIR=./
+SRCEXT      :=.erl
+OBJEXT      :=.beam
+SOLUTIONDIR :=./
 
 OBJDIR      := $(SOLUTIONDIR)ebin/
 SOURCEDIR   := $(SOLUTIONDIR)src/
 COMSOURCEDIR:= $(SOURCEDIR)commands/
 HEADERDIR   := $(SOLUTIONDIR)include/
+APP         := $(OBJDIR)eis.app
 
 ###########################################
 # Compiler configuration, put here all
 # you want to pass to $(ECC)
-##########################################
-ECC=erlc
-DEBUG=+debug_info
-EFLAGS:=$(DEBUG) -o $(OBJDIR) -I $(HEADERDIR) -Wall
+###########################################
+ECC         :=erlc
+DEBUG       :=+debug_info
+EFLAGS      :=$(DEBUG) -o $(OBJDIR) -I $(HEADERDIR) -Wall
 
+###########################################
+# Helper variables which can be used in
+# different subscript.
+###########################################
+COMMA       :=, 
+EMPTY       :=
+SPACE       :=$(EMPTY) $(EMPTY)
 
 ###########################################
 # Test configuration
@@ -46,7 +54,7 @@ irccommands:=com_join \
             com_who \
             com_quit \
             com_mode \
-	    com_topic
+	        com_topic
 
 modules:=conf_loader \
 		irc_log \
@@ -70,20 +78,20 @@ recompile_header:=  irc_struct.hrl \
 # do not touch unless you really know what you're doing.
 ############################################################
 
-COMOBJ:=$(addprefix $(OBJDIR),$(addsuffix $(OBJEXT),$(irccommands)))
-COMSRC:=$(addprefix $(COMSOURCEDIR),$(addsuffix $(SRCEXT), $(irccommands)))
-SRC:=$(addprefix $(SOURCEDIR),$(addsuffix $(SRCEXT), $(modules)))
-OBJ:=$(addprefix $(OBJDIR),$(addsuffix $(OBJEXT),$(modules)))
+COMOBJ  :=$(addprefix $(OBJDIR),$(addsuffix $(OBJEXT),$(irccommands)))
+COMSRC  :=$(addprefix $(COMSOURCEDIR),$(addsuffix $(SRCEXT), $(irccommands)))
+SRC     :=$(addprefix $(SOURCEDIR),$(addsuffix $(SRCEXT), $(modules)))
+OBJ     :=$(addprefix $(OBJDIR),$(addsuffix $(OBJEXT),$(modules)))
 
 TESTMODULES:=$(addsuffix $(TESTTAG), $(irccommands)) \
              $(addsuffix $(TESTTAG), $(modules))
 
-HDEP:=$(addprefix $(HEADERDIR), $(recompile_header))
+HDEP    :=$(addprefix $(HEADERDIR), $(recompile_header))
 
-TSTSRC:=$(addprefix $(TESTDIR), $(addsuffix $(TESTSUFIX), $(modules))) \
-        $(addprefix $(TESTCOMDIR), $(addsuffix $(TESTSUFIX), $(irccommands)))
-TSTOBJ:=$(addprefix $(OBJDIR),$(addsuffix $(TESTOBJSUFIX), $(modules))) \
-        $(addprefix $(OBJDIR), $(addsuffix $(TESTOBJSUFIX), $(irccommands)))
+TSTSRC  :=$(addprefix $(TESTDIR), $(addsuffix $(TESTSUFIX), $(modules))) \
+          $(addprefix $(TESTCOMDIR), $(addsuffix $(TESTSUFIX), $(irccommands)))
+TSTOBJ  :=$(addprefix $(OBJDIR),$(addsuffix $(TESTOBJSUFIX), $(modules))) \
+          $(addprefix $(OBJDIR), $(addsuffix $(TESTOBJSUFIX), $(irccommands)))
  
 ALLSOURCES:=$(SRC) $(COMSRC)
 ALLOBJ:=$(OBJ) $(COMOBJ)
@@ -91,8 +99,19 @@ ALLOBJ:=$(OBJ) $(COMOBJ)
 # Here it's the "standard" make rules.
 #
 ############################################################
-$(OUTPUT): $(ALLOBJ)
+$(OUTPUT): $(ALLOBJ) $(APP)
 
+# creation of the app file.
+# now it's automatically updated with
+# each change of the makefile :)
+MODLIST   := $(modules) $(irccommands)
+ALLMODULE := $(subst $(SPACE),$(COMMA),$(strip $(MODLIST)))
+$(APP): eisapp.header eisapp.footer makefile
+	echo ** Generating app file...
+	@cat eisapp.header > $@
+	@echo $(ALLMODULE) >> $@
+	@cat eisapp.footer >> $@
+    
 ####
 # Software build
 $(OBJDIR)%$(OBJEXT): $(SOURCEDIR)%$(SRCEXT) $(HDEP)

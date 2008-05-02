@@ -1,0 +1,7 @@
+{application, eis,
+ [
+    {description, "Erlang IRC server"},
+    {vsn, "p01"},
+    {modules,
+        [
+
