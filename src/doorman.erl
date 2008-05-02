@@ -50,6 +50,8 @@
             ,final_registration_state/3
         ]).
 
+-define( IDENT_TIMEOUT, 6 ).
+
 %-define( STATE_DEBUG, {debug, [trace] } ).
 -define( STATE_DEBUG,  ).
 
@@ -153,6 +155,13 @@ auth_process( ServPid, CliBal, CliSock ) ->
 		{ok, {Address, _}} ->
 			{ok , {hostent,Host,_,_,_,_}} = inet:gethostbyaddr( Address ),
 			irc:send_ident_msg( CliSock, ?HOST_FOUND_MSG ),
+			irc:send_ident_msg( CliSock, ?CHECKING_IDENT ),
+			case ident_checker:check_ident( CliSock, ?IDENT_TIMEOUT ) of
+			    {error, _Reason} ->
+				irc:send_ident_msg( CliSock, ?IDENT_CHECK_FAIL );
+			    {ok, {_System, _Data}} ->
+				irc:send_ident_msg( CliSock, ?IDENT_CHECK_VALID )
+			end,
 			State = #auth { host = Host
                             ,server = ServPid
                             ,sock = CliSock },

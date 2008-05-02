@@ -21,7 +21,7 @@
 %%	to make the call is deduced from the socket used to be
 %%	connected to the client.
 %% @end
-%% 
+%%
 %% @spec check_ident( ClientSocket, Timeout ) -> Result
 %% where
 %%		ClientSocket = socket()
@@ -36,9 +36,9 @@ check_ident( ClientSocket, Timeout ) ->
 	end.
 
 request_of_socket( Sock, Timeout ) ->
-	{ ForeignAdress, ForeignPort } = inet:peername( Sock ),
+	{ ok, {ForeignAdress, ForeignPort} } = inet:peername( Sock ),
 	{ ok, LocalPort } = inet:port( Sock ),
-	Request = list:concat([ integer_to_list(LocalPort),
+	Request = lists:concat([ integer_to_list(LocalPort),
 							",",
 							integer_to_list(ForeignPort)]),
 	{Status, Val} = gen_tcp:connect( ForeignAdress, ?IDENT_PORT, [], Timeout ),
@@ -56,4 +56,4 @@ perform_request( Sock, Req, Timeout ) ->
 		{error, _} -> error;
 		{ok, Answer} -> parse_answer( Answer )
 	end.
-	
+

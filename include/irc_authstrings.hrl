@@ -8,4 +8,7 @@
 -define( BAD_SEQUENCE_MSG, ":***Bad commands sequence.\n" ).
 -define( TIME_OUT_MSG, ":*** Time out, closing connection.\n" ).
 -define( VALIDATION_MSG, ":*** You've been registered !\n" ).
+-define( IDENT_CHECK_FAIL, ":*** Ident not received !\n" ).
+-define( IDENT_CHECK_VALID, ":*** Received a valid ident.\n" ).
+-define( CHECKING_IDENT, ":*** Checking your ident...\n" ).
 
