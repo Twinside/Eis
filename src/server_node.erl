@@ -68,14 +68,13 @@ send_motd( Client, Motd ) ->
     lists:foreach( Fun, Motd ).
 
 
-% @doc
+%% @doc
 %%  Tell if a client is a local one registered
 %%  here.
 %% @end
 %% @spec is_cli_local( Client ) -> bool
 %% where
-%%      Client = client()eis:dlaunch().
-
+%%      Client = client()
 is_cli_local( #client{ sendArgs={local,_ }} ) -> true;
 is_cli_local( #client{ sendArgs={local_test,_}} ) -> true;
 is_cli_local( _ ) -> false.
