@@ -26,6 +26,7 @@
 			,username = ""	%% as string
             ,is_in = []     %% as [{string(),Pid}]
             ,rights = 0     %% global mode of the user.
+            ,pinged = true  %% if the user has responded to ping
 			,send		    %% as function/2
 			,sendArgs       %% as {local, socket()} | {virtual, Pid} | {foreign, _}
 		}).

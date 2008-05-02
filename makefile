@@ -68,6 +68,7 @@ modules:=conf_loader \
 		ident_checker \
 		eis \
         chars \
+        pinger \
         wexpr
 
 recompile_header:=  irc_struct.hrl \

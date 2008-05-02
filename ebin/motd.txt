@@ -1,5 +1,16 @@
-Debut du MOTD
-Hello world.
-/!\ /!\ /!\ /!\
-Goodbye world.
-Fin du MOTD
+=======================================
+*
+* Eis : Erlang Irc Server
+* version : p01
+*
+* You are connected to a developer
+* test server, you may notice some
+* unfunctionnal parts.
+*
+* avaible commands at the moment :
+* PRIVMSG, NOTICE, JOIN, PART
+* QUIT, WHO, MODE (experimental)
+* NAMES (launched automaticaly, not user
+* accessible).
+*
+*======================================
