@@ -7,7 +7,7 @@
 -define( RPL_WHOREPLY, " 352 " ).
 
 -define( RPL_ENDOFWHO, " 315 " ).
--define( RPL_ENDOFWHO_TXT, ":End of /WHO list\r\n" ).
+-define( RPL_ENDOFWHO_TXT, " :End of /WHO list\r\n" ).
 
 -define( RPL_NAMEREPLY, " 353 " ).
 

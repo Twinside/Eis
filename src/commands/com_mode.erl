@@ -14,14 +14,20 @@
 
 -vsn( p01 ).
 
-
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%   On the client side
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 perform_client( Msg, Cli, ClientState ) ->
     msg_dispatch( Msg, Cli, ClientState, Msg#msg.params ).
 
+% case when there is not enough param
 msg_dispatch( _Msg, Cli, State, [] ) ->
     irc:send_err( State, Cli, ?ERR_NEEDMOREPARAMS),
     State;
-    
+
+% try to determine the application
+% - user with a nick
+% - chan
 msg_dispatch( Msg, Cli, State, [Name|_] ) ->
     Is_chan = irc:is_channame_valid( Name ),
     if Is_chan -> chan_request( Msg, Cli, State );
@@ -38,7 +44,8 @@ send_wrongnick( State, Cli, Name ) ->
     State.
 
 %% @doc
-%% if the mode command concern a client.
+%%  if the mode command concern a client.
+%%  First case : to request the client's mode
 %% @end
 client_request( #msg{ params =[Nick] }, Cli, State ) ->
     case server_node:get_client( State#listener.servernode, Nick ) of
@@ -49,7 +56,9 @@ client_request( #msg{ params =[Nick] }, Cli, State ) ->
                 State;
         _ -> send_wrongnick( State, Cli, Nick )
     end;
-    
+
+% Second case :
+% to apply a modification to the client.
 client_request( #msg{ params = [Nick,Modif|_] }, Cli, State ) ->
     if Nick /= Cli#client.nick ->
            Msg = ?ERR_USERDONTMATCH ++ ?ERR_USERDONTMATCH_TXT,
@@ -88,7 +97,11 @@ apply_user_mode( Cli, State, true, $-, Mode ) ->
     ets:insert( State#listener.bynick, {NeoCli#client.nick, NeoCli} ),
     State
     .
-    
+
+%% @doc
+%%  When the mode is concerning a chan,
+%%  check presence and change of process.
+%% @end
 chan_request( Msg, Cli, State ) ->
     [Name|_] = Msg#msg.params,
     case lists:keysearch( Name, 1, Cli#client.is_in ) of
@@ -102,6 +115,9 @@ chan_request( Msg, Cli, State ) ->
     end,
     State.
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%   On the chan side
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 perform_chan( Msg, Cli, Chan, State ) ->
     case Msg#msg.params of
         [_Name] -> send_chan_info( Cli, Chan, State );
@@ -152,6 +168,9 @@ apply_arg( {$-, _Mode}, _Arg, _Msg, _Cli, _Chan, State ) ->
 apply_arg( {_Side, _What}, _Arg, _Msg, _Cli, _Chan, State ) ->
     State.
 
+%% @doc
+%%  Send the ban list in responce of MODE +b command.
+%% @end
 send_ban_list( Cli, Chan, State ) ->
     Msg = ?RPL_BANLIST ++ Chan#chan.channame ++ " ",
     Snd = (fun(Ban,_) ->
@@ -165,6 +184,10 @@ send_ban_list( Cli, Chan, State ) ->
     irc:send_err( State, Cli, Endmsg ),
     State.
 
+%% @doc
+%%  Make a string with oprtional chan parameters.
+%%  It's used to send the mode information.
+%% @end
 make_pass_info( Chan, Str ) ->
     Pass = irc_laws:is_chan_passworded( Chan ),
     if Pass -> make_limit_info( Chan, Str ++ [$  |Chan#chan.password] );
@@ -178,9 +201,11 @@ make_limit_info( Chan, Str ) ->
     end.
 
 send_chan_info( Cli, Chan, State ) ->
-    Mode = irc_laws:chan_mode_to_string( Chan#chan.mode ) ++
-            make_pass_info( Chan, "" ),
+    Mode = irc_laws:chan_mode_to_string( Chan#chan.mode )
+         ++ make_pass_info( Chan, "" ),
     Msg = ?RPL_CHANNELMODEIS
+        ++ Cli#client.nick
+        ++ " "
         ++ Chan#chan.channame
         ++ [$  |Mode]
         ++ "\r\n",

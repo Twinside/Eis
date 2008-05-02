@@ -63,6 +63,7 @@
             ,string_to_globalmode/1
             ,string_to_usermode/1
             ,prefix_nick/2
+            ,mode_prefix/1
 		]).
 
 chan_modes( ) ->
@@ -82,12 +83,12 @@ simple_chan_modes( ) ->
 
 param_chan_modes( ) ->
 [
-     { $l, ?MLIMITED, param }
-    ,{ $k, ?MKEY, param }
-    ,{ $b, ?MBAN, param }
-    ,{ $v, ?MVOICED, param  }
-    ,{ $o, ?MCHANOP, param  }
-    ,{ $h, ?MHALFED, param  }
+     { $l, ?MLIMITED, limit }
+    ,{ $k, ?MKEY, key }
+    ,{ $b, ?MBAN, ban }
+    ,{ $v, ?MVOICED, voice  }
+    ,{ $o, ?MCHANOP, chanop }
+    ,{ $h, ?MHALFED, halfop }
 ].
 
 global_modes( ) ->
@@ -107,14 +108,27 @@ global_modes( ) ->
 %%      Nick = string()
 %%      Usermode = int()
 %%      Result = string()
-prefix_nick( St, M )
-    when M band ?MCHANOP /= 0 -> [$@ | St];
-prefix_nick( St, M )
-    when M band ?MHALFED /= 0 -> [$% | St];
-prefix_nick( St, M )
-    when M band ?MVOICED /= 0 -> [$+ | St];
-prefix_nick( St, _ ) -> St.
+prefix_nick( St, M ) ->
+    case mode_prefix( M ) of
+        [] -> St;
+        P -> [P | St]
+    end.    
 
+%% @doc
+%%  Return the prefix associated to a username
+%% @end
+%% @spec mode_prefix( Mode ) -> Result
+%% where
+%%      Mode = int()
+%%      Result = char | []
+mode_prefix( M )
+    when M band ?MCHANOP /= 0 -> $@;
+mode_prefix( M )
+    when M band ?MHALFED /= 0 -> $%;
+mode_prefix( M )
+    when M band ?MVOICED /= 0 -> $+;
+mode_prefix( _ ) -> [].
+    
 %% @doc
 %%  Convert an IRC string received
 %%  to an irc mode usable by the
@@ -136,12 +150,16 @@ string_to_globalmode( Str ) ->
 %%  Convert an IRC string received
 %%  to an irc mode usable by the
 %%  system. Cover modes for user in the
-%%  channel and the channel itself
+%%  channel and the channel itself.
+%%
+%%  Code is an atom used for arguments
+%%  version, to descriminate easely.
 %% @end
 %% @spec string_to_usermode( Str ) -> Result
 %% where
 %%      Str = string()
 %%      Result = {Side, Mode}
+%%              | {Side, Code, Mode}
 %%              | {unknwon, Side, C}
 %%      Side = plus | minus
 %%      Mode = int()

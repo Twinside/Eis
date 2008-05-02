@@ -32,18 +32,32 @@ analyse( Msg, Cli, ClientState ) ->
 perform_chan( _Msg, Cli, Chan, ChanState ) ->
     Prep = [$: | ChanState#cmanager.server_host]
             ++ ?RPL_WHOREPLY
-            ++ [$  | Chan#chan.channame]
+            ++ Cli#client.nick
+            ++ [$ | Chan#chan.channame]
             ++ " ",
-    Func = (fun({_Nick,ICli}, _) ->
-                Msg = lists:concat( Prep,
-                                    ICli#client.username, " ",
+    Func = (fun({_Nick,{ICli, Rights}}, _) ->
+                Cr = (case irc_laws:mode_prefix( Rights ) of
+                        [] -> [];
+                        A -> [A] end),
+                        
+                Msg = lists:concat( [Prep,
+                                    [$~ |ICli#client.username],
+                                    " ",
                                     ICli#client.host, " ",
                                     ChanState#cmanager.server_host,
-                                    ICli#client.nick, ": " ),
+                                    [$  |ICli#client.nick],
+                                    " H",
+                                    Cr,
+                                    " :0 no_info\r\n"] ),
 
                 (Cli#client.send)( Cli#client.sendArgs, Msg )
             end),  
-    ets:foldl(Func, 0, ChanState#chan.userlist),
-    ets:foldl(Func, 0, ChanState#chan.foreignusers),
+    ets:foldl(Func, 0, Chan#chan.userlist),
+    ets:foldl(Func, 0, Chan#chan.foreignusers),
+    Finish = ?RPL_ENDOFWHO
+            ++ Cli#client.nick
+            ++ [$ | Chan#chan.channame]
+            ++ ?RPL_ENDOFWHO_TXT,
+    irc:send_err(ChanState, Cli, Finish ),
     ChanState.
 
