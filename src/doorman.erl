@@ -162,7 +162,9 @@ auth_process( ServPid, CliBal, CliSock ) ->
 			case ident_checker:check_ident( CliSock, ?IDENT_TIMEOUT ) of
 			    {error, _Reason} ->
 				irc:send_ident_msg( CliSock, ?IDENT_CHECK_FAIL );
-			    {ok, {_System, _Data}} ->
+			    error ->
+				irc:send_ident_msg( CliSock, ?IDENT_CHECK_FAIL );
+			    {ok, _} ->
 				irc:send_ident_msg( CliSock, ?IDENT_CHECK_VALID )
 			end,
 			State = #auth { host = Host
