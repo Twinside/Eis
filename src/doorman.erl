@@ -51,6 +51,7 @@
         ]).
 
 -define( IDENT_TIMEOUT, 6 ).
+-define( TIMEOUT, 10 ).
 
 %-define( STATE_DEBUG, {debug, [trace] } ).
 -define( STATE_DEBUG,  ).
@@ -100,6 +101,8 @@ start_link( Port, ServPid, CliBalance ) ->
 %% @doc
 %% <p>Door_loop is the listening loop. When the server runs, it's this loop
 %% which permits client's connexions. So the function doesn't finish.</p>
+%% @end
+%%
 %% @end
 %%
 %% @spec door_loop ( ServPid, CliBalance, LSocket ) -> Result
@@ -196,36 +199,34 @@ auth_process( ServPid, CliBal, CliSock ) ->
 %% 		SubInfo = string()
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 auth_loop( FsmPid, CliSock, ServPid, CliBal ) ->
-	case gen_tcp:recv( CliSock, 0 ) of %, 100000 ) of
-		{ok, Packet} ->
-			IrcMessage = irc:msg_of_string( Packet ),
-			case gen_fsm:sync_send_event( FsmPid, IrcMessage, 100000 ) of
-				continue ->
-					auth_loop( FsmPid, CliSock, ServPid, CliBal );
-
-				error ->
-					gen_tcp:close( CliSock ),
-					irc:send_ident_msg( CliSock, ?BAD_SEQUENCE_MSG ),
-					log_error( "Bad commands sequence." ),
-					error;
-
-				{ok, {Client, _Auth}} ->
-					% @todo check client password
-				    Send = ?LOCAL_SEND,
-				    RealClient = Client#client{ send = Send
-                                             ,sendArgs = {local, CliSock} },
-				    irc:send_ident_msg( CliSock, ?VALIDATION_MSG ),
-				    server_node:add_user( ServPid, RealClient ),
-				    log_ok( Client ),
-				    ok
-			end;
-		{error, etimedout} ->
-			gen_fsm:send_event( FsmPid, stop ), % We have to stop state machine
+	case gen_tcp:recv( CliSock, ?TIMEOUT ) of
+	    {ok, Packet} ->
+		IrcMessage = irc:msg_of_string( Packet ),
+		case gen_fsm:sync_send_event( FsmPid, IrcMessage, 100000 ) of
+		    continue ->
+			auth_loop( FsmPid, CliSock, ServPid, CliBal );
+		    error ->
+			gen_tcp:close( CliSock ),
+			irc:send_ident_msg( CliSock, ?BAD_SEQUENCE_MSG ),
+			log_error( "Bad commands sequence." ),
+			error;
+		    {ok, {Client, _Auth}} ->
+			% @todo check client password
+			Send = ?LOCAL_SEND,
+			RealClient = Client#client{ send = Send
+			    ,sendArgs = {local, CliSock} },
+			irc:send_ident_msg( CliSock, ?VALIDATION_MSG ),
+			server_node:add_user( ServPid, RealClient ),
+			log_ok( Client ),
+			ok
+		end;
+	    {error, etimedout} ->
+		gen_fsm:send_event( FsmPid, stop ), % We have to stop state machine
 	    	irc:send_ident_msg( CliSock, ?TIME_OUT_MSG ),
-			gen_tcp:close( CliSock ),
-			log_error( "Client registration timed out." );
-		{error, Reason} ->
-			gen_tcp:close( CliSock ),
+		gen_tcp:close( CliSock ),
+		log_error( "Client registration timed out." );
+	    {error, Reason} ->
+		gen_tcp:close( CliSock ),
 	    	log_error( inet:format_error( Reason ) )
 	end.
 
@@ -250,7 +251,7 @@ init_state( Msg, _From, Auth ) ->
 	case Msg#msg.ircCommand of
 		'PASS' ->
 			[Pass|_] = Msg#msg.params,
-			{reply, continue, q2, Auth#auth{ pass = Pass} };
+			{reply, continue, q2, Auth#auth{ pass = Pass } };
 		'NICK' -> valid_nick( Msg, Auth );
 		_ -> % Not a valid message to initialise a connection
 			{stop, error, error, undefined}
@@ -271,13 +272,16 @@ q2( Msg, _From, Auth ) ->
 
 valid_nick( Msg, Auth ) ->
     [Nick|_] = Msg#msg.params,
-    Used = server_node:is_client_existing( Auth#auth.server, Nick ),
-    if Used -> irc:send_ident_msg( Auth#auth.sock, ?NICK_ALREADY_USED ),
-                % TODO : renvoyer le vrai message d'erreur
-                %       ERR_NICKNAMEINUSE...
-                {reply, continue, q2, Auth};
-
-       true -> {reply, continue, final_registration_state, Auth#auth{ nick = Nick } }
+    case server_node:is_client_existing( Auth#auth.server, Nick ) of
+	false ->
+	    {reply, continue, final_registration_state, Auth#auth{ nick = Nick } };
+	_ ->
+	    irc:send_ident_msg( Auth#auth.sock, ?NICK_ALREADY_USED ),
+            % TODO : renvoyer le vrai message d'erreur
+            %       ERR_NICKNAMEINUSE...
+	    % Il n'y a pas de vrai message d'erreur a ce moment la.
+	    % Si ton nick est occuppe tu px pas te connecter, point.
+            {reply, continue, q2, Auth}
     end.
 
 %% @hidden
