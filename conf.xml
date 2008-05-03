@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="utf-8"?>
+<?xml-stylesheet type="text/xsl" href="conf.xslt"?>
+<EisConf>
+  <Desc lang="en">
+    Each of the parameters is expected to be in the form param=value in the config file.
+    each param is on a line, and each line begining with a # is considered as a comment.
+  </Desc>
+  <Section name="General Configuration">
+    <Param>
+      <Desc>
+        time between each ping sended to the client.
+        Avoid using interval lower than 2 or 3 minutes
+        due to the excess of message generated.
+        time is in ms.
+      </Desc>
+      <ParamName>ping_cycle</ParamName>
+      <Default>300000</Default>
+      <Type>int</Type>
+    </Param>
+
+    <Param>
+      <Desc lang="en">
+        name of the server. Used in diverse message,
+        you should keep it relatively short.
+      </Desc>
+      <ParamName>server_name</ParamName>
+      <Default>eis</Default>
+      <Type>String</Type>
+    </Param>
+
+    <Param>
+      <Desc lang="en">
+        version of the application, this information
+        is displayed to the client in some commands.
+      </Desc>
+      <ParamName>version</ParamName>
+      <Default>0.1</Default>
+      <Type>String</Type>
+    </Param>
+
+    <Param>
+      <Desc lang="en">
+        bouncer adress
+      </Desc>
+      <ParamName>bounce</ParamName>
+      <Default>eis</Default>
+      <Type>URL or IP (a string)</Type>
+    </Param>
+    
+    <Param>
+      <Desc lang="en">
+        bouncer port, the client should use this port in case
+        of bouncing.
+      </Desc>
+      <ParamName>bounce_port</ParamName>
+      <Default>6667</Default>
+      <Type>0 &lt; int &lt; 65536</Type>
+    </Param>
+    
+    <Param>
+      <Desc lang="en">
+        Time to wait for the pong after
+        ping before deconnecting the
+        client. value is in ms
+      </Desc>
+      <ParamName>pong_timeout</ParamName>
+      <Default>10000</Default>
+      <Type>int</Type>
+    </Param>
+
+
+    <Param>
+      <Desc lang="en">
+        Max number of clients accepted
+        by the server. After this, all
+        clients are refused.
+      </Desc>
+      <ParamName>server_max_client</ParamName>
+      <Default>5000</Default>
+      <Type>int > 0</Type>
+    </Param>
+
+    <Param>
+      <Desc lang="en">
+        Max number of chan on the network.
+        should send error message when no
+        more chan can be created.
+      </Desc>
+      <ParamName>server_max_chan</ParamName>
+      <Default>15000</Default>
+      <Type>int > 0</Type>
+    </Param>
+
+    <Param>
+      <Desc lang="en">
+        How many chan an user can
+        be in.
+      </Desc>
+      <ParamName>chan_per_cli</ParamName>
+      <Default>15</Default>
+    </Param>
+
+    <Param>
+      <Desc lang="en">
+        Port used by the server to listen
+        to clients.
+      </Desc>
+      <ParamName>listening_port</ParamName>
+      <Default>6667</Default>
+      <Type>0 &lt; int &lt; 65536</Type>
+    </Param>
+
+    <Param>
+      <Desc lang="en">
+        server host to display in IRC
+        commands.
+      </Desc>
+      <ParamName>server_host</ParamName>
+      <Default>irc.local.none</Default>
+      <Type>URL or IP (as String)</Type>
+    </Param>
+
+    <Param>
+      <Desc lang="en">
+        file sended to the client after connection
+        keep it tiny to save bandwidth.
+      </Desc>
+      <ParamName>motd_file</ParamName>
+      <Default>motd.txt</Default>
+    </Param>
+  </Section>
+  <Section name="raw configuration, thread management">
+    <Description lang="en">
+      do not mess with this part unless you
+      really know what you're doing.
+    </Description>
+    <Param>
+      <Desc lang="en">
+        Number of clients handled by each client listener.
+        No advice for the moment
+      </Desc>
+      <ParamName>cli_per_thread</ParamName>
+      <Default>10</Default>
+      <Type>int &gt; 0</Type>
+    </Param>
+    <Param>
+      <Desc lang="en">
+        Number of chans handled by each chan_manager.
+        No advice for the moment
+      </Desc>
+      <ParamName>chan_per_thread</ParamName>
+      <Default>20</Default>
+      <Type>int &gt; 0</Type>
+    </Param>
+  </Section>
+</EisConf>
+

@@ -56,9 +56,9 @@
 %-define( STATE_DEBUG, {debug, [trace] } ).
 -define( STATE_DEBUG,  ).
 
-%-define( LOCAL_SEND, (fun({local, Sock}, Tosend) -> gen_tcp:send( Sock, Tosend )end)).
--define( LOCAL_SEND, (fun({local, Sock}, Tosend) -> irc_log:logDebug( "----> " ++ Tosend ++ "\n"),
-                                                    gen_tcp:send( Sock, Tosend )end)).
+-define( LOCAL_SEND, (fun({local, Sock}, Tosend) -> gen_tcp:send( Sock, Tosend )end)).
+%-define( LOCAL_SEND, (fun({local, Sock}, Tosend) -> irc_log:logDebug( "----> " ++ Tosend ++ "\n"),
+%                                                    gen_tcp:send( Sock, Tosend )end)).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Helpers %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 

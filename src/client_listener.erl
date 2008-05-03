@@ -36,7 +36,7 @@ init( [ {Balance, Servernode} ] ) ->
 	irc_log:logVerbose( "Client Listener created" ),
 
     % TODO : uncomment and debug this.
-    % pinger:start_link(),
+    pinger:start_link(),
 
 	State = #listener{ supervisor = Balance
                     	,servernode = Servernode
