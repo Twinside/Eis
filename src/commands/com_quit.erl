@@ -1,5 +1,6 @@
 -module( com_quit ).
 
+-include( "transaction.hrl" ).
 -include( "irc_struct.hrl" ).
 
 -vsn( p01 ).
@@ -49,12 +50,14 @@ send_quit( Cli, Msg ) ->
 %%      Cli = client()
 %%      State = listener()
 client_cleanup( Msg, Cli, State ) ->
+?TRANSACTIONBEGIN
     {_, Socket} = Cli#client.sendArgs,
     Nick = Cli#client.nick,
     ets:delete( State#listener.bysock, Socket ),
     ets:delete( State#listener.bynick, Nick ),
     server_node:del_user( State#listener.servernode, Nick ),
-    load_balancer:notif_killed( State#listener.supervisor ),
+    load_balancer:notif_killed( State#listener.supervisor )
+?TRANSACTIONEND,
     irc_log:logEvent( "Client disconected : " ++ irc:cli_to_string( Cli ) ),
     send_quit( Cli, Msg ),
     State

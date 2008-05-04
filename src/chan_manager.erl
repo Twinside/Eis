@@ -3,6 +3,7 @@
 %% @end
 -module(chan_manager).
 
+-include("transaction.hrl").
 -include("irc_struct.hrl").
 
 -behaviour(gen_server).
@@ -176,11 +177,14 @@ handle_cast( {killressource, Chan}, ChanList ) ->
 handle_cast({Msg, ChanName, Data}, State ) ->
     Lst = State#cmanager.byname,
 	[{_, Chan}] = ets:lookup( Lst, ChanName ),
-	{noreply, dispatch(Msg#msg.ircCommand,
+?TRANSACTION_SENTINEL_BEGIN
+    Result = dispatch(Msg#msg.ircCommand,
                         Msg,
 						Data,
-						Chan, State)
-	}
+						Chan, State),
+
+	{noreply, Result}
+?TRANSACTION_SENTINEL_END( State )
 	;
 	
 %% @hidden

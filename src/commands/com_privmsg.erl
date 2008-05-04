@@ -72,8 +72,10 @@ perform_chan( Msg, {notin_chan, Cli}, Chan, ChanState ) ->
     if Allowed -> perform_chan( Msg, Cli, Chan, ChanState );
        true -> send_cannotsenderr( Chan, Cli, ChanState ),
                ChanState
-    end;   
-% client is in chan or allowed.
+    end;
+
+%% Handle a message to be broadcasted
+%% in the chan.
 perform_chan( Msg, Cli, Chan, ChanState ) ->
     Right = chan_manager:get_user_right( Chan, Cli ),
     Allowed = irc_laws:check_chanlaw( 'PRIVMSG', Right, Chan#chan.mode ),

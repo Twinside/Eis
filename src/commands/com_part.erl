@@ -4,6 +4,7 @@
 %% @end
 -module( com_part ).
 
+-include( "transaction.hrl" ).
 -include( "irc_struct.hrl" ).
 
 -vsn( p01 ).
@@ -27,7 +28,7 @@ cleanup_chan( Chan, User, ChanState ) ->
     Local = server_node:is_cli_local( User ),
     user_remover( Chan, User, Local ),
     NeoChan = Chan#chan {usercount = Chan#chan.usercount - 1 },
-
+?TRANSACTIONBEGIN
     % we remove the chan if it's empty.
     if NeoChan#chan.usercount == 0 ->
                server_node:del_chan( ChanState#cmanager.serv,
@@ -42,6 +43,7 @@ cleanup_chan( Chan, User, ChanState ) ->
                             {NeoChan#chan.channame, NeoChan} ),
                {ok, ChanState}
     end
+?TRANSACTIONEND
     .
     
 user_remover( Chan, User, true ) -> % local

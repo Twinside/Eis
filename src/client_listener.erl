@@ -1,6 +1,7 @@
 -module(client_listener).
 
--include ("irc_struct.hrl").
+-include( "transaction.hrl" ).
+-include( "irc_struct.hrl"  ).
 
 -behaviour(gen_server).
 
@@ -134,12 +135,15 @@ handle_cast( _Request, State ) -> % ignore invalid cast
 %%  sended by the client.
 %% @end
 handle_info( {tcp, Socket, Data}, State ) ->
-	Bysock = State#listener.bysock,
+?TRANSACTION_SENTINEL_BEGIN
+    Bysock = State#listener.bysock,
     Bynick = State#listener.bynick,
-	Msg = irc:msg_of_string( Data ),
-	[{_, Nick}] = ets:lookup( Bysock, Socket ),
+    Msg = irc:msg_of_string( Data ),
+    [{_, Nick}] = ets:lookup( Bysock, Socket ),
     [{_,Cli}] = ets:lookup( Bynick, Nick ),
-	{noreply, dispatcher( Msg#msg.ircCommand, Msg, Cli, State ) };
+    NState = dispatcher( Msg#msg.ircCommand, Msg, Cli, State ),
+    {noreply, NState}
+?TRANSACTION_SENTINEL_END(State);
 
 %% @doc
 %%  Clause called when the socket got a problem.
@@ -149,8 +153,10 @@ handle_info( {tcp_closed, Socket} , State ) ->
 	[{_, Nick}] = ets:lookup( State#listener.bysock, Socket ),
     [{_,Cli}] = ets:lookup( State#listener.bynick, Nick ),
     Msg = irc:forge_msg( Cli, 'QUIT', [], ?CONNEC_PEER_RESET ),
+?TRANSACTION_SENTINEL_BEGIN
     Neos = com_quit:client_cleanup( Msg, Cli, State ),
     {noreply, Neos}
+?TRANSACTION_SENTINEL_END(State)
     .
     
 %% @hidden

@@ -4,6 +4,7 @@
 %% @end
 -module( com_join ).
 
+-include( "transaction.hrl" ).
 -include( "irc_struct.hrl" ).
 
 -vsn( p01 ).
@@ -87,8 +88,10 @@ join_chan( Msg, Cli, {Channame,Pid} ) ->
 	
 create_chan( Msg, Cli, ServerNode ) ->
 	[ChanName|_] = Msg#msg.params,
+?TRANSACTIONBEGIN
 	Pid = server_node:add_chan( ServerNode, ChanName ),
     chan_manager:send_chan( Pid, {Msg, ChanName, Cli} )
+?TRANSACTIONEND
 	.
 
 %% @doc
@@ -199,11 +202,13 @@ perform_chan( Msg, Cli, Chan, ChanState ) ->
 register_user( Cli, ChanState, Chan, false ) ->
     Right = irc_laws:choose_welcome_right( Chan#chan.usercount ),
     NeoChan = Chan#chan {usercount = Chan#chan.usercount + 1 },
+?TRANSACTIONBEGIN
     ets:insert( NeoChan#chan.foreignusers,
                 {Cli#client.nick, Right} ),
     % update the chan information.
     ets:insert( ChanState#cmanager.byname,
-                {Chan#chan.channame, NeoChan} ),
+                {Chan#chan.channame, NeoChan} )
+?TRANSACTIONEND,
     Notif = irc:forge_msg(Cli,'JOIN',[Chan#chan.channame], ""),
     chan_manager:broadcast_localusers( Chan, Notif ),
     ChanState;
@@ -212,6 +217,7 @@ register_user( Cli, ChanState, Chan, false ) ->
 register_user( Cli, ChanState, Chan, true ) ->
     Right = irc_laws:choose_welcome_right( Chan#chan.usercount ),
     NeoChan = Chan#chan {usercount = Chan#chan.usercount + 1 },
+?TRANSACTIONBEGIN
     ets:insert( NeoChan#chan.userlist,
                 {
                     Cli#client.nick,
@@ -219,7 +225,8 @@ register_user( Cli, ChanState, Chan, true ) ->
                 } ),
     % update the chan information.
     ets:insert( ChanState#cmanager.byname,
-                {NeoChan#chan.channame, NeoChan} ),
+                {NeoChan#chan.channame, NeoChan} )
+?TRANSACTIONEND,      
     send_welcome_info( ChanState#cmanager.server_host,
                         Cli, Chan ),
     Notif = irc:forge_msg(Cli,'JOIN',[Chan#chan.channame], ""),
@@ -254,8 +261,10 @@ send_welcome_info( Serverhost, Cli, #chan {channame = ChanName,
 %%      Result = srvs()
 server_add( ServerState, Channame ) ->
 	Bal = ServerState#srvs.chanbal,
+?TRANSACTIONBEGIN
 	Pid = load_balancer:add_ressource( Bal, Channame ),
 	ets:insert( ServerState#srvs.chans, {Channame, Pid} ),
     {Pid, ServerState}
+?TRANSACTIONEND
 	.
 

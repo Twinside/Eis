@@ -5,6 +5,7 @@
 %% @end
 -module( com_mode ).
 
+-include( "transaction.hrl" ).
 -include( "irc_struct.hrl" ).
 
 -export([
@@ -89,12 +90,16 @@ apply_user_mode( Cli, State, false, _, _ )->
 
 apply_user_mode( Cli, State, true, $+, Mode ) ->
     NeoCli = Cli#client{ rights = Cli#client.rights bor Mode },
-    ets:insert( State#listener.bynick, {NeoCli#client.nick, NeoCli} ),
+  ?TRANSACTIONBEGIN
+    ets:insert( State#listener.bynick, {NeoCli#client.nick, NeoCli} )
+  ?TRANSACTIONEND,
     State;
 
 apply_user_mode( Cli, State, true, $-, Mode ) ->
     NeoCli = Cli#client{ rights = Cli#client.rights band (bnot Mode) },
-    ets:insert( State#listener.bynick, {NeoCli#client.nick, NeoCli} ),
+  ?TRANSACTIONBEGIN    
+    ets:insert( State#listener.bynick, {NeoCli#client.nick, NeoCli} )
+  ?TRANSACTIONEND,  
     State
     .
 
@@ -147,18 +152,19 @@ apply_simple( _, _Msg, Cli, _Chan, State ) ->
     
 make_modechange( Msg, $+, What, Chan, State ) ->
     Nch = Chan#chan{ mode = Chan#chan.mode bor What },
-    SMsg = irc:string_of_msg( Msg ),
-    ets:insert( State#cmanager.byname, {Nch#chan.channame, Nch} ),
-    chan_manager:broadcast_users( Chan, SMsg ),
-    State;
+    commit_change( Msg, Nch, State );
     
 make_modechange( Msg, $-, What, Chan, State ) ->
     Nch = Chan#chan{ mode = Chan#chan.mode band (bnot What) },
+    commit_change( Msg, Nch, State ).
+
+commit_change( Msg, Chan, State ) ->
     SMsg = irc:string_of_msg( Msg ),
-    ets:insert( State#cmanager.byname, {Nch#chan.channame, Nch} ),
+  ?TRANSACTIONBEGIN
+    ets:insert( State#cmanager.byname, {Chan#chan.channame, Chan} )
+  ?TRANSACTIONEND,
     chan_manager:broadcast_users( Chan, SMsg ),
     State.
-    
         
 apply_arg( {$+, Mode}, _Arg, _Msg, _Cli, _Chan, State ) ->
     _Limit = irc_laws:is_chan_limited( Mode ),
