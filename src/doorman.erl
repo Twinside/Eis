@@ -28,8 +28,8 @@
 -include( "irc_authstrings.hrl" ).
 
 -export([
-            door_loop/3
-            ,auth_process/3
+            door_loop/4
+            ,auth_process/4
             ,start_link/3
 	    ]).
 
@@ -39,7 +39,6 @@
             ,handle_event/3
             ,handle_sync_event/4
             ,terminate/3
-
             ,code_change/4
             ,handle_info/3
 	    ]).
@@ -62,6 +61,15 @@
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Helpers %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+-record( infos,
+    {
+	servername = "eis",
+	version = "",
+	since = {1970,1,1},
+	bounce = "",
+	bounce_port = ""
+    } ).
+
 %% Function to log that a client failed to connecting with us
 log_error( Reason ) ->
 	irc_log:logEvent( "Failed to accept client " ++ Reason ).
@@ -70,6 +78,55 @@ log_error( Reason ) ->
 log_ok( Cli ) ->
 	irc_log:logEvent( "A client has just joined : " ++ Cli#client.nick ++ "@"
 							++ Cli#client.host ).
+
+%% Initialisation messages sender
+
+date_to_string( Date ) ->
+    {Year, Month, Day} = Date,
+    integer_to_list(Day) ++ "/" ++ integer_to_list(Month)
+	++ "/" ++ integer_to_list(Year).
+
+time_to_string( Time ) ->
+    {Hour, Minute, Second} = Time,
+    integer_to_list(Hour) ++ ":" ++ integer_to_list(Minute) ++ ":"
+	++ integer_to_list(Second).
+
+date_time_to_string( {Date, Time} ) ->
+    date_to_string( Date ) ++ " " ++ time_to_string( Time ).
+
+welcome( Infos, Client ) ->
+    Base = #msg{ sender = "Serveur", params = [Client#client.nick] },
+    Welcome = [
+	Base#msg{
+	    ircCommand = 001,
+	    data = "Welcome to the freenode IRC Network "
+		++ (irc:cli_to_string( Client ))
+	},
+	Base#msg{
+	    ircCommand = 002,
+	    data = "Your host is " ++ Infos#infos.servername
+		++ ", running version " ++ Infos#infos.version
+	},
+	Base#msg{
+	    ircCommand = 003,
+	    data = "This server was created "
+		++ date_time_to_string( Infos#infos.since )
+	},
+	Base#msg{
+	    ircCommand = 004,
+	    data = Infos#infos.servername ++ " " ++ Infos#infos.version
+		++ " modes disponibles : veuiller utiliser les minimum"
+		++ " de modes SVP durant le developpement du server"
+	},
+	Base#msg{
+	    ircCommand = 005,
+	    data = "Try server " ++ Infos#infos.bounce ++ " on "
+		++ Infos#infos.bounce_port
+	}
+    ],
+    Fun = fun ( Msg ) -> (Client#client.send)( Client#client.sendArgs, irc:string_of_msg( Msg ) ) end,
+    lists:foreach( Fun, Welcome ).
+
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%% To squeeze warnings  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -91,9 +148,16 @@ handle_event( _, _, _ ) -> undefined.
 %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 start_link( Port, ServPid, CliBalance ) ->
-	{ok, LSocket} = gen_tcp:listen(Port, [{active, false}, {packet, line},
-							{reuseaddr, true}]),
-	Pid = spawn(?MODULE, door_loop, [ServPid, CliBalance, LSocket]),
+    {ok, LSocket} = gen_tcp:listen(Port, [{active, false}, {packet, line},
+					{reuseaddr, true}]),
+    Infos = #infos{
+	    servername = conf_loader:get_conf( "server_name" ),
+	    version = conf_loader:get_conf( "version" ),
+	    since = {date(), time()},
+	    bounce = conf_loader:get_conf( "bounce" ),
+	    bounce_port = conf_loader:get_conf( "bounce_port" )
+	},
+    Pid = spawn(?MODULE, door_loop, [ServPid, CliBalance, LSocket, Infos]),
     ok = gen_tcp:controlling_process( LSocket, Pid ),
 	{ok, Pid}.
 
@@ -113,15 +177,15 @@ start_link( Port, ServPid, CliBalance ) ->
 %% 		Result = none()
 %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-door_loop( ServPid, CliBalance, LSocket ) ->
+door_loop( ServPid, CliBalance, LSocket, Infos ) ->
 	case gen_tcp:accept( LSocket ) of
 		{ok, CliSock} ->
-			Pid = spawn( ?MODULE, auth_process, [ServPid, CliBalance, CliSock] ),
+			Pid = spawn( ?MODULE, auth_process, [ServPid, CliBalance, CliSock, Infos] ),
             ok = gen_tcp:controlling_process( CliSock, Pid ),
-			door_loop( ServPid, CliBalance, LSocket );
+			door_loop( ServPid, CliBalance, LSocket, Infos );
 		{error, Reason} ->
 			log_error( inet:format_error( Reason ) ),
-			door_loop( ServPid, CliBalance, LSocket )
+			door_loop( ServPid, CliBalance, LSocket, Infos )
 	end.
 
 
@@ -150,7 +214,7 @@ door_loop( ServPid, CliBalance, LSocket ) ->
 %% 		LSocket = socket()
 %% 		Result = none()
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-auth_process( ServPid, CliBal, CliSock ) ->
+auth_process( ServPid, CliBal, CliSock, Infos ) ->
 	irc:send_ident_msg( CliSock, ?LOOKING_HOST_MSG ),
 	inet:setopts(CliSock, [{active, false}, {packet, line}]),
 
@@ -171,8 +235,7 @@ auth_process( ServPid, CliBal, CliSock ) ->
                             ,server = ServPid
                             ,sock = CliSock },
 			{ok, Pid} = gen_fsm:start_link( doorman, State, [?STATE_DEBUG]),
-			auth_loop( Pid, CliSock, ServPid, CliBal );
-
+			auth_loop( Pid, CliSock, ServPid, CliBal, Infos );
 		{error, Reason} ->
 	    	irc:send_ident_msg( CliSock, ?HOST_NOT_FOUND_MSG ),
 	   		gen_tcp:close( CliSock ),
@@ -200,13 +263,13 @@ auth_process( ServPid, CliBal, CliSock ) ->
 %% 		UserName = string()
 %% 		SubInfo = string()
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-auth_loop( FsmPid, CliSock, ServPid, CliBal ) ->
+auth_loop( FsmPid, CliSock, ServPid, CliBal, Infos ) ->
 	case gen_tcp:recv( CliSock, 0, ?TIMEOUT ) of
 	    {ok, Packet} ->
 		IrcMessage = irc:msg_of_string( Packet ),
 		case gen_fsm:sync_send_event( FsmPid, IrcMessage, 100000 ) of
 		    continue ->
-			auth_loop( FsmPid, CliSock, ServPid, CliBal );
+			auth_loop( FsmPid, CliSock, ServPid, CliBal, Infos );
 		    error ->
 			gen_tcp:close( CliSock ),
 			irc:send_ident_msg( CliSock, ?BAD_SEQUENCE_MSG ),
@@ -218,6 +281,7 @@ auth_loop( FsmPid, CliSock, ServPid, CliBal ) ->
 			RealClient = Client#client{ send = Send
 			    ,sendArgs = {local, CliSock} },
 			irc:send_ident_msg( CliSock, ?VALIDATION_MSG ),
+			welcome( Infos, RealClient ),
 			server_node:add_user( ServPid, RealClient ),
 			log_ok( Client ),
 			ok
