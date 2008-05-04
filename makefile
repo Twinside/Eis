@@ -134,7 +134,32 @@ $(OBJDIR)%$(OBJEXT): $(TESTCOMDIR)%$(SRCEXT) $(HDEP)
 docs: $(ALLSOURCES)
 	escript doc_generator.erl $^
 
+ldoc: docs
+	xsltproc -o doc/conf_doc.html conf.xslt conf.xml
+
+lconf:
+	xsltproc -o ebin/eis.conf conf_real.xslt conf.xml
+
+wdoc: docs
+	msxsl conf.xml conf.xslt -o doc\conf_doc.html
+    
+wconf: docs
+	msxsl conf.xml conf_real.xslt -o ebin/eis.conf
+    
 test: $(TSTOBJ) $(OBJDIR)tests.beam
+
+    
+help:
+	@echo ======== Eis Makefile help ==========
+	@echo make       : build the software and .app file
+	@echo make test  : build the test suite.
+	@echo make tests : perform the test suite
+	@echo make docs  : compile the documentation from source code
+	@echo make help  : show this screen
+	@echo make ldoc  : create doc and conf's documentation in linux
+	@echo make wdoc  : create doc and conf's documentation in windows
+	@echo make lconf : generate conf file from xml under linux
+	@echo make wconf : generate conf file from xml under windows
 
 #####
 # test running.
