@@ -51,10 +51,28 @@ user_remover( Chan, User, true ) -> % local
 user_remover( Chan, User, _ ) -> % foreign
     ets:delete( Chan#chan.foreignusers, User#client.nick )
     .
-    
-perform_client( _Msg, _Cli, ClientState ) ->
+
+% Not enough parameters
+perform_client( #msg { params=[] }, Cli, ClientState ) ->
+    irc:send_err( ClientState, Cli, ?ERR_NEEDMOREPARAMS );
+
+perform_client( Msg, Cli, ClientState ) ->
+    [ChanName|_] = Msg#msg.params,
+    NeoMsg = irc:update_sender( Msg, Cli ),
+    case [Pid || {X, Pid} <- Cli#client.is_in, X == ChanName] of
+        [PPid] -> chan_manager:send_chan( PPid, {NeoMsg, ChanName, Cli} );
+        [] -> Errmsg = ?ERR_NOTONCHANNEL
+                     ++ Cli#client.nick
+                     ++ [$  | ?ERR_NOTONCHANNEL_TXT],
+              irc:send_err( ClientState, Cli, Errmsg )
+    end,    
     ClientState.
 
-perform_chan( _Msg, _Data, _Chan, ChanState ) ->
-    ChanState.
+perform_chan( Msg, Cli, Chan, ChanState ) ->
+    case cleanup_chan( Chan, Cli, ChanState ) of
+        {removed,State} -> State;
+        {ok, State} -> [{_, NeoChan}] = ets:lookup( State#cmanager.byname, Chan#chan.channame ),
+                       chan_manager:broadcast_users( NeoChan, Msg )
+    end
+    .
 
