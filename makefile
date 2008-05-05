@@ -165,6 +165,11 @@ help:
 # test running.
 tests: $(ALLBOJ) test
 	escript test_generator.erl $(TESTMODULES)
+	
+#####
+# running application
+start: all
+	escript starter.erl 
 
 clean:
 	rm -f $(OBJDIR)*.beam doc/*
