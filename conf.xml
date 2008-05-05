@@ -20,6 +20,24 @@
 
     <Param>
       <Desc lang="en">
+        Number maximum of allowed ban mask
+        per channel.
+      </Desc>
+      <ParamName>max_ban_per_chan</ParamName>
+      <Default>30</Default>
+      <Type>int</Type>
+    </Param>
+    <Param>
+      <Desc lang="en">
+        Maximum string size for a ban mask
+        used in a channel.
+      </Desc>
+      <ParamName>max_ban_length</ParamName>
+      <Default>70</Default>
+      <Type>int</Type>
+    </Param>
+    <Param>
+      <Desc lang="en">
         name of the server. Used in diverse message,
         you should keep it relatively short.
       </Desc>

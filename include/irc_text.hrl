@@ -62,6 +62,9 @@
 -define( ERR_NOPRIVILEGES, " 481 " ).
 -define( ERR_NOPRIVILEGES_TXT, ":Permission denied, you're not an IRC operator\r\n" ).
 
+-define( ERR_CHANOPPRIVSNEEDED, " 482 " ).
+-define( ERR_CHANOPPRIVSNEEDED_TXT, ": You node more rights to use this mode\r\n" ).
+
 -define( ERR_UNKNOWNMODEFLAG, " 501 " ).
 -define( ERR_UNKNOWNMODEFLAG_TXT, ":Unknown mode flag " ).
 

@@ -56,6 +56,8 @@
 			,serv		%% PID of servernode.
 			,byname		%% association table with chan name in key
             ,server_host %% as string
+            ,max_ban_per_chan %% as int
+            ,max_ban_length   %% as int
 		}).
 
 -record( srvs,

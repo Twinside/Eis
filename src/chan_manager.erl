@@ -141,6 +141,8 @@ init( [ {Balance, ServerNode} ] ) ->
 reload_config( State ) ->
 	State#cmanager {
 		server_host = conf_loader:get_conf( "server_host" )
+        ,max_ban_per_chan = conf_loader:get_int_conf( max_ban_per_chan )
+        ,max_ban_length = conf_loader:get_int_conf( max_ban_length )
 	}.
 
 %% @hidden

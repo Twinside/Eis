@@ -135,11 +135,12 @@ mode_prefix( _ ) -> [].
 %%  to an irc mode usable by the
 %%  system. Cover the global modes.
 %% @end
-%% @spec string_to_globalmode( Str ) -> Result
+%% @spec string_to_globalmode( Str ) -> [Result]
 %% where
 %%      Str = string()
 %%      Result = {Side, Mode}
-%%              | {unknwon, Side, C}
+%%              | {Side, Mode, Atom}
+%%              | {unknwon, char()}
 %%      Side = plus | minus
 %%      Mode = int()
 %%      C = char()
@@ -156,12 +157,12 @@ string_to_globalmode( Str ) ->
 %%  Code is an atom used for arguments
 %%  version, to descriminate easely.
 %% @end
-%% @spec string_to_usermode( Str ) -> Result
+%% @spec string_to_usermode( Str ) -> [Result]
 %% where
 %%      Str = string()
 %%      Result = {Side, Mode}
-%%              | {Side, Code, Mode}
-%%              | {unknwon, Side, C}
+%%              | {Side, Mode, Atom}
+%%              | {unknwon, char()}
 %%      Side = plus | minus
 %%      Mode = int()
 %%      C = char()
@@ -169,15 +170,16 @@ string_to_usermode( Str ) ->
     string_to_mode(chan_modes() , $+, Str )
     .
 
+string_to_mode(  _,  _, [] ) -> [];
 string_to_mode( Lst, _, [$+|St] ) ->
     string_to_mode( Lst, $+, St );
 string_to_mode( Lst, _, [$-|St] ) ->
     string_to_mode( Lst, $-, St );
-string_to_mode( Lst, Side, [C|_] ) ->
+string_to_mode( Lst, Side, [C|St] ) ->
     case lists:keysearch( C , 1, Lst ) of
-        {value, {_,M}} -> {Side, M};
-        {value, {_,M,_}} -> {Side, M};
-        _              -> {unknown, Side, C}
+        {value, {_,M}} -> [{Side, M} | string_to_mode(Lst, Side, St)];
+        {value, {_,M,Atom}} -> [{Side, M, Atom} | string_to_mode( Lst, Side, St)];
+        _              -> [{unknown, C} | string_to_mode( Lst, Side, St )]
     end
     .
 

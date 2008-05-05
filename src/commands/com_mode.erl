@@ -13,6 +13,10 @@
             ,perform_chan/4
         ]).
 
+-export([
+            mode_applyer/2
+        ]).
+
 -vsn( p01 ).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -123,56 +127,151 @@ chan_request( Msg, Cli, State ) ->
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %   On the chan side
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+-record( ms,
+        {
+            msg,
+            cli,
+            chan,
+            state,
+            right
+       }).
+       
 perform_chan( Msg, Cli, Chan, State ) ->
     case Msg#msg.params of
         [_Name] -> send_chan_info( Cli, Chan, State );
         [_Name,"+b"] -> send_ban_list( Cli, Chan, State );
-        [_Name,What] -> apply_simple( irc_laws:string_to_usermode( What ), Msg, Cli, Chan, State );
-        [_Name,What|Arg] -> apply_arg( irc_laws:string_to_usermode( What ), Arg, Msg, Cli, Chan, State );
+        [_Name,What | Params] -> Modes = irc_laws:string_to_usermode( What ),
+                                 {_, {_,Right}} = ets:lookup( Chan, Cli#client.nick ),
+                                 Mos = #ms {msg = Msg,
+                                            cli = Cli,
+                                            chan = Chan,
+                                            right = Right,
+                                            state = State },
+                                 {_,NMos} = lists:foldl( mode_applyer, {Params, Mos}, Modes ),
+                                 NMos#ms.state;
         _ -> State
     end.
 
-apply_simple( {Side,What}, Msg, Cli, Chan, State ) ->
-    Needmore = irc_laws:is_chan_passworded( What ) or
-                irc_laws:is_chan_limited( What ),
-    if Needmore ->
-            EMsg = ?ERR_NEEDMOREPARAMS,
-            irc:send_err( State, Cli, EMsg ),
-            State;
-            
-       true ->
-            make_modechange( Msg, Side, What, Chan, State )
+mode_applyer( M, Acc ) ->
+    case M of
+        {unknown,_} -> Acc;
+        {_, Mode, _} -> valid( M, Acc, Mode );
+        {_, Mode}    -> valid( M, Acc, Mode )
+    end.
+    
+%% @doc
+%%  Given an ModeState and the right
+%%  to apply, tell if it's valid or not.
+%%  Also send an error message.
+%% @end
+valid( What, {Params, Mos}, R ) ->
+    Right = Mos#ms.right,
+    Valid = irc_laws:check_granting( R, Right ),
+    if Valid -> apply_chan( What, {Params, Mos} );
+       true -> ErrMsg = ?ERR_CHANOPPRIVSNEEDED
+                        ++ (Mos#ms.cli)#client.nick
+                        ++ ?ERR_CHANOPPRIVSNEEDED_TXT,
+               irc:send_err( Mos#ms.state, Mos#ms.cli, ErrMsg ),
+               {Params, Mos}
+    end.
+
+apply_chan( {unknown, C}, {Params, Mos} ) ->
+    Msg = ?ERR_UNKNOWNMODEFLAG
+        ++ ?ERR_UNKNOWNMODEFLAG_TXT
+        ++ [C | "\r\n"],
+    irc:send_err( Mos#ms.state, Mos#ms.cli, Msg ),
+    {Params, Mos};
+    
+apply_chan( {$+, Mode, limit}, {[P|Next], Mos} ) ->
+    case chars:int_from_string( P ) of
+        error -> irc:send_err( Mos#ms.state, Mos#ms.cli, ?ERR_NEEDMOREPARAMS ),
+                 {Next, Mos};
+        Val -> OChan = Mos#ms.chan,
+                Chan = OChan#chan { mode = OChan#chan.mode bor Mode,
+                                    userlimit = Val },
+                commit_change( Mos#ms.msg, Chan, {[Next], Mos} )
     end;
 
-apply_simple( _, _Msg, Cli, _Chan, State ) ->
-    Msg = ?ERR_UNKNOWNMODEFLAG ++ ?ERR_UNKNOWNMODEFLAG_TXT ++ "\r\n",
-    irc:send_err( State, Cli, Msg ),
-    State.
-
+apply_chan( {$+, _, _}, {[], Mos} ) ->
+    irc:send_err( Mos#ms.state, Mos#ms.cli, ?ERR_NEEDMOREPARAMS ),
+    {[], Mos};
+               
+apply_chan( {$-, Mode, limit}, {Params, Mos} ) ->
+    OChan = Mos#ms.chan,
+    Chan = OChan#chan { mode = OChan#chan.mode band (bnot Mode),
+                        userlimit = 0 },
+    commit_change( Mos#ms.msg, Chan, {Params, Mos} );
     
-make_modechange( Msg, $+, What, Chan, State ) ->
-    Nch = Chan#chan{ mode = Chan#chan.mode bor What },
-    commit_change( Msg, Nch, State );
+apply_chan( {$+, Mode, key}, {[Key|Next], Mos} ) ->
+    % Assume key must be a valid nickname,
+    % this is made to avoid scary problem
+    % of impossible nickname...
+    Valid = irc:is_username_valid( Key ),
+    if Valid -> OChan = Mos#ms.chan,
+                Chan = OChan#chan { mode = OChan#chan.mode bor Mode,
+                                    password = Key },
+                commit_change( Mos#ms.msg, Chan, {Next, Mos} );
+        true -> {Next, Mos}
+    end;
     
-make_modechange( Msg, $-, What, Chan, State ) ->
-    Nch = Chan#chan{ mode = Chan#chan.mode band (bnot What) },
-    commit_change( Msg, Nch, State ).
+apply_chan( {$-, Mode, key}, {Params, Mos} ) ->
+    OChan = Mos#ms.chan,
+    Chan = OChan#chan { mode = OChan#chan.mode band (bnot Mode),
+                        password = "" },
+    commit_change( Mos#ms.msg, Chan, {Params, Mos} ),
+    {Params, Mos};
 
-commit_change( Msg, Chan, State ) ->
+apply_chan( {$+, _, ban}, {[Ban|Next], Mos} ) ->
+    Chan = Mos#ms.chan,
+    State = Mos#ms.state,
+    Valid = lists:length( Chan#chan.banlist ) + 1 < State#cmanager.max_ban_per_chan and
+            (lists:length( Ban ) =< State#cmanager.max_ban_length),
+    if Valid ->
+            NeoChan = Chan#chan{ banlist = [Ban|Chan#chan.banlist] },
+            commit_change( Mos#ms.msg, NeoChan, {Next, Mos} );
+
+       true -> {Next, Mos}
+    end;
+
+apply_chan( {$-, Mode, ban}, {[Ban|Next], Mos} ) -> 
+    OChan = Mos#ms.chan,
+    Chan = OChan#chan { mode = OChan#chan.mode band (bnot Mode),
+                        banlist = [Mask || Mask <- OChan#chan.banlist, Mask /= Ban] },
+    commit_change( Mos#ms.msg, Chan, {Next, Mos} );
+
+% assume to apply something to a nick only !!
+apply_chan( {$+, Mode, _}, {[Name|Next], Mos} ) ->
+    Chan = Mos#ms.chan,
+    {Nick, {Cli,Right}} = ets:lookup( Chan#chan.userlist, Name ),
+    ets:insert( Chan#chan.userlist, {Nick, {Cli, Right bor Mode}} ),
+    {Next, Mos};
+
+apply_chan( {$-, Mode, _}, {[Name|Next], Mos} ) ->
+    Chan = Mos#ms.chan,
+    {Nick, {Cli,Right}} = ets:lookup( Chan#chan.userlist, Name ),
+    ets:insert( Chan#chan.userlist, {Nick, {Cli, Right band (not Mode)}} ),
+    {Next, Mos};
+    
+apply_chan( {$-, What}, {Params, Mos} ) ->
+    OChan = Mos#ms.chan,
+    Chan = OChan#chan{ mode = (Mos#ms.chan)#chan.mode band (bnot What)},
+    commit_change( Mos#ms.msg, Chan, {Params, Mos} );
+    
+apply_chan( {$+, What}, {Params, Mos} ) ->
+    OChan = Mos#ms.chan,
+    Chan = OChan#chan{ mode = (Mos#ms.chan)#chan.mode bor What },
+    commit_change( Mos#ms.msg, Chan, {Params,Mos} );
+    
+apply_chan( _, Acc ) -> Acc.
+
+commit_change( Msg, Chan, {Params, Mos} ) ->
     SMsg = irc:string_of_msg( Msg ),
+    State = Mos#ms.state,
   ?TRANSACTIONBEGIN
     ets:insert( State#cmanager.byname, {Chan#chan.channame, Chan} )
   ?TRANSACTIONEND,
     chan_manager:broadcast_users( Chan, SMsg ),
-    State.
-        
-apply_arg( {$+, Mode}, _Arg, _Msg, _Cli, _Chan, State ) ->
-    _Limit = irc_laws:is_chan_limited( Mode ),
-    State;
-apply_arg( {$-, _Mode}, _Arg, _Msg, _Cli, _Chan, State ) ->
-    State;
-apply_arg( {_Side, _What}, _Arg, _Msg, _Cli, _Chan, State ) ->
-    State.
+    {Params, Mos}.
 
 %% @doc
 %%  Send the ban list in responce of MODE +b command.
