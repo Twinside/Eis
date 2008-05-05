@@ -169,7 +169,7 @@ tests: $(ALLBOJ) test
 #####
 # running application
 start: all
-	escript starter.erl 
+	./starter.sh 
 
 clean:
 	rm -f $(OBJDIR)*.beam doc/*
