@@ -14,12 +14,21 @@
             ,perform_chan/4
         ]).
 
+%% @doc
+%%   called by the client_listener,
+%%   perform basic command validation
+%% @end
 perform_client( Msg, Cli, ClientState ) ->
     case Msg#msg.params of
         [_Chan|_] -> analyse( Msg, Cli, ClientState );
         _ -> ClientState
     end.
 
+%% @doc
+%%  Try to find the chan in parameter, no
+%%  wildcard expression is used. If found
+%%  send message to that process.
+%% @end
 analyse( Msg, Cli, ClientState ) ->
     [Chan|_] = Msg#msg.params,
     Remain = [Pid || {Name,Pid} <- Cli#client.is_in, Name == Chan],
@@ -29,6 +38,10 @@ analyse( Msg, Cli, ClientState ) ->
         _ -> ClientState
     end.
 
+%% @doc
+%%  Called by the chan manager, send all the info
+%%  about the client to the caller.
+%% @end
 perform_chan( _Msg, Cli, Chan, ChanState ) ->
     Prep = [$: | ChanState#cmanager.server_host]
             ++ ?RPL_WHOREPLY
@@ -42,9 +55,8 @@ perform_chan( _Msg, Cli, Chan, ChanState ) ->
                         
                 Msg = lists:concat( [Prep,
                                     [$~ |ICli#client.username],
-                                    " ",
-                                    ICli#client.host, " ",
-                                    ChanState#cmanager.server_host,
+                                    [$  |ICli#client.host],
+                                    [$  |ChanState#cmanager.server_host],
                                     [$  |ICli#client.nick],
                                     " H",
                                     Cr,
