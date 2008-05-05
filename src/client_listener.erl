@@ -173,6 +173,8 @@ code_change(_OldVsn,_State,_Extra) ->
 
 dispatcher( 'JOIN', Msg, From, State ) ->
 	com_join:perform_client( Msg, From, State );
+dispatcher( 'PART', Msg, From, State ) -> 
+	com_part:perform_client( Msg, From, State );
 dispatcher( 'NOTICE', Msg, From, State ) ->
 	com_notice:perform_client( Msg, From, State );
 dispatcher( 'PRIVMSG', Msg, From, State ) ->
