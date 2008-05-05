@@ -57,10 +57,17 @@ perform_client( #msg { params=[] }, Cli, ClientState ) ->
     irc:send_err( ClientState, Cli, ?ERR_NEEDMOREPARAMS );
 
 perform_client( Msg, Cli, ClientState ) ->
+    UMsg = irc:update_sender( Msg, Cli ),
     Iterer = (fun( ChanName ) ->
-                NeoMsg = (irc:update_sender( Msg, Cli ))#msg{ params = [ChanName] },
-                case [Pid || {X, Pid} <- Cli#client.is_in, X == ChanName] of
-                    [PPid] -> chan_manager:send_chan( PPid, {NeoMsg, ChanName, Cli} );
+                NeoMsg = UMsg#msg{ params = [ChanName] },
+                case [Pid || {Name, Pid} <- Cli#client.is_in, Name == ChanName] of
+                    [PPid] -> chan_manager:send_chan( PPid, {NeoMsg, ChanName, Cli} ),
+                              Filtered = [{N, P} || {N,P} <- Cli#client.is_in, N /= ChanName],
+                              NeoCli = Cli#client{ is_in = Filtered },
+                           ?TRANSACTIONBEGIN
+                              ets:insert( ClientState#listener.bynick, {NeoCli#client.nick, NeoCli} )
+                           ?TRANSACTIONEND;
+
                     [] -> Errmsg = ?ERR_NOTONCHANNEL
                                  ++ Cli#client.nick
                                  ++ [$  | ChanName ]
@@ -72,11 +79,9 @@ perform_client( Msg, Cli, ClientState ) ->
     ClientState.
 
 perform_chan( Msg, Cli, Chan, ChanState ) ->
-    case cleanup_chan( Chan, Cli, ChanState ) of
-        {removed,State} -> State;
-        {ok, State} -> [{_, NeoChan}] = ets:lookup( State#cmanager.byname, Chan#chan.channame ),
-                       chan_manager:broadcast_users( NeoChan, Msg ),
-                       State
-    end
+    StrMsg = irc:string_of_msg( Msg ),
+    chan_manager:broadcast_users( Chan, StrMsg ),
+    {_, State} = cleanup_chan( Chan, Cli, ChanState ),
+    State
     .
 
