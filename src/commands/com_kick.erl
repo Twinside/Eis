@@ -18,21 +18,21 @@ perform_client( #msg { params=[] }, Cli, ClientState ) ->
 perform_client( Msg, Cli, ClientState) ->
 	[ Chan, Dest | _ ]  = Msg#msg.params,
 	Valid = validate_chan( Chan, Cli, ClientState ) andalso
-			validate_right( Chan, Cli#client.nick, ClientState ),
+			validate_right( Chan, Cli, ClientState ),
 	if 
 		Valid ->
 			case [Pid || {ChanName, Pid} <- Cli#client.is_in, ChanName == Chan] of
 				[PPid] -> case [Pid || {ChanName, Pid} <- Dest#client.is_in, ChanName == Chan] of
-							[PPPid] -> 	chan_manager:send_chan( PPid, {Msg, ChanName, Cli} );
+							[_PPPid] -> 	chan_manager:send_chan( PPid, {Msg, Chan, Cli} );
 							[] -> Errmsg = ?ERR_USERNOTINCHANNEL
 								  ++ Dest#client.nick
-								  ++ [$  | ChanName ]
+								  ++ [$  | Chan ]
 								  ++ [$  | ?ERR_USERNOTINCHANNEL_TXT],
 								  irc:send_err( ClientState, Cli, Errmsg )
 						  end;
 				[] -> Errmsg = ?ERR_NOTONCHANNEL
 	                  ++ Cli#client.nick
-	                  ++ [$  | ChanName ]
+	                  ++ [$  | Chan ]
 	                  ++ [$  | ?ERR_NOTONCHANNEL_TXT],
 	                  irc:send_err( ClientState, Cli, Errmsg )
 			end
@@ -45,18 +45,18 @@ validate_chan ( Chan, Cli, ClientState ) ->
 		Valid -> true;
 		true  -> Errmsg = ?ERR_NOSUCHCHANNEL
                  ++ Cli#client.nick
-                 ++ [$  | ChanName ]
+                 ++ [$  | Chan ]
                  ++ [$  | ?ERR_NOSUCHCHANNEL_TXT],
                  irc:send_err( ClientState, Cli, Errmsg )
 	end.
 	
 % Check userright in the chan
-validate_right (Chan, Nick, ClientState) ->
-	Valid = irc_laws:check_chanlaw( 'KICK', chan_manager:get_user_right( Chan, Nick ), []),
+validate_right (Chan, Cli, ClientState) ->
+	Valid = irc_laws:check_chanlaw( 'KICK', chan_manager:get_user_right( Chan, Cli#client.nick ), []),
 	if 
 		Valid -> true;
 		true  -> Errmsg = ?ERR_CHANOPPRIVSNEEDED
-                 ++ [$  | ChanName ]
+                 ++ [$  | Chan ]
                  ++ [$  | ?ERR_CHANOPPRIVSNEEDED_TXT],
                  irc:send_err( ClientState, Cli, Errmsg )
 	end.
