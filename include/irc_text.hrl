@@ -71,6 +71,9 @@
 -define( ERR_USERDONTMATCH, " 502 " ).
 -define( ERR_USERDONTMATCH_TXT, ":Cannot change mode for other users\r\n" ).
 
+-define( ERR_USERNOTINCHANNEL, " 441 ").
+-define( ERR_USERNOTINCHANNEL_TXT, ":They aren't on that channel\r\n" ).
+
 -define( RPL_TOPIC, "322 " ).
 -define( RPL_NOTOPIC, "331 " ).
 
