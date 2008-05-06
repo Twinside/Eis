@@ -74,7 +74,7 @@ do_com_topic( Chan, Cli, [] ) ->
 					++ [$  | Chan#chan.channame]
 					++ [$: | ?RPL_NOTOPIC_TXT ],
 					(Cli#client.send)( Cli#client.sendArgs, Msg )
-	end.
+	end;
 	
 % Change topic
 do_com_topic( Chan, _Cli, Topic ) ->
