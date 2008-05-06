@@ -75,7 +75,9 @@
 -define( ERR_USERNOTINCHANNEL_TXT, ":They aren't on that channel\r\n" ).
 
 -define( RPL_TOPIC, "322 " ).
+
 -define( RPL_NOTOPIC, "331 " ).
+-define( RPL_NOTOPIC_TXT, ":No topic is set\r\n" ).
 
 -define( RPL_WELCOME, 001 ).
 -define( RPL_YOURHOST, 002 ).
