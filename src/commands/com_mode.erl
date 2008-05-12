@@ -237,13 +237,13 @@ apply_chan( {$-, Mode, ban}, {[Ban|Next], Mos} ) ->
 % assume to apply something to a nick only !!
 apply_chan( {$+, Mode, _}, {[Name|Next], Mos} ) ->
     Chan = Mos#ms.chan,
-    {Nick, {Cli,Right}} = ets:lookup( Chan#chan.userlist, Name ),
+    [{Nick, {Cli,Right}}] = ets:lookup( Chan#chan.userlist, Name ),
     ets:insert( Chan#chan.userlist, {Nick, {Cli, Right bor Mode}} ),
     {Next, Mos};
 
 apply_chan( {$-, Mode, _}, {[Name|Next], Mos} ) ->
     Chan = Mos#ms.chan,
-    {Nick, {Cli,Right}} = ets:lookup( Chan#chan.userlist, Name ),
+    [{Nick, {Cli,Right}}] = ets:lookup( Chan#chan.userlist, Name ),
     ets:insert( Chan#chan.userlist, {Nick, {Cli, Right band (not Mode)}} ),
     {Next, Mos};
     
