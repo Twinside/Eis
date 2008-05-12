@@ -159,10 +159,7 @@ valid( What, {Params, Mos}, R ) ->
     Right = Mos#ms.right,
     Valid = irc_laws:check_granting( R, Right ),
     if Valid -> apply_chan( What, {Params, Mos} );
-       true -> ErrMsg = ?ERR_CHANOPPRIVSNEEDED
-                        ++ (Mos#ms.cli)#client.nick
-                        ++ ?ERR_CHANOPPRIVSNEEDED_TXT,
-               irc:send_err( Mos#ms.state, Mos#ms.cli, ErrMsg ),
+       true -> err:chanopprivsneeded( Mos#ms.state, Mos#ms.cli, Mos#ms.chan ),
                {Params, Mos}
     end.
 
@@ -215,9 +212,10 @@ apply_chan( {$-, Mode, key}, {Params, Mos} ) ->
 apply_chan( {$+, _, ban}, {[Ban|Next], Mos} ) ->
     Chan = Mos#ms.chan,
     State = Mos#ms.state,
-    Valid = lists:length( Chan#chan.banlist ) + 1 < State#cmanager.max_ban_per_chan and
-            (lists:length( Ban ) =< State#cmanager.max_ban_length),
-    if Valid ->
+    ValidBanCount = length( Ban ) =< State#cmanager.max_ban_length,
+    ValidBanSize  = length( Chan#chan.banlist ) + 1 < State#cmanager.max_ban_per_chan,
+    
+    if ValidBanCount and ValidBanSize ->
             NeoChan = Chan#chan{ banlist = [Ban|Chan#chan.banlist] },
             commit_change( Mos#ms.msg, NeoChan, {Next, Mos} );
 

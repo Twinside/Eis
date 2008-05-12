@@ -315,7 +315,8 @@ is( A, B ) -> (A band B) /= 0.
 %%		UserRight = int
 %%		ChanRight = int
 check_chanlaw( 'PRIVMSG', Ur, Cr ) ->
-    imply( Cr band ?MMODERATED, Ur band ?MVOICED ) and
+    Allowed = ?MVOICED bor ?MHALFED bor ?MCHANOP,
+    imply( Cr band ?MMODERATED, Ur band Allowed ) and
     imply( Cr band ?MFROMINSIDE, Ur band ?INSIDE );
 
 check_chanlaw( 'TOPIC', Ur, Cr ) ->

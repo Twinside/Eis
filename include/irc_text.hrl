@@ -48,7 +48,7 @@
 -define( ERR_UNKNWONCOMMAND_TXT, "Unknown command " ).
 
 -define( ERR_BANNEDFROMCHAN, "461" ).
--define( ERR_BANNEDFROMCHAN_TXT, ": You are banned from the chan" ).
+-define( ERR_BANNEDFROMCHAN_TXT, ": You are banned from the chan\r\n" ).
 
 -define( ERR_NORECIPIENT, "411" ).
 -define( ERR_NORECIPIENT_TXT, " : There is no recipient in your command\r\n" ).
@@ -93,4 +93,5 @@
 %% non-IRC text, but still usefull.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 -define( CONNEC_PEER_RESET, "Connection reset by peer" ).
+-define( PING_TIMEOUT_TXT, "Ping timeout" ).
 

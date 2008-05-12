@@ -92,7 +92,7 @@ clean_unponged( ClientState ) ->
             end),
             
     CleanMsg = #msg { ircCommand = 'QUIT',
-                      data = "Ping timeout" },
+                      data = ?PING_TIMEOUT_TXT },
     Cleaner = (fun (Cli, State) ->
                     com_quit:perform_client( CleanMsg, Cli, State )
                 end),

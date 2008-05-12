@@ -29,7 +29,8 @@
 perform_client( Msg, Cli, ClientState ) ->
 	Valid = validate_message( Msg, Cli, ClientState ) andalso
             check_chan_limit( Msg, Cli, ClientState ) andalso
-            name_validation( Msg, Cli, ClientState ),
+            name_validation( Msg, Cli, ClientState ) andalso
+            alreadyin_validation( Msg, Cli, ClientState ),
 	
     if Valid -> NeoMsg = irc:update_sender( Msg, Cli#client.nick ),
                 [Dest|_] = NeoMsg#msg.params,
@@ -40,7 +41,7 @@ perform_client( Msg, Cli, ClientState ) ->
 validate_message( Msg, Cli, State ) ->
     Lst = Msg#msg.params,
 	case Lst of
-		[] -> irc:sendErr( State, Cli, ?ERR_NEEDMOREPARAMS ),
+		[] -> irc:send_err( State, Cli, ?ERR_NEEDMOREPARAMS ),
               false;
         [_Dest | _] -> true
 	end.
@@ -56,6 +57,12 @@ check_chan_limit( #msg{ params = [CName|_] }, Cli, ClientState ) ->
     end
     .
 
+alreadyin_validation( #msg { params = [CName|_] }, Cli, _ClientState ) ->
+    case [N || {N, _} <- Cli#client.is_in, N == CName ] of
+        [_|_] -> false;
+        []    -> true
+    end.
+    
 %% @doc
 %%  Validate a channel name and send the
 %%  apropriate error message if there is an error.
@@ -170,7 +177,7 @@ check_user_ban( State, Cli, Chan ) ->
 check_ban_list( [], _, _, _ ) -> false;        
 check_ban_list( [Banned | Bagnar], Clhost, Cli, State ) ->
     Matched = wexpr:match( Banned, Clhost ),
-    if Matched -> false;
+    if Matched -> true;
           true -> check_ban_list( Bagnar, Clhost, Cli, State )
     end.
 

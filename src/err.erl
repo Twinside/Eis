@@ -26,8 +26,8 @@
 %%      Cli = client()
 %%      Chan = chan() | string
 %%      TargetNick = string()
-usernotinchannel( State, Cli, TargetNick, #chan { channame = Chan } ) ->
-    usernotinchannel( State, Cli, TargetNick, Chan );
+usernotinchannel( State, Cli, TargetNick, Chan ) when is_record( Chan, chan )->
+    usernotinchannel( State, Cli, TargetNick, Chan#chan.channame );
 
 usernotinchannel( State, Cli, TargetNick, Chan ) ->
     Errmsg = ?ERR_USERNOTINCHANNEL
@@ -44,7 +44,7 @@ usernotinchannel( State, Cli, TargetNick, Chan ) ->
 %%      State = listener() | cmanager()
 %%      Cli = client()
 %%      Chan = chan() | string()
-chanopprivsneeded( State, Cli, #chan { channame = Chan } ) ->
+chanopprivsneeded( State, Cli, Chan ) when is_record( Chan, chan ) ->
     chanopprivsneeded( State, Cli, Chan );
     
 chanopprivsneeded( State, Cli, Chan ) ->
@@ -58,8 +58,8 @@ chanopprivsneeded( State, Cli, Chan ) ->
 %%      State = listener() | cmanager()
 %%      Cli = client()
 %%      Chan = chan() | string()
-notonchannel( State, Cli, #chan { channame = Chan } ) ->
-    notonchannel( State, Cli, Chan );
+notonchannel( State, Cli, Chan ) when is_record( Chan, chan ) ->
+    notonchannel( State, Cli, Chan#chan.channame );
 
 notonchannel( State, Cli, Chan ) ->
     Errmsg = ?ERR_NOTONCHANNEL
