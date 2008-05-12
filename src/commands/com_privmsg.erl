@@ -114,7 +114,7 @@ perform_chan( Msg, {notin_chan, Cli}, Chan, ChanState ) ->
 %%  in the chan. Check some rights
 %% @end
 perform_chan( Msg, Cli, Chan, ChanState ) ->
-    Right = chan_manager:get_user_right( Chan, Cli ),
+    Right = chan_manager:get_user_right( Chan, Cli#client.nick ),
     Allowed = irc_laws:check_chanlaw( 'PRIVMSG', Right, Chan#chan.mode ),
     if Allowed -> NeoMsg = irc:update_sender( Msg, Cli ),
                   chan_manager:broadcast_diff_users( Chan, irc:string_of_msg( NeoMsg ), Cli#client.nick );

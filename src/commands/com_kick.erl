@@ -22,7 +22,7 @@ perform_client( Msg, Cli, ClientState) ->
 	[ Chan, _ | _ ]  = Msg#msg.params,
     UMsg = irc:update_sender( Msg, Cli ),
     case [Pid || {ChanName, Pid} <- Cli#client.is_in, ChanName == Chan] of
-        [PPid] -> chan_manager:send_chan( PPid, {UMsg, Chan, Cli} );
+        [PPid] -> chan_manager:send_chan( PPid, {UMsg, Chan, {self(), Cli}} );
         []     -> err:notonchannel( ClientState, Cli, Chan )
     end,
     ClientState.
@@ -38,11 +38,13 @@ validate_right (Chan, Cli, State) ->
 	end.
 	
 		
-perform_chan( Msg, Cli, Chan, ChanState ) ->
+perform_chan( Msg, {LPid, Cli}, Chan, ChanState ) ->
     Valid = validate_right( Chan, Cli, ChanState ),
     if Valid -> [ _, Target | _ ]  = Msg#msg.params,
                 AssumedCli = ets:lookup( Chan#chan.userlist, Target ),
-                kick_user( Msg, AssumedCli, Cli, Chan, ChanState );
+                Result = kick_user( Msg, AssumedCli, Cli, Chan, ChanState ),
+                gen_server:cast( LPid, {notifkick, Target, Chan#chan.channame} ),
+                Result;
                 
        true -> ChanState
     end.

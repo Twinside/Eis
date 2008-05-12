@@ -81,22 +81,38 @@ handle_cast( {killressource, Client}, State ) ->
 	Bynick = State#listener.bynick,
 	case ets:lookup( Bynick, Client#client.nick ) of
 		[] -> {noreply, State};
-		[Cli] -> {_, Sock} = Cli#client.sendArgs,
+		[{_,Cli}] ->
+                {_, Sock} = Cli#client.sendArgs,
+                Msg = irc:forge_msg( Cli, 'QUIT', [], ?CONNEC_PEER_RESET ),
+            ?TRANSACTION_SENTINEL_BEGIN
                 gen_tcp:close( Sock ), % close the connection between us
-                % rest of the cleaning is made during
-                % the socket cleanup
-				{noreply, State}
+                Neos = com_quit:client_cleanup( Msg, Cli, State ),
+                {noreply, Neos}
+            ?TRANSACTION_SENTINEL_END(State)
 	end;
 
 %% @doc
 %%  Clause used by a chan to validate a
 %%  client join, so we can register this.
 %% @end
+handle_cast( {notifkick, Cliname, Chaninfo}, State ) ->
+    case ets:lookup( State#listener.bynick, Cliname ) of
+        [{_,Cli}] ->
+            Filtered = [ {Name,Pid} || {Name, Pid} <- Cli#client.is_in, Name /= Chaninfo],
+            Neocli = Cli#client{ is_in = Filtered },
+            ets:insert( State#listener.bynick, {Cliname,Neocli} ),
+            {noreply, State};
+        _ -> {noreply, State}
+     end;   
+        
 handle_cast( {notifjoin, Cliname, Chaninfo}, State ) ->
-    [{_,Cli}] = ets:lookup( State#listener.bynick, Cliname ),
-    Neocli = Cli#client{ is_in = [Chaninfo|Cli#client.is_in] },
-    ets:insert( State#listener.bynick, {Cliname,Neocli} ),
-    {noreply, State};
+    case ets:lookup( State#listener.bynick, Cliname ) of
+        [{_,Cli}] ->
+            Neocli = Cli#client{ is_in = [Chaninfo|Cli#client.is_in] },
+            ets:insert( State#listener.bynick, {Cliname,Neocli} ),
+            {noreply, State};
+        _ -> {noreply, State}
+     end; 
                                         
 %% @doc
 %%  Clause made uniquely to inject

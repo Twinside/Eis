@@ -45,7 +45,7 @@ usernotinchannel( State, Cli, TargetNick, Chan ) ->
 %%      Cli = client()
 %%      Chan = chan() | string()
 chanopprivsneeded( State, Cli, Chan ) when is_record( Chan, chan ) ->
-    chanopprivsneeded( State, Cli, Chan );
+    chanopprivsneeded( State, Cli, Chan#chan.channame );
     
 chanopprivsneeded( State, Cli, Chan ) ->
     Errmsg = ?ERR_CHANOPPRIVSNEEDED
