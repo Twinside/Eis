@@ -13,10 +13,6 @@
             ,perform_chan/4
         ]).
 
--export([
-            mode_applyer/2
-        ]).
-
 -vsn( p01 ).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -137,28 +133,27 @@ chan_request( Msg, Cli, State ) ->
        }).
        
 perform_chan( Msg, Cli, Chan, State ) ->
+    Applyer = (fun( M, Acc ) ->
+                    case M of
+                        {unknown,_} -> Acc;
+                        {_, Mode, _} -> valid( M, Acc, Mode );
+                        {_, Mode}    -> valid( M, Acc, Mode )
+                    end end),
     case Msg#msg.params of
         [_Name] -> send_chan_info( Cli, Chan, State );
         [_Name,"+b"] -> send_ban_list( Cli, Chan, State );
         [_Name,What | Params] -> Modes = irc_laws:string_to_usermode( What ),
-                                 {_, {_,Right}} = ets:lookup( Chan, Cli#client.nick ),
+                                 [{_, {_,Right}}] = ets:lookup( Chan#chan.userlist, Cli#client.nick ),
                                  Mos = #ms {msg = Msg,
                                             cli = Cli,
                                             chan = Chan,
                                             right = Right,
                                             state = State },
-                                 {_,NMos} = lists:foldl( mode_applyer, {Params, Mos}, Modes ),
+                                 {_,NMos} = lists:foldl( Applyer, {Params, Mos}, Modes ),
                                  NMos#ms.state;
         _ -> State
     end.
 
-mode_applyer( M, Acc ) ->
-    case M of
-        {unknown,_} -> Acc;
-        {_, Mode, _} -> valid( M, Acc, Mode );
-        {_, Mode}    -> valid( M, Acc, Mode )
-    end.
-    
 %% @doc
 %%  Given an ModeState and the right
 %%  to apply, tell if it's valid or not.

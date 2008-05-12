@@ -169,7 +169,8 @@ tests: $(ALLBOJ) test
 #####
 # running application
 start: all
-	./starter.sh 
+	cd ebin
+	erl -run eis dlaunch
 
 clean:
 	rm -f $(OBJDIR)*.beam doc/*

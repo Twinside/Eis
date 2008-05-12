@@ -218,5 +218,9 @@ dispatch( 'QUIT', Msg, Data, Chan, State ) ->
     com_quit:perform_chan( Msg, Data, Chan, State );
 dispatch( 'PART', Msg, Data, Chan, State ) ->
     com_part:perform_chan( Msg, Data, Chan, State );
+dispatch( 'KICK', Msg, Data, Chan, State ) ->
+    com_kick:perform_chan( Msg, Data, Chan, State );
+dispatch( 'TOPIC', Msg, Data, Chan, State ) ->
+    com_topic:perform_chan( Msg, Data, Chan, State );
 dispatch( _, _Msg, _Data, _Chan, State ) ->
 	State.

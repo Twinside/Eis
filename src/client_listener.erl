@@ -187,6 +187,10 @@ dispatcher( 'MODE', Msg, From, State ) ->
     com_mode:perform_client( Msg, From, State );
 dispatcher( 'QUIT', Msg, From, State ) ->
     com_quit:perform_client( Msg, From, State );
+dispatcher( 'TOPIC', Msg, From, State ) ->
+    com_topic:perform_client( Msg, From, State );
+dispatcher( 'KICK', Msg, From, State ) ->
+    com_kick:perform_client( Msg, From, State );
 dispatcher( 'PONG', Msg, From, State ) ->
     pinger:perform_client( Msg, From, State );
 dispatcher( {unknown_command, Txt}, _Msg, From, State ) ->
