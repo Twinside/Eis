@@ -112,11 +112,7 @@ chan_request( Msg, Cli, State ) ->
     case lists:keysearch( Name, 1, Cli#client.is_in ) of
         {value, {_, Pid}} -> UMsg = irc:update_sender( Msg, Cli ),
                              chan_manager:send_chan( Pid, {UMsg, Name, Cli} );
-        _ -> Msg = ?ERR_NOTONCHANNEL
-                    ++ Name
-                    ++ ?ERR_NOTONCHANNEL_TXT
-                    ++ [Name | "\r\n"],
-            irc:send_err( State, Cli, Msg )
+        _ -> err:notonchannel( State, Cli, Name )
     end,
     State.
 
@@ -237,16 +233,25 @@ apply_chan( {$-, Mode, ban}, {[Ban|Next], Mos} ) ->
 % assume to apply something to a nick only !!
 apply_chan( {$+, Mode, _}, {[Name|Next], Mos} ) ->
     Chan = Mos#ms.chan,
-    [{Nick, {Cli,Right}}] = ets:lookup( Chan#chan.userlist, Name ),
-    ets:insert( Chan#chan.userlist, {Nick, {Cli, Right bor Mode}} ),
+    case ets:lookup( Chan#chan.userlist, Name ) of
+        [{Nick, {Cli,Right}}] ->
+                ets:insert( Chan#chan.userlist, {Nick, {Cli, Right bor Mode}} );
+        [] -> err:usernotinchannel( Mos#ms.state, Mos#ms.cli, Name, Mos#ms.chan )
+    end,    
     {Next, Mos};
 
 apply_chan( {$-, Mode, _}, {[Name|Next], Mos} ) ->
     Chan = Mos#ms.chan,
-    [{Nick, {Cli,Right}}] = ets:lookup( Chan#chan.userlist, Name ),
-    ets:insert( Chan#chan.userlist, {Nick, {Cli, Right band (not Mode)}} ),
+    case ets:lookup( Chan#chan.userlist, Name ) of
+        [{Nick, {Cli,Right}}] ->
+            ets:insert( Chan#chan.userlist, {Nick, {Cli, Right band (not Mode)}} );
+        [] -> err:usernotinchannel( Mos#ms.state, Mos#ms.cli, Name, Mos#ms.chan )
+    end,
     {Next, Mos};
-    
+
+
+
+
 apply_chan( {$-, What}, {Params, Mos} ) ->
     OChan = Mos#ms.chan,
     Chan = OChan#chan{ mode = (Mos#ms.chan)#chan.mode band (bnot What)},

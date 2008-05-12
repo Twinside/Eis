@@ -14,58 +14,47 @@
 
 perform_client( #msg { params=[] }, Cli, ClientState ) ->
     irc:send_err( ClientState, Cli, ?ERR_NEEDMOREPARAMS );
-		
-perform_client( Msg, Cli, ClientState) ->
-	[ Chan, Dest | _ ]  = Msg#msg.params,
-	Valid = validate_chan( Chan, Cli, ClientState ) andalso
-			validate_right( Chan, Cli, ClientState ),
-	if 
-		Valid ->
-			case [Pid || {ChanName, Pid} <- Cli#client.is_in, ChanName == Chan] of
-				[PPid] -> case [Pid || {ChanName, Pid} <- Dest#client.is_in, ChanName == Chan] of
-							[_PPPid] -> 	chan_manager:send_chan( PPid, {Msg, Chan, Cli} );
-							[] -> Errmsg = ?ERR_USERNOTINCHANNEL
-								  ++ Dest#client.nick
-								  ++ [$  | Chan ]
-								  ++ [$  | ?ERR_USERNOTINCHANNEL_TXT],
-								  irc:send_err( ClientState, Cli, Errmsg )
-						  end;
-				[] -> Errmsg = ?ERR_NOTONCHANNEL
-	                  ++ Cli#client.nick
-	                  ++ [$  | Chan ]
-	                  ++ [$  | ?ERR_NOTONCHANNEL_TXT],
-	                  irc:send_err( ClientState, Cli, Errmsg )
-			end
-	end.
 
-% Check if the chan exist
-validate_chan ( Chan, Cli, ClientState ) ->
-	Valid = irc:is_channame_valid( Chan ),
-	if
-		Valid -> true;
-		true  -> Errmsg = ?ERR_NOSUCHCHANNEL
-                 ++ Cli#client.nick
-                 ++ [$  | Chan ]
-                 ++ [$  | ?ERR_NOSUCHCHANNEL_TXT],
-                 irc:send_err( ClientState, Cli, Errmsg )
-	end.
+perform_client( #msg { params=[_] }, Cli, ClientState ) ->
+    irc:send_err( ClientState, Cli, ?ERR_NEEDMOREPARAMS );
+        		
+perform_client( Msg, Cli, ClientState) ->
+	[ Chan, _ | _ ]  = Msg#msg.params,
+    UMsg = irc:update_sender( Msg, Cli ),
+    case [Pid || {ChanName, Pid} <- Cli#client.is_in, ChanName == Chan] of
+        [PPid] -> chan_manager:send_chan( PPid, {UMsg, Chan, Cli} );
+        []     -> err:notonchannel( ClientState, Cli, Chan )
+    end,
+    ClientState.
 	
 % Check userright in the chan
-validate_right (Chan, Cli, ClientState) ->
-	Valid = irc_laws:check_chanlaw( 'KICK', chan_manager:get_user_right( Chan, Cli#client.nick ), []),
+validate_right (Chan, Cli, State) ->
+    URight = chan_manager:get_user_right( Chan, Cli#client.nick ),
+	Valid = irc_laws:check_chanlaw( 'KICK', URight, Chan#chan.mode ),
 	if 
 		Valid -> true;
-		true  -> Errmsg = ?ERR_CHANOPPRIVSNEEDED
-                 ++ [$  | Chan ]
-                 ++ [$  | ?ERR_CHANOPPRIVSNEEDED_TXT],
-                 irc:send_err( ClientState, Cli, Errmsg )
+		true  -> err:chanopprivsneeded( State, Cli, Chan ),
+                 false
 	end.
 	
 		
-perform_chan( Msg, _Cli, Chan, ChanState ) ->
-	[ Chan, Dest | _ ]  = Msg#msg.params,
-	StrMsg = irc:string_of_msg( Msg ),
+perform_chan( Msg, Cli, Chan, ChanState ) ->
+    Valid = validate_right( Chan, Cli, ChanState ),
+    if Valid -> [ _, Target | _ ]  = Msg#msg.params,
+                AssumedCli = ets:lookup( Chan#chan.userlist, Target ),
+                kick_user( Msg, AssumedCli, Cli, Chan, ChanState );
+                
+       true -> ChanState
+    end.
+
+kick_user( Msg, [{_, {Cli, _}}], _Kicker, Chan, ChanState ) ->
+    StrMsg = irc:string_of_msg( Msg ),
     chan_manager:broadcast_users( Chan, StrMsg ),
-    {_, State} = com_part:cleanup_chan( Chan, Dest, ChanState ),
-    State
-    .
+    {_, State} = com_part:cleanup_chan( Chan, Cli, ChanState ),
+    State;
+    
+kick_user( #msg { params = [_, TargetNick |_]}, _, Kicker,
+            Chan, ChanState ) ->
+    err:usernotinchannel( ChanState, Kicker, TargetNick, Chan ),
+    ChanState.
+    

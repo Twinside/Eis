@@ -69,7 +69,8 @@ modules:=conf_loader \
 		eis \
         chars \
         pinger \
-        wexpr
+        wexpr \
+        err
 
 recompile_header:=  irc_struct.hrl \
                     irc_text.hrl
