@@ -1,0 +1,34 @@
+digraph
+{
+		RootSupervisor -> ServerNode
+		RootSupervisor -> bal1
+		RootSupervisor -> bal2
+		RootSupervisor -> virt1
+		RootSupervisor -> virt2
+
+		bal1 [label="LoadBalancer", shape="rectangle",fontname="Tahoma",fontsize="8",fontnames="svg"]
+		bal2 [label="LoadBalancer", shape="rectangle",fontname="Tahoma",fontsize="8",fontnames="svg"]
+
+		ServerNode [shape="rectangle",fontname="Tahoma",fontsize="8",fontnames="svg"]
+		virt1	[label="VirtualUser0",shape="rectangle",fontname="Tahoma",fontsize="8",fontnames="svg"]
+		virt2	[label="VirtualUser1",shape="rectangle",fontname="Tahoma",fontsize="8",fontnames="svg"]
+
+		chan0	[label="ChanManager0",shape="rectangle",fontname="Tahoma",fontsize="8",fontnames="svg"]
+		chan1	[label="ChanManager1",shape="rectangle",fontname="Tahoma",fontsize="8",fontnames="svg"]
+		chann	[label="ChanManagerN",shape="rectangle",fontname="Tahoma",fontsize="8",fontnames="svg"]
+
+		cli1	[label="ClientListener0",shape="rectangle",fontname="Tahoma",fontsize="8",fontnames="svg"]
+		cli2	[label="ClientListener1",shape="rectangle",fontname="Tahoma",fontsize="8",fontnames="svg"]
+		clin	[label="ClientListenerN",shape="rectangle",fontname="Tahoma",fontsize="8",fontnames="svg"]
+		
+		bal1 -> chan0
+		bal1 -> chan1
+		bal1 -> chann
+
+		bal2 -> cli1
+		bal2 -> cli2
+		bal2 -> clin
+
+		
+}
+

@@ -1,0 +1,17 @@
+digraph Automaton {
+  q1 [shape=circle,label="q1"];
+  q2 [shape=circle,label="q2"];
+  q3 [shape=circle,label="q3"];
+  q4 [shape=doublecircle,label=""];
+  poubelle [shape=circle,label="err"];
+  initial [shape=plaintext,label=""];
+  initial -> q1
+  q1 -> q2 [label="PASS"]
+  q2 -> q2 [label="PASS"]
+  q2 -> q3 [label="NICK"]
+  q1 -> q3 [label="NICK"]
+  q3 -> q4 [label="USER"]
+  q1 -> poubelle [style=dotted]
+  q2 -> poubelle [style=dotted]
+  q3 -> poubelle [style=dotted]
+}
